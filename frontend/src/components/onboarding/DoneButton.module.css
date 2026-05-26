@@ -1,0 +1,52 @@
+.button {
+  display: block;
+  margin: var(--space-8) auto 0;
+  width: 280px;
+  height: 64px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent-start), var(--color-accent-end));
+  color: white;
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-base);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.button:hover:not(:disabled) {
+  transform: scale(1.03);
+  box-shadow: var(--glow-accent-lg);
+  animation: none;
+}
+
+.button:focus-visible:not(:disabled) {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 3px;
+  animation: none;
+  box-shadow: var(--glow-accent-lg);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  animation: none;
+}
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 20px 5px rgba(201, 136, 74, 0.1); }
+  50% { box-shadow: 0 0 30px 10px rgba(201, 136, 74, 0.2); }
+}
+
+@media (max-width: 768px) {
+  .button {
+    width: 100%;
+    max-width: 320px;
+  }
+}

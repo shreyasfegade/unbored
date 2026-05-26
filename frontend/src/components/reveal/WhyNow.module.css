@@ -1,0 +1,11 @@
+.text {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  opacity: 0.85;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto var(--space-8);
+  line-height: var(--leading-relaxed);
+}

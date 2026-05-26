@@ -1,0 +1,136 @@
+{
+  "happy_energetic": {
+    "boost_genres": ["Comedy", "Adventure", "Action", "Animation", "Family", "Music"],
+    "penalize_genres": ["Drama", "War", "History"],
+    "boost_keywords": [
+      "feel-good", "buddy", "road trip", "friendship", "celebration",
+      "uplifting", "coming of age", "party", "dance", "summer",
+      "adventure", "fun", "lighthearted", "optimistic", "energetic"
+    ],
+    "penalize_keywords": [
+      "tragedy", "grief", "death", "depression", "war",
+      "heavy", "bleak", "loss", "funeral", "terminal illness"
+    ],
+    "emotional_intensity_modifier": -0.2,
+    "pacing_modifier": "fast",
+    "darkness_modifier": -0.3
+  },
+
+  "tired_low": {
+    "boost_genres": ["Drama", "Animation", "Documentary", "Family", "Romance"],
+    "penalize_genres": ["Action", "Thriller", "Horror", "Crime"],
+    "boost_keywords": [
+      "slow burn", "atmospheric", "comfort", "cozy", "slice of life",
+      "healing", "gentle", "nature", "meditation", "nostalgia",
+      "small town", "countryside", "warm", "soothing", "calm",
+      "relaxing", "peaceful", "bedtime", "quiet"
+    ],
+    "penalize_keywords": [
+      "intense", "complex plot", "fast-paced", "action-packed", "explosive",
+      "adrenaline", "non-stop", "twists", "mind-bending", "cerebral",
+      "high stakes", "suspenseful"
+    ],
+    "emotional_intensity_modifier": -0.2,
+    "pacing_modifier": "slow",
+    "darkness_modifier": -0.2
+  },
+
+  "anxious": {
+    "boost_genres": ["Comedy", "Animation", "Family", "Romance", "Music"],
+    "penalize_genres": ["Thriller", "Horror", "Crime", "Mystery", "War"],
+    "boost_keywords": [
+      "feel-good", "light comedy", "familiar", "comfort", "wholesome",
+      "predictable", "happy ending", "heartwarming", "safe", "cozy",
+      "friendship", "gentle", "sweet", "charming", "easygoing",
+      "lighthearted", "uplifting", "calming"
+    ],
+    "penalize_keywords": [
+      "thriller", "horror", "tense", "suspense", "jump scare",
+      "anxiety", "panic", "dread", "disturbing", "psychological",
+      "paranoia", "stalker", "kidnapping", "dark", "gore",
+      "violence", "torture"
+    ],
+    "emotional_intensity_modifier": -0.3,
+    "pacing_modifier": "slow",
+    "darkness_modifier": -0.3
+  },
+
+  "want_to_cry": {
+    "boost_genres": ["Drama", "Romance", "War", "History"],
+    "penalize_genres": ["Comedy", "Action", "Adventure", "Animation"],
+    "boost_keywords": [
+      "emotional", "melancholic", "tearjerker", "bittersweet", "grief",
+      "loss", "love story", "tragic", "poignant", "heartbreak",
+      "sacrifice", "farewell", "nostalgia", "sentimental", "moving",
+      "dying", "terminal illness", "separation", "longing", "regret"
+    ],
+    "penalize_keywords": [
+      "slapstick", "parody", "absurdist", "action-packed", "explosive",
+      "fun", "lighthearted", "silly", "wacky", "over-the-top",
+      "buddy comedy", "party"
+    ],
+    "emotional_intensity_modifier": 0.3,
+    "pacing_modifier": "slow",
+    "darkness_modifier": 0.2
+  },
+
+  "mindblown_curious": {
+    "boost_genres": ["Science Fiction", "Mystery", "Documentary", "Drama", "Thriller"],
+    "penalize_genres": ["Comedy", "Romance", "Family", "Music"],
+    "boost_keywords": [
+      "mind-bending", "complex narrative", "plot twist", "cerebral",
+      "philosophical", "dystopia", "time travel", "simulation",
+      "artificial intelligence", "conspiracy", "puzzle", "nonlinear",
+      "existential", "surreal", "experimental", "thought-provoking",
+      "sci-fi", "deep", "intelligent", "ambitious"
+    ],
+    "penalize_keywords": [
+      "shallow", "formulaic", "predictable", "feel-good", "simple",
+      "slapstick", "rom-com", "lighthearted", "cliché", "generic",
+      "by-the-numbers", "easy watch"
+    ],
+    "emotional_intensity_modifier": 0.1,
+    "pacing_modifier": null,
+    "darkness_modifier": 0.1
+  },
+
+  "want_to_laugh": {
+    "boost_genres": ["Comedy", "Animation", "Family"],
+    "penalize_genres": ["Drama", "Horror", "War", "Crime", "Thriller"],
+    "boost_keywords": [
+      "comedy", "sitcom", "absurdist", "slapstick", "parody",
+      "satire", "dark comedy", "buddy comedy", "stand-up",
+      "improvisation", "sketch", "funny", "hilarious", "witty",
+      "irreverent", "deadpan", "farce", "mockumentary", "wacky",
+      "rom-com"
+    ],
+    "penalize_keywords": [
+      "serious", "heavy", "bleak", "disturbing", "depressing",
+      "tragic", "grief", "horror", "gore", "violence",
+      "intense", "dark", "gritty", "brutal"
+    ],
+    "emotional_intensity_modifier": -0.2,
+    "pacing_modifier": "fast",
+    "darkness_modifier": -0.2
+  },
+
+  "thrilled": {
+    "boost_genres": ["Thriller", "Action", "Mystery", "Crime", "Horror"],
+    "penalize_genres": ["Romance", "Family", "Music", "Documentary"],
+    "boost_keywords": [
+      "thriller", "action", "mystery", "suspense", "twist",
+      "chase", "heist", "spy", "assassin", "detective",
+      "whodunit", "conspiracy", "adrenaline", "fast-paced",
+      "edge of seat", "cliffhanger", "crime", "undercover",
+      "explosive", "intense"
+    ],
+    "penalize_keywords": [
+      "slow burn", "slice of life", "cozy", "calm", "gentle",
+      "meditative", "relaxing", "pastoral", "peaceful", "quiet",
+      "nostalgic", "soothing", "healing", "comfort"
+    ],
+    "emotional_intensity_modifier": 0.2,
+    "pacing_modifier": "fast",
+    "darkness_modifier": 0.2
+  }
+}

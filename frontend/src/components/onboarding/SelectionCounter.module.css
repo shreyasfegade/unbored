@@ -1,0 +1,48 @@
+.counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.text {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.textComplete {
+  color: var(--color-accent-solid);
+}
+
+.number {
+  font-weight: var(--font-bold);
+  font-size: var(--text-lg);
+  display: inline-block;
+}
+
+.dots {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-bg-hover);
+  transition: background var(--transition-fast);
+}
+
+.dotFilled {
+  background: var(--color-accent-solid);
+}
+
+.ready {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-accent-solid);
+  opacity: 0.7;
+  margin-top: var(--space-1);
+}

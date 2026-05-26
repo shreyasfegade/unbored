@@ -1,0 +1,82 @@
+.button {
+  display: block;
+  margin: 0 auto;
+  width: 280px;
+  height: 64px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent-start) 0%, var(--color-accent-end) 100%);
+  color: white;
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--transition-base), opacity var(--transition-fast);
+  animation: breathe 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.button:hover:not(:disabled):not(.loading) {
+  box-shadow: var(--glow-accent-lg);
+  animation: none;
+}
+
+.button:focus-visible:not(:disabled) {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 3px;
+  animation: none;
+  box-shadow: var(--glow-accent-lg);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  animation: none;
+}
+
+.loading {
+  animation: none;
+  opacity: 0.85;
+}
+
+.scanningLabel {
+  display: inline-block;
+}
+
+.scanningLetter {
+  display: inline-block;
+  animation: letterPulse 1.2s ease-in-out infinite;
+}
+
+.scanningLetter:nth-child(1) { animation-delay: 0s; }
+.scanningLetter:nth-child(2) { animation-delay: 0.05s; }
+.scanningLetter:nth-child(3) { animation-delay: 0.1s; }
+.scanningLetter:nth-child(4) { animation-delay: 0.15s; }
+.scanningLetter:nth-child(5) { animation-delay: 0.2s; }
+.scanningLetter:nth-child(6) { animation-delay: 0.25s; }
+.scanningLetter:nth-child(7) { animation-delay: 0.3s; }
+.scanningLetter:nth-child(8) { animation-delay: 0.35s; }
+
+.dot1, .dot2, .dot3 {
+  display: inline-block;
+  animation: dotBlink 1.5s step-end infinite;
+}
+.dot2 { animation-delay: 0.5s; }
+.dot3 { animation-delay: 1s; }
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 20px 5px rgba(201, 136, 74, 0.1); }
+  50% { box-shadow: 0 0 30px 10px rgba(201, 136, 74, 0.2); }
+}
+
+@keyframes letterPulse {
+  0%, 100% { opacity: 0.5; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}

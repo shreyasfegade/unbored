@@ -1,0 +1,128 @@
+[
+  {
+    "required_genres": ["drama"],
+    "min_rating": 8.0,
+    "min_runtime": 100,
+    "is_anime": null,
+    "keywords": ["emotionally intense", "character-driven"]
+  },
+  {
+    "required_genres": ["drama"],
+    "min_rating": 7.5,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["character-driven"]
+  },
+  {
+    "required_genres": ["comedy"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["funny", "light"]
+  },
+  {
+    "required_genres": ["comedy", "drama"],
+    "min_rating": 7.5,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["bittersweet", "witty"]
+  },
+  {
+    "required_genres": ["horror"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["dark", "tense", "suspense"]
+  },
+  {
+    "required_genres": ["thriller"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["tense", "suspense", "intense"]
+  },
+  {
+    "required_genres": ["science fiction"],
+    "min_rating": 7.5,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["cerebral", "thought-provoking"]
+  },
+  {
+    "required_genres": ["science fiction"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["futuristic"]
+  },
+  {
+    "required_genres": ["action"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["fast-paced", "adrenaline"]
+  },
+  {
+    "required_genres": ["action", "adventure"],
+    "min_rating": 7.5,
+    "min_runtime": 120,
+    "is_anime": null,
+    "keywords": ["epic", "visually stunning"]
+  },
+  {
+    "required_genres": ["romance"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["emotional", "feel-good"]
+  },
+  {
+    "required_genres": ["animation"],
+    "min_rating": 8.0,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["visually stunning", "emotional"]
+  },
+  {
+    "required_genres": ["mystery"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["plot twist", "suspense"]
+  },
+  {
+    "required_genres": ["war"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["intense", "emotional", "dark"]
+  },
+  {
+    "required_genres": ["fantasy"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": null,
+    "keywords": ["epic", "world-building"]
+  },
+  {
+    "required_genres": ["drama"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": true,
+    "keywords": ["emotional", "character-driven", "atmospheric"]
+  },
+  {
+    "required_genres": ["action"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": true,
+    "keywords": ["intense", "fast-paced", "adrenaline"]
+  },
+  {
+    "required_genres": ["comedy"],
+    "min_rating": null,
+    "min_runtime": null,
+    "is_anime": true,
+    "keywords": ["light", "funny", "slice of life"]
+  }
+]

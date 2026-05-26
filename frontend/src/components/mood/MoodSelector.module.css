@@ -1,0 +1,14 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+  .grid {
+    max-width: 264px;
+  }
+}

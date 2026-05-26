@@ -1,0 +1,54 @@
+.container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+.glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  height: 510px;
+  border-radius: var(--radius-xl);
+  background: radial-gradient(
+    ellipse,
+    rgba(201, 136, 74, 0.15) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.poster {
+  width: 300px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  will-change: transform, opacity, filter;
+}
+
+@media (max-width: 768px) {
+  .poster {
+    width: 250px;
+  }
+
+  .glow {
+    width: 280px;
+    height: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .poster {
+    width: 220px;
+  }
+
+  .glow {
+    width: 250px;
+    height: 375px;
+  }
+}

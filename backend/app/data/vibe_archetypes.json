@@ -1,0 +1,154 @@
+{
+  "archetypes": [
+    {
+      "id": "cinephile_dark",
+      "name": "The Dark Cinephile",
+      "description": "Loves complex, dark narratives with psychological depth",
+      "trigger_genres": ["thriller", "crime", "drama"],
+      "trigger_threshold": 0.55,
+      "boost_genres": {
+        "thriller": 0.25, "crime": 0.2, "mystery": 0.2,
+        "drama": 0.1
+      },
+      "boost_keywords": {
+        "neo-noir": 0.3, "plot twist": 0.3, "psychological": 0.3,
+        "dark": 0.2, "morally ambiguous": 0.25, "unreliable narrator": 0.2,
+        "nonlinear timeline": 0.2, "character study": 0.2
+      },
+      "pacing_hint": "mixed",
+      "emotional_intensity_hint": 0.7,
+      "darkness_hint": 0.8
+    },
+    {
+      "id": "comfort_watcher",
+      "name": "The Comfort Watcher",
+      "description": "Prefers feel-good, light, familiar content",
+      "trigger_genres": ["comedy", "romance", "family"],
+      "trigger_threshold": 0.5,
+      "boost_genres": {
+        "comedy": 0.25, "romance": 0.2, "family": 0.15,
+        "animation": 0.1
+      },
+      "boost_keywords": {
+        "feel-good": 0.3, "heartwarming": 0.3, "friendship": 0.2,
+        "coming of age": 0.2, "found family": 0.2, "slice of life": 0.2,
+        "comfort": 0.25, "lighthearted": 0.2
+      },
+      "pacing_hint": "slow",
+      "emotional_intensity_hint": 0.3,
+      "darkness_hint": 0.1
+    },
+    {
+      "id": "action_junkie",
+      "name": "The Action Junkie",
+      "description": "Craves high-energy, fast-paced spectacle",
+      "trigger_genres": ["action", "adventure", "science fiction"],
+      "trigger_threshold": 0.5,
+      "boost_genres": {
+        "action": 0.25, "adventure": 0.2, "science fiction": 0.15,
+        "thriller": 0.1
+      },
+      "boost_keywords": {
+        "epic": 0.3, "superhero": 0.2, "heist": 0.2,
+        "chase": 0.2, "martial arts": 0.2, "blockbuster": 0.2,
+        "adrenaline": 0.2, "explosion": 0.15
+      },
+      "pacing_hint": "fast",
+      "emotional_intensity_hint": 0.5,
+      "darkness_hint": 0.4
+    },
+    {
+      "id": "anime_devotee",
+      "name": "The Anime Devotee",
+      "description": "Primarily watches anime and animated content",
+      "trigger_genres": ["animation"],
+      "trigger_threshold": 0.35,
+      "boost_genres": {
+        "animation": 0.3, "fantasy": 0.2, "action": 0.15,
+        "science fiction": 0.1
+      },
+      "boost_keywords": {
+        "anime": 0.3, "shonen": 0.2, "supernatural": 0.2,
+        "tournament": 0.15, "isekai": 0.2, "power system": 0.15,
+        "dark fantasy": 0.2, "school": 0.1
+      },
+      "pacing_hint": "fast",
+      "emotional_intensity_hint": 0.5,
+      "darkness_hint": 0.3
+    },
+    {
+      "id": "prestige_seeker",
+      "name": "The Prestige Seeker",
+      "description": "Gravitates toward critically acclaimed, award-winning content",
+      "trigger_genres": ["drama", "history", "war"],
+      "trigger_threshold": 0.5,
+      "boost_genres": {
+        "drama": 0.25, "history": 0.15, "war": 0.1,
+        "documentary": 0.1
+      },
+      "boost_keywords": {
+        "based on true story": 0.3, "biography": 0.2, "critically acclaimed": 0.3,
+        "character study": 0.25, "literary adaptation": 0.2,
+        "award winner": 0.2, "ensemble cast": 0.15
+      },
+      "pacing_hint": "slow",
+      "emotional_intensity_hint": 0.8,
+      "darkness_hint": 0.5
+    },
+    {
+      "id": "horror_enthusiast",
+      "name": "The Horror Enthusiast",
+      "description": "Loves being scared, unsettled, and disturbed",
+      "trigger_genres": ["horror"],
+      "trigger_threshold": 0.25,
+      "boost_genres": {
+        "horror": 0.35, "thriller": 0.2, "mystery": 0.15
+      },
+      "boost_keywords": {
+        "supernatural": 0.3, "slasher": 0.2, "paranormal": 0.25,
+        "haunting": 0.3, "survival": 0.2, "cosmic horror": 0.2,
+        "folk horror": 0.2, "body horror": 0.15
+      },
+      "pacing_hint": "mixed",
+      "emotional_intensity_hint": 0.6,
+      "darkness_hint": 0.9
+    },
+    {
+      "id": "scifi_explorer",
+      "name": "The Sci-Fi Explorer",
+      "description": "Fascinated by speculative worlds, big ideas, and future tech",
+      "trigger_genres": ["science fiction"],
+      "trigger_threshold": 0.3,
+      "boost_genres": {
+        "science fiction": 0.35, "thriller": 0.1, "adventure": 0.1,
+        "mystery": 0.1
+      },
+      "boost_keywords": {
+        "dystopia": 0.3, "time travel": 0.3, "artificial intelligence": 0.3,
+        "space": 0.2, "mind-bending": 0.3, "cyberpunk": 0.2,
+        "first contact": 0.2, "parallel universe": 0.2
+      },
+      "pacing_hint": "mixed",
+      "emotional_intensity_hint": 0.5,
+      "darkness_hint": 0.5
+    },
+    {
+      "id": "rom_com_lover",
+      "name": "The Rom-Com Lover",
+      "description": "Lives for romantic comedies and love stories",
+      "trigger_genres": ["romance", "comedy"],
+      "trigger_threshold": 0.5,
+      "boost_genres": {
+        "romance": 0.35, "comedy": 0.25, "drama": 0.1
+      },
+      "boost_keywords": {
+        "love": 0.3, "wedding": 0.2, "relationship": 0.25,
+        "romantic comedy": 0.3, "enemies to lovers": 0.2,
+        "second chance": 0.2, "holiday": 0.15
+      },
+      "pacing_hint": "mixed",
+      "emotional_intensity_hint": 0.4,
+      "darkness_hint": 0.1
+    }
+  ]
+}

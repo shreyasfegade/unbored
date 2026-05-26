@@ -1,0 +1,107 @@
+.poster {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 2 / 3;
+  background: var(--color-bg-tertiary);
+  border: 2px solid transparent;
+  padding: 0;
+  display: block;
+  font-family: inherit;
+  color: inherit;
+  width: 100%;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast), border-color var(--transition-fast);
+}
+
+.poster:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), var(--glow-accent);
+  filter: brightness(1.1);
+}
+
+.poster:focus-visible {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
+.selected {
+  transform: scale(1.02);
+  border-color: var(--color-accent-solid);
+  box-shadow: var(--glow-accent-lg);
+}
+
+.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.checkmark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  box-shadow: var(--shadow-md);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.titleOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-3) var(--space-2);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poster:hover .titleOverlay,
+.poster:focus-visible .titleOverlay {
+  opacity: 1;
+}
+
+.loading {
+  background: var(--color-bg-tertiary);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
+.error {
+  background: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: 24px;
+}

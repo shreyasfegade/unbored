@@ -1,0 +1,15 @@
+.background {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #0c0b09 0%, #141310 50%, #1e1b16 100%);
+  z-index: var(--z-background);
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(201, 136, 74, 0.2);
+}
