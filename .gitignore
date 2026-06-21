@@ -5,7 +5,9 @@ __pycache__/
 venv/
 .env
 .pytest_cache/
+.pytest-tmp/
 pytest_tmp*/
+tmp/
 
 # Node
 node_modules/
