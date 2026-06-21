@@ -83,20 +83,20 @@ def mock_services(monkeypatch):
     mock_anilist.get_detail = AsyncMock(return_value=None)
     mock_anilist.close = AsyncMock()
 
-    mock_gemini = MagicMock()
-    mock_gemini.generate_why_now = AsyncMock(
-        return_value=WhyNowResult(sentence="A solid pick for tonight.", source="gemini")
+    mock_why_now = MagicMock()
+    mock_why_now.generate_why_now = AsyncMock(
+        return_value=WhyNowResult(sentence="A solid pick for tonight.", source="llm", provider="gemini")
     )
-    mock_gemini.close = AsyncMock()
+    mock_why_now.close = AsyncMock()
 
     app.state.tmdb = mock_tmdb
     app.state.anilist = mock_anilist
-    app.state.gemini_service = mock_gemini
+    app.state.why_now = mock_why_now
 
     # Clear the in-memory recommendation log
     rec_module._recommendation_log.clear()
 
-    yield mock_tmdb, mock_anilist, mock_gemini
+    yield mock_tmdb, mock_anilist, mock_why_now
 
     rec_module._recommendation_log.clear()
 
@@ -161,7 +161,8 @@ async def test_recommend_success(mock_services, clean_file_store):
     assert body["primary"]["media"]["id"] in {"tmdb_100", "tmdb_200", "tmdb_300"}
     assert len(body["alternates"]) == 2
     assert "request_id" in body
-    assert body["why_now"]["source"] == "gemini"
+    assert body["why_now"]["source"] == "llm"
+    assert body["why_now"]["provider"] == "gemini"
     assert body["confidence"] in {"high", "strong", "moderate"}
 
     # Verify history recorded

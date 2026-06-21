@@ -14,7 +14,8 @@ from app.routers import health, taste, recommend, search, media
 from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 from app.services.candidate_pool import CandidatePool
-from app.services.gemini_service import GeminiService
+from app.services.why_now import WhyNowService
+from app.llm import build_provider
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI):
     app.state.tmdb = tmdb
     app.state.anilist = anilist
     app.state.pool = pool
-    app.state.gemini_service = GeminiService(settings)
+    app.state.why_now = WhyNowService(settings, build_provider(settings))
 
     async def refresh_loop():
         while True:
@@ -58,7 +59,7 @@ async def lifespan(app: FastAPI):
         await refresh_task
     except asyncio.CancelledError:
         pass
-    await app.state.gemini_service.close()
+    await app.state.why_now.close()
     await tmdb.close()
     await anilist.close()
     logger.info("Unbored API stopped.")

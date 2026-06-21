@@ -40,9 +40,10 @@ class WhyNowContext(BaseModel):
     mood: str
 
 class WhyNowResult(BaseModel):
-    """Result of Gemini sentence generation."""
+    """Result of 'Why now?' sentence generation."""
     sentence: str
-    source: str  # "gemini" | "fallback" | "cache"
+    source: str  # "llm" | "fallback" | "cache"
+    provider: str | None = None  # e.g. "gemini", "deepseek" — None when offline
 
 class RecommendationResponse(BaseModel):
     primary: ScoredMediaItem

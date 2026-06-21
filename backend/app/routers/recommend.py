@@ -145,7 +145,7 @@ async def _run_recommendation_pipeline(
     excluded_ids: list[str],
 ) -> RecommendationResponse:
     pool = request.app.state.pool
-    gemini = request.app.state.gemini_service
+    why_now_service = request.app.state.why_now
     builder = _get_taste_builder(request)
 
     candidates = pool.get_candidates(exclude_ids=excluded_ids)
@@ -183,7 +183,7 @@ async def _run_recommendation_pipeline(
     confidence = _confidence_from_score(primary.score)
 
     ctx = _build_why_now_context(primary, body)
-    why_now = await gemini.generate_why_now(ctx)
+    why_now = await why_now_service.generate_why_now(ctx)
 
     response = RecommendationResponse(
         primary=primary,

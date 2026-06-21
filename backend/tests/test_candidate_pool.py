@@ -172,4 +172,9 @@ async def test_main_lifespan_integration(monkeypatch):
                 data = response.json()
                 assert data["status"] == "ok"
                 assert data["candidate_pool_size"] == 0
-                assert data["tmdb_genres_loaded"] is True
+
+                status_resp = await client.get("/api/status")
+                assert status_resp.status_code == 200
+                status_data = status_resp.json()
+                assert status_data["catalog"]["tmdb_genres_loaded"] is True
+                assert "llm" in status_data

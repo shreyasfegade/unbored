@@ -60,14 +60,14 @@ def mock_services(monkeypatch):
     mock_pool.refresh = AsyncMock()
     mock_pool.get_candidates = MagicMock(return_value=[])
 
-    mock_gemini = MagicMock()
-    mock_gemini.close = AsyncMock()
+    mock_why_now = MagicMock()
+    mock_why_now.close = AsyncMock()
 
     # Set on app.state directly — bypasses lifespan
     app.state.tmdb = mock_tmdb
     app.state.anilist = mock_anilist
     app.state.pool = mock_pool
-    app.state.gemini_service = mock_gemini
+    app.state.why_now = mock_why_now
 
     return mock_tmdb, mock_anilist, mock_pool
 
