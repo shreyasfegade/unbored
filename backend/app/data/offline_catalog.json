@@ -1,0 +1,1099 @@
+{
+  "version": 1,
+  "generated_for": "demo-mode",
+  "items": [
+    {
+      "id": "tmdb_90001",
+      "source": "tmdb_movie",
+      "tmdb_id": 90001,
+      "source_api": "tmdb",
+      "title": "Inception",
+      "original_title": "Inception",
+      "overview": "A thief who steals corporate secrets through dream-sharing takes on one last job: planting an idea.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "sci-fi",
+        "thriller"
+      ],
+      "keywords": [
+        "dream",
+        "heist",
+        "subconscious",
+        "mind-bending"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 35000,
+      "runtime_minutes": 148,
+      "release_year": 2010,
+      "media_type": "movie",
+      "popularity": 84.0,
+      "year": 2010
+    },
+    {
+      "id": "tmdb_90002",
+      "source": "tmdb_movie",
+      "tmdb_id": 90002,
+      "source_api": "tmdb",
+      "title": "Spirited Away",
+      "original_title": "Spirited Away",
+      "overview": "A young girl wanders into a world of spirits and must find the courage to free her parents.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "family",
+        "fantasy"
+      ],
+      "keywords": [
+        "spirit-world",
+        "coming-of-age",
+        "magic",
+        "wholesome"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 16000,
+      "runtime_minutes": 125,
+      "release_year": 2001,
+      "media_type": "movie",
+      "popularity": 85.0,
+      "year": 2001
+    },
+    {
+      "id": "tmdb_90003",
+      "source": "tmdb_movie",
+      "tmdb_id": 90003,
+      "source_api": "tmdb",
+      "title": "Parasite",
+      "original_title": "Parasite",
+      "overview": "A poor family schemes to become employed by a wealthy household, with unforeseen consequences.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama",
+        "thriller"
+      ],
+      "keywords": [
+        "class-conflict",
+        "dark-comedy",
+        "twist",
+        "social-commentary"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 18000,
+      "runtime_minutes": 132,
+      "release_year": 2019,
+      "media_type": "movie",
+      "popularity": 85.0,
+      "year": 2019
+    },
+    {
+      "id": "tmdb_90004",
+      "source": "tmdb_movie",
+      "tmdb_id": 90004,
+      "source_api": "tmdb",
+      "title": "Mad Max: Fury Road",
+      "original_title": "Mad Max: Fury Road",
+      "overview": "On the fury road, a drifter and a rebel warrior flee a tyrant across a desert wasteland.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "adventure",
+        "sci-fi"
+      ],
+      "keywords": [
+        "post-apocalyptic",
+        "chase",
+        "practical-effects",
+        "high-octane"
+      ],
+      "vote_average": 7.6,
+      "vote_count": 22000,
+      "runtime_minutes": 120,
+      "release_year": 2015,
+      "media_type": "movie",
+      "popularity": 76.0,
+      "year": 2015
+    },
+    {
+      "id": "tmdb_90005",
+      "source": "tmdb_movie",
+      "tmdb_id": 90005,
+      "source_api": "tmdb",
+      "title": "The Grand Budapest Hotel",
+      "original_title": "The Grand Budapest Hotel",
+      "overview": "A legendary concierge and his protege become entangled in the theft of a priceless painting.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama"
+      ],
+      "keywords": [
+        "whimsical",
+        "symmetry",
+        "caper",
+        "stylized"
+      ],
+      "vote_average": 8.1,
+      "vote_count": 18000,
+      "runtime_minutes": 99,
+      "release_year": 2014,
+      "media_type": "movie",
+      "popularity": 81.0,
+      "year": 2014
+    },
+    {
+      "id": "tmdb_90006",
+      "source": "tmdb_movie",
+      "tmdb_id": 90006,
+      "source_api": "tmdb",
+      "title": "Whiplash",
+      "original_title": "Whiplash",
+      "overview": "A promising drummer enrolls under a ruthless instructor who will stop at nothing to realize potential.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "music"
+      ],
+      "keywords": [
+        "obsession",
+        "jazz",
+        "mentor",
+        "intense"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 16000,
+      "runtime_minutes": 106,
+      "release_year": 2014,
+      "media_type": "movie",
+      "popularity": 84.0,
+      "year": 2014
+    },
+    {
+      "id": "tmdb_90007",
+      "source": "tmdb_movie",
+      "tmdb_id": 90007,
+      "source_api": "tmdb",
+      "title": "Blade Runner 2049",
+      "original_title": "Blade Runner 2049",
+      "overview": "A young blade runner uncovers a long-buried secret that could plunge society into chaos.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "sci-fi",
+        "drama",
+        "mystery"
+      ],
+      "keywords": [
+        "dystopia",
+        "replicant",
+        "neo-noir",
+        "atmospheric"
+      ],
+      "vote_average": 7.5,
+      "vote_count": 14000,
+      "runtime_minutes": 164,
+      "release_year": 2017,
+      "media_type": "movie",
+      "popularity": 75.0,
+      "year": 2017
+    },
+    {
+      "id": "tmdb_90008",
+      "source": "tmdb_movie",
+      "tmdb_id": 90008,
+      "source_api": "tmdb",
+      "title": "Coco",
+      "original_title": "Coco",
+      "overview": "A boy is transported to the Land of the Dead, where he seeks the help of a charming trickster.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "family",
+        "fantasy"
+      ],
+      "keywords": [
+        "family",
+        "music",
+        "mexico",
+        "heartfelt"
+      ],
+      "vote_average": 8.2,
+      "vote_count": 17000,
+      "runtime_minutes": 105,
+      "release_year": 2017,
+      "media_type": "movie",
+      "popularity": 82.0,
+      "year": 2017
+    },
+    {
+      "id": "tmdb_90009",
+      "source": "tmdb_movie",
+      "tmdb_id": 90009,
+      "source_api": "tmdb",
+      "title": "Knives Out",
+      "original_title": "Knives Out",
+      "overview": "A detective investigates the death of a patriarch amid a web of a wealthy, dysfunctional family.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "crime",
+        "mystery"
+      ],
+      "keywords": [
+        "whodunit",
+        "ensemble",
+        "twist",
+        "clever"
+      ],
+      "vote_average": 7.9,
+      "vote_count": 14000,
+      "runtime_minutes": 130,
+      "release_year": 2019,
+      "media_type": "movie",
+      "popularity": 79.0,
+      "year": 2019
+    },
+    {
+      "id": "tmdb_90010",
+      "source": "tmdb_movie",
+      "tmdb_id": 90010,
+      "source_api": "tmdb",
+      "title": "Everything Everywhere All at Once",
+      "original_title": "Everything Everywhere All at Once",
+      "overview": "An exhausted laundromat owner discovers she must connect with versions of herself across universes.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "adventure",
+        "sci-fi"
+      ],
+      "keywords": [
+        "multiverse",
+        "absurdist",
+        "family",
+        "emotional"
+      ],
+      "vote_average": 7.8,
+      "vote_count": 12000,
+      "runtime_minutes": 139,
+      "release_year": 2022,
+      "media_type": "movie",
+      "popularity": 78.0,
+      "year": 2022
+    },
+    {
+      "id": "tmdb_90011",
+      "source": "tmdb_movie",
+      "tmdb_id": 90011,
+      "source_api": "tmdb",
+      "title": "Your Name",
+      "original_title": "Your Name",
+      "overview": "Two teenagers share a profound, magical connection when they discover they are swapping bodies.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "romance",
+        "fantasy"
+      ],
+      "keywords": [
+        "body-swap",
+        "star-crossed",
+        "longing",
+        "beautiful"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 11000,
+      "runtime_minutes": 106,
+      "release_year": 2016,
+      "media_type": "movie",
+      "popularity": 85.0,
+      "year": 2016
+    },
+    {
+      "id": "tmdb_90012",
+      "source": "tmdb_movie",
+      "tmdb_id": 90012,
+      "source_api": "tmdb",
+      "title": "The Dark Knight",
+      "original_title": "The Dark Knight",
+      "overview": "Batman faces the Joker, a criminal mastermind who plunges Gotham into anarchy.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "crime",
+        "drama"
+      ],
+      "keywords": [
+        "vigilante",
+        "chaos",
+        "moral-dilemma",
+        "iconic"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 31000,
+      "runtime_minutes": 152,
+      "release_year": 2008,
+      "media_type": "movie",
+      "popularity": 85.0,
+      "year": 2008
+    },
+    {
+      "id": "tmdb_90013",
+      "source": "tmdb_movie",
+      "tmdb_id": 90013,
+      "source_api": "tmdb",
+      "title": "Arrival",
+      "original_title": "Arrival",
+      "overview": "A linguist works to communicate with extraterrestrial visitors before global tensions boil over.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "mystery",
+        "sci-fi"
+      ],
+      "keywords": [
+        "first-contact",
+        "language",
+        "cerebral",
+        "melancholy"
+      ],
+      "vote_average": 7.6,
+      "vote_count": 16000,
+      "runtime_minutes": 116,
+      "release_year": 2016,
+      "media_type": "movie",
+      "popularity": 76.0,
+      "year": 2016
+    },
+    {
+      "id": "tmdb_90014",
+      "source": "tmdb_movie",
+      "tmdb_id": 90014,
+      "source_api": "tmdb",
+      "title": "Past Lives",
+      "original_title": "Past Lives",
+      "overview": "Two childhood friends reunite decades later for one fateful week, confronting what might have been.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "romance"
+      ],
+      "keywords": [
+        "yearning",
+        "destiny",
+        "quiet",
+        "bittersweet"
+      ],
+      "vote_average": 7.8,
+      "vote_count": 4000,
+      "runtime_minutes": 106,
+      "release_year": 2023,
+      "media_type": "movie",
+      "popularity": 78.0,
+      "year": 2023
+    },
+    {
+      "id": "tmdb_90015",
+      "source": "tmdb_movie",
+      "tmdb_id": 90015,
+      "source_api": "tmdb",
+      "title": "Spider-Man: Into the Spider-Verse",
+      "original_title": "Spider-Man: Into the Spider-Verse",
+      "overview": "A teen becomes Spider-Man and joins others from parallel dimensions to save the multiverse.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "action",
+        "adventure"
+      ],
+      "keywords": [
+        "multiverse",
+        "coming-of-age",
+        "stylish",
+        "kinetic"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 16000,
+      "runtime_minutes": 117,
+      "release_year": 2018,
+      "media_type": "movie",
+      "popularity": 84.0,
+      "year": 2018
+    },
+    {
+      "id": "tmdb_90016",
+      "source": "tmdb_movie",
+      "tmdb_id": 90016,
+      "source_api": "tmdb",
+      "title": "La La Land",
+      "original_title": "La La Land",
+      "overview": "A jazz pianist and an aspiring actress fall in love while chasing their dreams in Los Angeles.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama",
+        "romance"
+      ],
+      "keywords": [
+        "musical",
+        "ambition",
+        "jazz",
+        "wistful"
+      ],
+      "vote_average": 7.9,
+      "vote_count": 16000,
+      "runtime_minutes": 128,
+      "release_year": 2016,
+      "media_type": "movie",
+      "popularity": 79.0,
+      "year": 2016
+    },
+    {
+      "id": "tmdb_90017",
+      "source": "tmdb_movie",
+      "tmdb_id": 90017,
+      "source_api": "tmdb",
+      "title": "No Country for Old Men",
+      "original_title": "No Country for Old Men",
+      "overview": "A hunter stumbles on a drug deal gone wrong and a relentless killer follows the trail of money.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "crime",
+        "drama",
+        "thriller"
+      ],
+      "keywords": [
+        "cat-and-mouse",
+        "fate",
+        "tense",
+        "sparse"
+      ],
+      "vote_average": 8.1,
+      "vote_count": 13000,
+      "runtime_minutes": 122,
+      "release_year": 2007,
+      "media_type": "movie",
+      "popularity": 81.0,
+      "year": 2007
+    },
+    {
+      "id": "tmdb_90018",
+      "source": "tmdb_movie",
+      "tmdb_id": 90018,
+      "source_api": "tmdb",
+      "title": "The Truman Show",
+      "original_title": "The Truman Show",
+      "overview": "An insurance salesman discovers his entire life is an elaborate, televised construction.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama"
+      ],
+      "keywords": [
+        "satire",
+        "reality",
+        "awakening",
+        "thoughtful"
+      ],
+      "vote_average": 8.2,
+      "vote_count": 13000,
+      "runtime_minutes": 103,
+      "release_year": 1998,
+      "media_type": "movie",
+      "popularity": 82.0,
+      "year": 1998
+    },
+    {
+      "id": "tmdb_90019",
+      "source": "tmdb_tv",
+      "tmdb_id": 90019,
+      "source_api": "tmdb",
+      "title": "Breaking Bad",
+      "original_title": "Breaking Bad",
+      "overview": "A chemistry teacher turned methamphetamine producer navigates the dangers of the criminal underworld.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "crime",
+        "drama",
+        "thriller"
+      ],
+      "keywords": [
+        "transformation",
+        "drugs",
+        "tension",
+        "masterful"
+      ],
+      "vote_average": 8.9,
+      "vote_count": 13000,
+      "runtime_minutes": 47,
+      "release_year": 2008,
+      "media_type": "tv",
+      "popularity": 89.0,
+      "year": 2008
+    },
+    {
+      "id": "tmdb_90020",
+      "source": "tmdb_tv",
+      "tmdb_id": 90020,
+      "source_api": "tmdb",
+      "title": "The Bear",
+      "original_title": "The Bear",
+      "overview": "A fine-dining chef returns home to run his late brother's chaotic sandwich shop.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama"
+      ],
+      "keywords": [
+        "kitchen",
+        "grief",
+        "pressure",
+        "intense"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 4000,
+      "runtime_minutes": 30,
+      "release_year": 2022,
+      "media_type": "tv",
+      "popularity": 85.0,
+      "year": 2022
+    },
+    {
+      "id": "tmdb_90021",
+      "source": "tmdb_tv",
+      "tmdb_id": 90021,
+      "source_api": "tmdb",
+      "title": "Fleabag",
+      "original_title": "Fleabag",
+      "overview": "A dry-witted woman navigates love and loss in London while addressing the audience directly.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama"
+      ],
+      "keywords": [
+        "fourth-wall",
+        "grief",
+        "sharp",
+        "witty"
+      ],
+      "vote_average": 8.6,
+      "vote_count": 3000,
+      "runtime_minutes": 27,
+      "release_year": 2016,
+      "media_type": "tv",
+      "popularity": 86.0,
+      "year": 2016
+    },
+    {
+      "id": "tmdb_90022",
+      "source": "tmdb_tv",
+      "tmdb_id": 90022,
+      "source_api": "tmdb",
+      "title": "Severance",
+      "original_title": "Severance",
+      "overview": "Employees surgically divide their memories between work and personal life, until the wall cracks.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "mystery",
+        "sci-fi"
+      ],
+      "keywords": [
+        "dystopia",
+        "corporate",
+        "eerie",
+        "cerebral"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 4000,
+      "runtime_minutes": 50,
+      "release_year": 2022,
+      "media_type": "tv",
+      "popularity": 84.0,
+      "year": 2022
+    },
+    {
+      "id": "tmdb_90023",
+      "source": "tmdb_tv",
+      "tmdb_id": 90023,
+      "source_api": "tmdb",
+      "title": "Avatar: The Last Airbender",
+      "original_title": "Avatar: The Last Airbender",
+      "overview": "A young Avatar must master the four elements to end a hundred-year war and restore balance.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "action",
+        "adventure"
+      ],
+      "keywords": [
+        "found-family",
+        "war",
+        "coming-of-age",
+        "wholesome"
+      ],
+      "vote_average": 8.7,
+      "vote_count": 5000,
+      "runtime_minutes": 24,
+      "release_year": 2005,
+      "media_type": "tv",
+      "popularity": 87.0,
+      "year": 2005
+    },
+    {
+      "id": "tmdb_90024",
+      "source": "tmdb_tv",
+      "tmdb_id": 90024,
+      "source_api": "tmdb",
+      "title": "The Office",
+      "original_title": "The Office",
+      "overview": "The everyday absurdities of office life at a mid-sized paper company, caught by a documentary crew.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy"
+      ],
+      "keywords": [
+        "mockumentary",
+        "workplace",
+        "cringe",
+        "comforting"
+      ],
+      "vote_average": 8.6,
+      "vote_count": 7000,
+      "runtime_minutes": 22,
+      "release_year": 2005,
+      "media_type": "tv",
+      "popularity": 86.0,
+      "year": 2005
+    },
+    {
+      "id": "tmdb_90025",
+      "source": "tmdb_tv",
+      "tmdb_id": 90025,
+      "source_api": "tmdb",
+      "title": "Chernobyl",
+      "original_title": "Chernobyl",
+      "overview": "A dramatization of the 1986 nuclear disaster and the sacrifices made to contain it.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "history",
+        "thriller"
+      ],
+      "keywords": [
+        "disaster",
+        "true-story",
+        "bleak",
+        "gripping"
+      ],
+      "vote_average": 8.6,
+      "vote_count": 5000,
+      "runtime_minutes": 60,
+      "release_year": 2019,
+      "media_type": "tv",
+      "popularity": 86.0,
+      "year": 2019
+    },
+    {
+      "id": "tmdb_90026",
+      "source": "tmdb_tv",
+      "tmdb_id": 90026,
+      "source_api": "tmdb",
+      "title": "Bluey",
+      "original_title": "Bluey",
+      "overview": "A lovable Blue Heeler puppy turns everyday family life into boundless, imaginative play.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "family",
+        "comedy"
+      ],
+      "keywords": [
+        "wholesome",
+        "parenting",
+        "heartfelt",
+        "imaginative"
+      ],
+      "vote_average": 8.9,
+      "vote_count": 1500,
+      "runtime_minutes": 8,
+      "release_year": 2018,
+      "media_type": "tv",
+      "popularity": 89.0,
+      "year": 2018
+    },
+    {
+      "id": "tmdb_90027",
+      "source": "tmdb_tv",
+      "tmdb_id": 90027,
+      "source_api": "tmdb",
+      "title": "Dark",
+      "original_title": "Dark",
+      "overview": "A child's disappearance exposes the fractured relationships and secrets of four families across time.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "crime",
+        "drama",
+        "mystery"
+      ],
+      "keywords": [
+        "time-travel",
+        "interconnected",
+        "brooding",
+        "intricate"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 4000,
+      "runtime_minutes": 60,
+      "release_year": 2017,
+      "media_type": "tv",
+      "popularity": 84.0,
+      "year": 2017
+    },
+    {
+      "id": "tmdb_90028",
+      "source": "tmdb_tv",
+      "tmdb_id": 90028,
+      "source_api": "tmdb",
+      "title": "Ted Lasso",
+      "original_title": "Ted Lasso",
+      "overview": "An American football coach is hired to manage an English soccer team despite knowing nothing about it.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "drama"
+      ],
+      "keywords": [
+        "sports",
+        "optimism",
+        "heartfelt",
+        "feel-good"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 3500,
+      "runtime_minutes": 30,
+      "release_year": 2020,
+      "media_type": "tv",
+      "popularity": 84.0,
+      "year": 2020
+    },
+    {
+      "id": "al_9029",
+      "source": "anilist",
+      "anilist_id": 9029,
+      "source_api": "anilist",
+      "title": "Cowboy Bebop",
+      "original_title": "Cowboy Bebop",
+      "overview": "A ragtag crew of bounty hunters chases targets across the solar system while running from their pasts.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "drama",
+        "sci-fi"
+      ],
+      "keywords": [
+        "bounty-hunter",
+        "jazz",
+        "stylish",
+        "melancholy"
+      ],
+      "vote_average": 8.7,
+      "vote_count": 9000,
+      "runtime_minutes": 24,
+      "release_year": 1998,
+      "media_type": "anime",
+      "popularity": 87.0,
+      "year": 1998
+    },
+    {
+      "id": "al_9030",
+      "source": "anilist",
+      "anilist_id": 9030,
+      "source_api": "anilist",
+      "title": "Fullmetal Alchemist: Brotherhood",
+      "original_title": "Fullmetal Alchemist: Brotherhood",
+      "overview": "Two brothers search for a way to restore their bodies after a forbidden alchemical experiment.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "adventure",
+        "drama"
+      ],
+      "keywords": [
+        "alchemy",
+        "brotherhood",
+        "war",
+        "epic"
+      ],
+      "vote_average": 9.1,
+      "vote_count": 12000,
+      "runtime_minutes": 24,
+      "release_year": 2009,
+      "media_type": "anime",
+      "popularity": 91.0,
+      "year": 2009
+    },
+    {
+      "id": "al_9031",
+      "source": "anilist",
+      "anilist_id": 9031,
+      "source_api": "anilist",
+      "title": "Mushishi",
+      "original_title": "Mushishi",
+      "overview": "A wandering expert investigates supernatural creatures that drift between the seen and unseen worlds.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "adventure",
+        "fantasy",
+        "mystery"
+      ],
+      "keywords": [
+        "episodic",
+        "atmospheric",
+        "meditative",
+        "slice-of-life"
+      ],
+      "vote_average": 8.4,
+      "vote_count": 2000,
+      "runtime_minutes": 25,
+      "release_year": 2005,
+      "media_type": "anime",
+      "popularity": 84.0,
+      "year": 2005
+    },
+    {
+      "id": "al_9032",
+      "source": "anilist",
+      "anilist_id": 9032,
+      "source_api": "anilist",
+      "title": "Steins Gate",
+      "original_title": "Steins Gate",
+      "overview": "A self-proclaimed mad scientist discovers a way to send messages to the past, and the cost of doing so.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "sci-fi",
+        "thriller"
+      ],
+      "keywords": [
+        "time-travel",
+        "conspiracy",
+        "tense",
+        "cerebral"
+      ],
+      "vote_average": 9.0,
+      "vote_count": 6000,
+      "runtime_minutes": 24,
+      "release_year": 2011,
+      "media_type": "anime",
+      "popularity": 90.0,
+      "year": 2011
+    },
+    {
+      "id": "al_9033",
+      "source": "anilist",
+      "anilist_id": 9033,
+      "source_api": "anilist",
+      "title": "Violet Evergarden",
+      "original_title": "Violet Evergarden",
+      "overview": "A former child soldier becomes a ghostwriter, learning what it means to understand human feeling.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "drama",
+        "fantasy",
+        "romance"
+      ],
+      "keywords": [
+        "healing",
+        "letters",
+        "beautiful",
+        "emotional"
+      ],
+      "vote_average": 8.6,
+      "vote_count": 4000,
+      "runtime_minutes": 24,
+      "release_year": 2018,
+      "media_type": "anime",
+      "popularity": 86.0,
+      "year": 2018
+    },
+    {
+      "id": "al_9034",
+      "source": "anilist",
+      "anilist_id": 9034,
+      "source_api": "anilist",
+      "title": "Demon Slayer",
+      "original_title": "Demon Slayer",
+      "overview": "A kind-hearted boy becomes a demon slayer to avenge his family and cure his transformed sister.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "adventure",
+        "fantasy"
+      ],
+      "keywords": [
+        "demons",
+        "revenge",
+        "gorgeous",
+        "kinetic"
+      ],
+      "vote_average": 8.5,
+      "vote_count": 6000,
+      "runtime_minutes": 24,
+      "release_year": 2019,
+      "media_type": "anime",
+      "popularity": 85.0,
+      "year": 2019
+    },
+    {
+      "id": "al_9035",
+      "source": "anilist",
+      "anilist_id": 9035,
+      "source_api": "anilist",
+      "title": "K-On",
+      "original_title": "K-On",
+      "overview": "Four high-school girls form a band and spend their days practicing, snacking, and growing up together.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "comedy",
+        "music",
+        "slice-of-life"
+      ],
+      "keywords": [
+        "wholesome",
+        "friendship",
+        "cozy",
+        "light"
+      ],
+      "vote_average": 8.0,
+      "vote_count": 1500,
+      "runtime_minutes": 24,
+      "release_year": 2009,
+      "media_type": "anime",
+      "popularity": 80.0,
+      "year": 2009
+    },
+    {
+      "id": "al_9036",
+      "source": "anilist",
+      "anilist_id": 9036,
+      "source_api": "anilist",
+      "title": "Attack on Titan",
+      "original_title": "Attack on Titan",
+      "overview": "Humanity fights for survival behind enormous walls against man-eating giants, and darker truths.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "drama",
+        "fantasy"
+      ],
+      "keywords": [
+        "survival",
+        "mystery",
+        "brutal",
+        "epic"
+      ],
+      "vote_average": 9.0,
+      "vote_count": 11000,
+      "runtime_minutes": 24,
+      "release_year": 2013,
+      "media_type": "anime",
+      "popularity": 90.0,
+      "year": 2013
+    },
+    {
+      "id": "al_9037",
+      "source": "anilist",
+      "anilist_id": 9037,
+      "source_api": "anilist",
+      "title": "A Silent Voice",
+      "original_title": "A Silent Voice",
+      "overview": "A former bully seeks to make amends with the deaf girl he tormented in elementary school.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "animation",
+        "drama",
+        "romance"
+      ],
+      "keywords": [
+        "redemption",
+        "bullying",
+        "healing",
+        "moving"
+      ],
+      "vote_average": 8.9,
+      "vote_count": 5000,
+      "runtime_minutes": 130,
+      "release_year": 2016,
+      "media_type": "anime",
+      "popularity": 89.0,
+      "year": 2016
+    },
+    {
+      "id": "al_9038",
+      "source": "anilist",
+      "anilist_id": 9038,
+      "source_api": "anilist",
+      "title": "Vinland Saga",
+      "original_title": "Vinland Saga",
+      "overview": "A young warrior driven by vengeance is swept into the brutal politics of the Viking age.",
+      "poster_path": null,
+      "backdrop_path": null,
+      "genres": [
+        "action",
+        "adventure",
+        "drama"
+      ],
+      "keywords": [
+        "vikings",
+        "revenge",
+        "historical",
+        "epic"
+      ],
+      "vote_average": 8.7,
+      "vote_count": 3000,
+      "runtime_minutes": 24,
+      "release_year": 2019,
+      "media_type": "anime",
+      "popularity": 87.0,
+      "year": 2019
+    }
+  ]
+}

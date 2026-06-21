@@ -127,6 +127,11 @@ class TMDBService:
 
     async def initialize(self) -> None:
         """Call during FastAPI lifespan startup. Loads genre maps and prefills candidate pool."""
+        if not self._api_key:
+            logger.info(
+                "No TMDB key — demo mode. Using bundled genre maps and offline catalog."
+            )
+            return
         logger.info("TMDBService initializing...")
         await self._load_genre_maps()
         logger.info(

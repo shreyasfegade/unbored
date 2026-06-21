@@ -9,6 +9,15 @@ from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 
 
+@pytest.fixture(autouse=True)
+def _force_live_mode(monkeypatch):
+    """Most pool tests exercise the live TMDB/AniList path. Force live mode so
+    they don't short-circuit to the demo offline catalog (no key in CI)."""
+    stub = MagicMock()
+    stub.has_tmdb = True
+    monkeypatch.setattr("app.services.candidate_pool.settings", stub)
+
+
 def _create_mock_item(
     id: str,
     title: str,
@@ -171,7 +180,9 @@ async def test_main_lifespan_integration(monkeypatch):
                 assert response.status_code == 200
                 data = response.json()
                 assert data["status"] == "ok"
-                assert data["candidate_pool_size"] == 0
+                # Live sources are mocked empty, so the pool falls back to the
+                # bundled offline catalog rather than being empty.
+                assert data["candidate_pool_size"] >= 30
 
                 status_resp = await client.get("/api/status")
                 assert status_resp.status_code == 200

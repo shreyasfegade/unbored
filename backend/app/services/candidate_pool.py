@@ -4,7 +4,9 @@ from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from typing import Optional
 
+from app.config import settings
 from app.models.media import MediaItem, MediaSource
+from app.services.offline_catalog import load_offline_catalog
 from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 
@@ -12,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class CandidatePool:
-    """In-memory pool of candidate content for recommendations."""
+    """In-memory pool of candidate content for recommendations.
+
+    With a TMDB key, the pool is built from live TMDB + AniList data. Without
+    one (demo mode), or if the live fetch yields nothing, it falls back to the
+    bundled offline catalog so recommendations always work.
+    """
 
     def __init__(self, tmdb: TMDBService, anilist: Optional[AniListService] = None) -> None:
         self.tmdb = tmdb
@@ -21,7 +28,13 @@ class CandidatePool:
         self.last_refresh: Optional[datetime] = None
 
     async def refresh(self) -> None:
-        """Fetch fresh candidates from TMDB and AniList, deduplicate and enrich them."""
+        """Refresh candidates from live sources, falling back to the offline catalog."""
+        if not settings.has_tmdb:
+            self.candidates = list(load_offline_catalog())
+            self.last_refresh = datetime.now(timezone.utc)
+            logger.info("Demo mode: serving %d offline catalog items", len(self.candidates))
+            return
+
         logger.info("Refreshing candidate pool...")
         all_items: list[MediaItem] = []
 
@@ -89,6 +102,10 @@ class CandidatePool:
         final_candidates = al_items + [
             item for item in tmdb_items if item.id not in excluded_tmdb_ids
         ]
+
+        if not final_candidates:
+            logger.warning("Live sources returned no candidates; using offline catalog")
+            final_candidates = list(load_offline_catalog())
 
         self.candidates = final_candidates
         self.last_refresh = datetime.now(timezone.utc)
