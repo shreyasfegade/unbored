@@ -27,8 +27,17 @@
   width: 300px;
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-lg);
-  object-fit: cover;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  container-type: inline-size;
   will-change: transform, opacity, filter;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 @media (max-width: 768px) {

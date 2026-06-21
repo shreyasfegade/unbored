@@ -43,10 +43,7 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
             className={styles.revealed}
           >
-            <PosterReveal
-              posterUrl={primary.media.poster_path}
-              title={primary.media.title}
-            />
+            <PosterReveal item={primary.media} />
 
             {showInfo && confidence && (
               <InfoCascade

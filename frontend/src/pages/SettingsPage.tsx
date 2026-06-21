@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
 import { useUIStore } from "../stores/uiStore";
+import { useStatusStore } from "../stores/statusStore";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import styles from "./SettingsPage.module.css";
 
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const resetProfile = useTasteStore((s) => s.resetProfile);
   const resetRec = useRecommendationStore((s) => s.reset);
   const resetUI = useUIStore((s) => s.resetSelections);
+  const status = useStatusStore((s) => s.status);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const executeReset = useCallback(() => {
@@ -35,6 +37,9 @@ export default function SettingsPage() {
       },
     }),
   };
+
+  const isDemo = status?.catalogMode === "demo";
+  const llmConfigured = status?.llm.configured ?? false;
 
   return (
     <div className={styles.page}>
@@ -70,12 +75,56 @@ export default function SettingsPage() {
         Settings
       </motion.h1>
 
+      {/* ── System status ─────────────────────────────────────────── */}
+      <motion.div
+        className={`${styles.section} ${styles.statusCard}`}
+        variants={itemVariant}
+        initial={prefersReduced ? false : "hidden"}
+        animate="visible"
+        custom={0}
+      >
+        <span className={styles.sectionLabel}>System</span>
+
+        <div className={styles.statusRow}>
+          <div className={styles.statusText}>
+            <span className={styles.statusName}>Catalog</span>
+            <span className={styles.statusValue}>
+              {status
+                ? isDemo
+                  ? `Demo · ${status.catalogSize} built-in titles`
+                  : `Live · ${status.catalogSize} titles`
+                : "…"}
+            </span>
+          </div>
+          <span className={`${styles.dot} ${isDemo ? styles.dotAmber : styles.dotGreen}`} />
+        </div>
+
+        <div className={styles.statusRow}>
+          <div className={styles.statusText}>
+            <span className={styles.statusName}>Why-now writer</span>
+            <span className={styles.statusValue}>
+              {status ? status.llm.label : "…"}
+            </span>
+          </div>
+          <span className={`${styles.dot} ${llmConfigured ? styles.dotGreen : styles.dotAmber}`} />
+        </div>
+
+        {(isDemo || !llmConfigured) && (
+          <p className={styles.statusHint}>
+            {isDemo
+              ? "Add a free TMDB key to backend/.env for the full live catalog"
+              : "Add an LLM key (Gemini, DeepSeek, OpenAI…) for AI-written picks"}
+            {isDemo && !llmConfigured ? ", plus an LLM key for AI-written picks." : "."}
+          </p>
+        )}
+      </motion.div>
+
       <motion.div
         className={styles.section}
         variants={itemVariant}
         initial={prefersReduced ? false : "hidden"}
         animate="visible"
-        custom={0}
+        custom={1}
       >
         <motion.button
           className={styles.actionBtn}
@@ -92,7 +141,7 @@ export default function SettingsPage() {
         variants={itemVariant}
         initial={prefersReduced ? false : "hidden"}
         animate="visible"
-        custom={1}
+        custom={2}
       >
         <motion.button
           className={styles.dangerBtn}
@@ -112,9 +161,9 @@ export default function SettingsPage() {
         variants={itemVariant}
         initial={prefersReduced ? false : "hidden"}
         animate="visible"
-        custom={2}
+        custom={3}
       >
-        UNBORED v0.1.0
+        UNBORED v2.0.0
       </motion.p>
     </div>
   );

@@ -26,7 +26,8 @@ export interface RecommendationRequest {
 
 export interface WhyNowResult {
   sentence: string;
-  source: string;
+  source: "llm" | "fallback" | "cache" | string;
+  provider?: string | null;
 }
 
 export interface RecommendationResponse {

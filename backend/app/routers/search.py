@@ -5,8 +5,10 @@ import logging
 
 from fastapi import APIRouter, Query, Request
 
+from app.config import settings
 from app.exceptions import AppError
 from app.models.media import SearchResponse
+from app.services.offline_catalog import load_offline_catalog
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,15 @@ async def search_multi(
     q: str = Query(..., min_length=MIN_QUERY_LEN, max_length=MAX_QUERY_LEN),
     page: int = Query(1, ge=MIN_PAGE, le=MAX_PAGE),
 ):
+    if not settings.has_tmdb:
+        # Demo mode: search the bundled catalog locally.
+        needle = q.strip().lower()
+        matches = [
+            m for m in load_offline_catalog()
+            if needle in m.title.lower() or any(needle in kw for kw in m.keywords)
+        ]
+        return SearchResponse(results=matches[:MAX_RESULTS], total_results=len(matches), query=q)
+
     tmdb = request.app.state.tmdb
     anilist = request.app.state.anilist
 
@@ -99,6 +110,10 @@ async def search_multi(
 
 @router.get("/search/curated-shortlist")
 async def get_curated_shortlist(request: Request):
+    if not settings.has_tmdb:
+        # Demo mode: the bundled catalog is the shortlist.
+        return {"items": load_offline_catalog()}
+
     tmdb = request.app.state.tmdb
     anilist = request.app.state.anilist
 

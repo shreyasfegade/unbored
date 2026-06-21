@@ -37,6 +37,10 @@ def _make_media_item(
 
 @pytest.fixture
 def mock_services(monkeypatch):
+    # These tests exercise the live TMDB/AniList search path; force live mode so
+    # they don't short-circuit to the demo offline catalog (no key in CI).
+    monkeypatch.setattr("app.routers.search.settings.has_tmdb", True)
+
     mock_tmdb = MagicMock()
     mock_tmdb.initialize = AsyncMock()
     mock_tmdb.close = AsyncMock()
@@ -52,6 +56,27 @@ def mock_services(monkeypatch):
     app.state.tmdb = mock_tmdb
     app.state.anilist = mock_anilist
     yield mock_tmdb, mock_anilist
+
+
+@pytest.mark.asyncio
+async def test_search_demo_mode_uses_offline_catalog(monkeypatch):
+    """With no TMDB key, search filters the bundled catalog locally."""
+    monkeypatch.setattr("app.routers.search.settings.has_tmdb", False)
+    async with _client() as client:
+        resp = await client.get("/api/search/multi", params={"q": "the office"})
+    assert resp.status_code == 200
+    titles = [r["title"] for r in resp.json()["results"]]
+    assert any("Office" in t for t in titles)
+
+
+@pytest.mark.asyncio
+async def test_curated_shortlist_demo_mode(monkeypatch):
+    """With no TMDB key, the shortlist is the bundled catalog."""
+    monkeypatch.setattr("app.routers.search.settings.has_tmdb", False)
+    async with _client() as client:
+        resp = await client.get("/api/search/curated-shortlist")
+    assert resp.status_code == 200
+    assert len(resp.json()["items"]) >= 30
 
 
 @pytest.fixture

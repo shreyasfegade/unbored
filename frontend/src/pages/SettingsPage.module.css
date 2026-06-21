@@ -49,6 +49,77 @@
   align-items: center;
 }
 
+.statusCard {
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  align-items: stretch;
+  gap: var(--space-3);
+  backdrop-filter: blur(8px);
+}
+
+.sectionLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.statusText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.statusName {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+.statusValue {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotGreen {
+  background: var(--color-success);
+  box-shadow: 0 0 8px 1px rgba(74, 222, 128, 0.5);
+}
+
+.dotAmber {
+  background: var(--color-accent-solid);
+  box-shadow: 0 0 8px 1px var(--color-accent-glow);
+}
+
+.statusHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--leading-normal);
+  margin-top: var(--space-1);
+}
+
 .actionBtn {
   width: 100%;
   padding: var(--space-3) var(--space-6);

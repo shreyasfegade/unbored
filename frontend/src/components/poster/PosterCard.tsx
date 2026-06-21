@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { MediaItem } from '../../types/media';
+import PosterArt from './PosterArt';
 import styles from './PosterCard.module.css';
 
 interface PosterCardProps {
@@ -11,33 +13,12 @@ interface PosterCardProps {
 }
 
 export default function PosterCard({ item, isSelected, onToggle, disabled, index = 0 }: PosterCardProps) {
+  const [failed, setFailed] = useState(false);
+  const showArt = !item.poster_path || failed;
+
   const handleClick = () => {
-    if (!disabled) {
-      onToggle(item);
-    }
+    if (!disabled || isSelected) onToggle(item);
   };
-
-  const posterUrl = item.poster_path;
-
-  if (!posterUrl) {
-    return (
-      <motion.button
-        className={`${styles.poster} ${styles.error}`}
-        disabled
-        aria-label={`${item.title} — no poster available`}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          delay: 0.05 + index * 0.03,
-          stiffness: 350,
-          damping: 26,
-          mass: 0.7,
-        }}
-      >
-        ?
-      </motion.button>
-    );
-  }
 
   return (
     <motion.button
@@ -48,14 +29,9 @@ export default function PosterCard({ item, isSelected, onToggle, disabled, index
       aria-label={`${item.title}${isSelected ? ' — selected' : ''}`}
       initial={{ opacity: 0, scale: 0.9, y: 12 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{
-        delay: 0.05 + index * 0.03,
-        stiffness: 350,
-        damping: 26,
-        mass: 0.7,
-      }}
-      whileHover={!disabled ? { scale: 1.05, y: -4 } : {}}
-      whileTap={!disabled ? { scale: 0.95 } : {}}
+      transition={{ delay: 0.05 + index * 0.03, stiffness: 350, damping: 26, mass: 0.7 }}
+      whileHover={!disabled || isSelected ? { scale: 1.05, y: -4 } : {}}
+      whileTap={!disabled || isSelected ? { scale: 0.95 } : {}}
     >
       {isSelected && (
         <motion.div
@@ -67,14 +43,21 @@ export default function PosterCard({ item, isSelected, onToggle, disabled, index
           ✓
         </motion.div>
       )}
-      <img
-        src={posterUrl}
-        alt=""
-        loading="lazy"
-        width={200}
-        height={300}
-      />
-      <div className={styles.titleOverlay}>{item.title}</div>
+      {showArt ? (
+        <PosterArt item={item} />
+      ) : (
+        <>
+          <img
+            src={item.poster_path ?? ''}
+            alt=""
+            loading="lazy"
+            width={200}
+            height={300}
+            onError={() => setFailed(true)}
+          />
+          <div className={styles.titleOverlay}>{item.title}</div>
+        </>
+      )}
     </motion.button>
   );
 }

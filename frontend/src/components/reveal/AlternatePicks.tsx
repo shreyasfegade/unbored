@@ -1,10 +1,34 @@
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { ScoredMediaItem } from "../../types/recommendation";
+import PosterArt from "../poster/PosterArt";
 import styles from "./AlternatePicks.module.css";
 
 interface AlternatePicksProps {
   alternates: ScoredMediaItem[];
   onSelect: (index: number) => void;
+}
+
+function AltPoster({ alt }: { alt: ScoredMediaItem }) {
+  const [failed, setFailed] = useState(false);
+  const showArt = !alt.media.poster_path || failed;
+  return (
+    <div className={styles.poster}>
+      {showArt ? (
+        <PosterArt item={alt.media} />
+      ) : (
+        <img
+          src={alt.media.poster_path ?? ""}
+          alt={alt.media.title}
+          className={styles.posterImg}
+          loading="lazy"
+          width={120}
+          height={180}
+          onError={() => setFailed(true)}
+        />
+      )}
+    </div>
+  );
 }
 
 export function AlternatePicks({ alternates, onSelect }: AlternatePicksProps) {
@@ -19,6 +43,7 @@ export function AlternatePicks({ alternates, onSelect }: AlternatePicksProps) {
           key={alt.media.id}
           className={styles.card}
           onClick={() => onSelect(i)}
+          aria-label={`Swap to ${alt.media.title}`}
           initial={prefersReduced ? false : { opacity: 0, y: 20, scale: 0.92 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{
@@ -31,16 +56,7 @@ export function AlternatePicks({ alternates, onSelect }: AlternatePicksProps) {
           whileHover={prefersReduced ? {} : { scale: 1.05, y: -4 }}
           whileTap={prefersReduced ? {} : { scale: 0.95 }}
         >
-          {alt.media.poster_path && (
-            <img
-              src={alt.media.poster_path}
-              alt={alt.media.title}
-              className={styles.poster}
-              loading="lazy"
-              width={120}
-              height={180}
-            />
-          )}
+          <AltPoster alt={alt} />
           <p className={styles.title}>{alt.media.title}</p>
           <motion.p
             className={styles.score}

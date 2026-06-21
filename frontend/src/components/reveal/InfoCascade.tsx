@@ -99,7 +99,14 @@ export function InfoCascade({
           }}
           transition={{ duration: 0.6 }}
         >
-          <WhyNow text={whyNow.sentence} />
+          <WhyNow
+            text={whyNow.sentence}
+            attribution={
+              whyNow.source !== "fallback" && whyNow.provider
+                ? `Reasoned by ${whyNow.provider}`
+                : null
+            }
+          />
         </motion.div>
       )}
 
