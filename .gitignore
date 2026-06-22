@@ -18,6 +18,7 @@ dist/
 # AI tools
 .commandcode/
 .ai-docs/
+.claude/
 
 # Runtime
 backend/data/
