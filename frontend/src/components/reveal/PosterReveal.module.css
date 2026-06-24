@@ -10,15 +10,15 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 340px;
-  height: 510px;
-  border-radius: var(--radius-xl);
+  width: 380px;
+  height: 560px;
+  border-radius: var(--radius-2xl);
   background: radial-gradient(
     ellipse,
-    rgba(201, 136, 74, 0.15) 0%,
-    transparent 70%
+    rgba(217, 154, 82, 0.28) 0%,
+    transparent 72%
   );
-  filter: blur(40px);
+  filter: blur(55px);
   pointer-events: none;
   z-index: -1;
 }
@@ -28,7 +28,8 @@
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--glow-poster);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   container-type: inline-size;
   will-change: transform, opacity, filter;
 }

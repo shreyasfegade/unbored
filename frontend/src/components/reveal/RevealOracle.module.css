@@ -8,9 +8,32 @@
 }
 
 .revealed {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   max-width: var(--content-width);
+}
+
+/* Full-bleed blurred backdrop of the recommended title — the cinematic hero. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(34px) saturate(1.25);
+  pointer-events: none;
+  transform: scale(1.04);
+}
+
+.backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 38%, rgba(12, 11, 9, 0.25) 0%, rgba(12, 11, 9, 0.7) 70%),
+    linear-gradient(180deg, rgba(12, 11, 9, 0.62) 0%, rgba(12, 11, 9, 0.82) 55%, rgba(12, 11, 9, 0.97) 100%);
 }

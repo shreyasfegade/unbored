@@ -8,20 +8,23 @@
 
 .heading {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
   text-align: center;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  background: linear-gradient(180deg, #fbeede 0%, var(--color-accent-bright) 60%, var(--color-accent-end) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--color-accent-bright);
 }
 
 .subtitle {
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--color-text-secondary);
-  opacity: 0.6;
   text-align: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 .scrollArea {

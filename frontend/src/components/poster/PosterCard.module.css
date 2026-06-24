@@ -28,8 +28,13 @@
 
 .selected {
   transform: scale(1.02);
-  border-color: var(--color-accent-solid);
-  box-shadow: var(--glow-accent-lg);
+  border-color: var(--color-accent-bright);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7),
+    0 0 0 2px var(--color-accent-bright), var(--glow-accent-lg);
+}
+
+.selected img {
+  filter: brightness(1.05) saturate(1.05);
 }
 
 .disabled {

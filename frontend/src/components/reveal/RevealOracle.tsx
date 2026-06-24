@@ -32,6 +32,20 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
 
   return (
     <div className={styles.container} aria-live="polite" aria-atomic="true">
+      <AnimatePresence>
+        {showRevealed && primary?.media.backdrop_path && (
+          <motion.div
+            key={`backdrop-${primary.media.id}`}
+            className={styles.backdrop}
+            style={{ backgroundImage: `url(${primary.media.backdrop_path})` }}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 1, scale: 1.04 }}
+            exit={{ opacity: 0, transition: { duration: 0.25 } }}
+            transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {isScanning && <ScanningPhase key="scanning" takingLonger={takingLonger} />}
 
