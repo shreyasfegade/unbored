@@ -11,6 +11,10 @@ confident thing to watch — right now. No infinite scroll, no twenty-minute
 ![Tests](https://img.shields.io/badge/tests-302_passing-4ade80?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
+### ▶ [Live demo → unbored-five.vercel.app](https://unbored-five.vercel.app)
+
+Runs in zero-key demo mode (38 curated titles). The free-tier backend may take ~50s to wake on the first visit.
+
 ![Unbored — mood selector](screenshots/hero.png)
 
 ---
@@ -217,30 +221,31 @@ configuration summary at `http://localhost:8000/api/status`.
 
 ---
 
-## Deploy — Vercel (frontend) + Railway (backend)
+## Deploy — Vercel (frontend) + Render (backend)
 
 Unbored splits cleanly: the Vite frontend goes to **Vercel**, the FastAPI
-backend to **Railway**. The frontend calls `/api/*`, which Vercel proxies to
-Railway (see [`frontend/vercel.json`](frontend/vercel.json)) — so requests are
+backend to **Render**. The frontend calls `/api/*`, which Vercel proxies to the
+backend (see [`frontend/vercel.json`](frontend/vercel.json)) — so requests are
 same-origin (no CORS) and no backend URL is baked into the bundle.
 
-**1. Backend → Railway**
+The live demo runs at **[unbored-five.vercel.app](https://unbored-five.vercel.app)** (frontend) → `unbored-api.onrender.com` (backend). The backend host is interchangeable — the `Procfile` runs equally well on Render, Railway, or Fly.
 
-- New project → *Deploy from GitHub repo* → set **Root Directory** to `backend`.
-- Railway installs `requirements.txt` and runs the [`Procfile`](backend/Procfile)
-  (`uvicorn app.main:app --host 0.0.0.0 --port $PORT`).
+**1. Backend → Render**
+
+- New → **Blueprint** → pick this repo; Render reads [`render.yaml`](render.yaml)
+  (root dir `backend`, build `pip install -r requirements.txt`, start
+  `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, health check `/api/health`).
 - **Environment variables are all optional** — with none set, the demo catalog
-  + offline "Why now?" sentences work out of the box. Add `TMDB_API_KEY` for the
-  live catalog and `GEMINI_API_KEY` (or any provider) for AI-written picks. See
-  [`backend/.env.example`](backend/.env.example).
-- *(Optional)* Mount a Railway volume and set `STORAGE_DIR` to it to persist
-  taste profiles across restarts.
-- Copy the public URL, e.g. `https://unbored-production.up.railway.app`.
+  + offline "Why now?" sentences work out of the box. Add `TMDB_API_KEY` (use the
+  TMDB **v4 Read Access Token**) for the live catalog and `GEMINI_API_KEY` (or any
+  provider) for AI-written picks. See [`backend/.env.example`](backend/.env.example).
+- The free plan spins down after inactivity (first request cold-starts in ~50s).
+- Copy the public URL, e.g. `https://unbored-api.onrender.com`.
 
 **2. Frontend → Vercel**
 
-- Edit [`frontend/vercel.json`](frontend/vercel.json) and replace
-  `REPLACE-WITH-YOUR-RAILWAY-BACKEND.up.railway.app` with your Railway host. Commit.
+- Edit [`frontend/vercel.json`](frontend/vercel.json) and replace the proxy
+  `destination` host with your backend URL. Commit.
 - New Vercel project → import this repo → set **Root Directory** to `frontend`.
   Vercel auto-detects Vite (build `npm run build`, output `dist`).
 - Deploy. The app loads in demo mode instantly; mood → time → "Just decide for
