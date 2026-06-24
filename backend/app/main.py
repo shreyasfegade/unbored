@@ -10,12 +10,12 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.exceptions import AppError
 from app.middleware import RequestLoggingMiddleware
-from app.routers import health, taste, recommend, search, media
+from app.routers import health, taste, recommend, search, media, llm
 from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 from app.services.candidate_pool import CandidatePool
-from app.services.why_now import WhyNowService
-from app.llm import build_provider
+from app.engine.content import ContentIndex
+from app.llm.cache import ProviderCache
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
@@ -28,38 +28,26 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting Unbored API...")
 
+    # Runtime serves the pre-built catalog — no live TMDB/AniList calls. The
+    # service instances are kept only for the (rarely used) detail/search fallback.
     tmdb = TMDBService()
     anilist = AniListService()
-    await tmdb.initialize()
 
     pool = CandidatePool(tmdb, anilist)
     await pool.refresh()
-    logger.info(f"Candidate pool loaded: {len(pool.candidates)} items")
+
+    index = ContentIndex(pool.candidates)
+    logger.info("Content index built over %d items", len(pool.candidates))
 
     app.state.tmdb = tmdb
     app.state.anilist = anilist
     app.state.pool = pool
-    app.state.why_now = WhyNowService(settings, build_provider(settings))
-
-    async def refresh_loop():
-        while True:
-            await asyncio.sleep(settings.pool_refresh_hours * 3600)
-            try:
-                await pool.refresh()
-                logger.info(f"Pool refreshed: {len(pool.candidates)} items")
-            except Exception as e:
-                logger.error(f"Pool refresh failed: {e}")
-
-    refresh_task = asyncio.create_task(refresh_loop())
+    app.state.index = index
+    app.state.provider_cache = ProviderCache(settings)
 
     yield
 
-    refresh_task.cancel()
-    try:
-        await refresh_task
-    except asyncio.CancelledError:
-        pass
-    await app.state.why_now.close()
+    await app.state.provider_cache.close_all()
     await tmdb.close()
     await anilist.close()
     logger.info("Unbored API stopped.")
@@ -87,6 +75,7 @@ app.include_router(taste.router, prefix="/api", tags=["taste"])
 app.include_router(recommend.router, prefix="/api", tags=["recommend"])
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(media.router, prefix="/api", tags=["media"])
+app.include_router(llm.router, prefix="/api", tags=["llm"])
 
 
 @app.exception_handler(AppError)

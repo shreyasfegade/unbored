@@ -12,6 +12,33 @@ from app.llm.openai_compatible import OpenAICompatibleProvider
 logger = logging.getLogger(__name__)
 
 
+def build_user_provider(name: str, api_key: str, settings: Settings) -> LLMProvider | None:
+    """Build a provider from a user-supplied key (BYO key).
+
+    Only ``gemini`` and ``deepseek`` are offered in-app. The key is never logged
+    or persisted — callers hold these only in memory (see ProviderCache).
+    """
+    name = (name or "").strip().lower()
+    api_key = (api_key or "").strip()
+    if not api_key or name not in {"gemini", "deepseek"}:
+        return None
+
+    if name == "gemini":
+        return GeminiProvider(
+            api_key=api_key,
+            model=settings.gemini_model,
+            base_url=settings.gemini_base_url,
+            timeout=settings.llm_timeout_seconds,
+        )
+    return OpenAICompatibleProvider(
+        name="deepseek",
+        api_key=api_key,
+        model=settings.deepseek_model,
+        base_url=settings.deepseek_base_url,
+        timeout=settings.llm_timeout_seconds,
+    )
+
+
 def build_provider(settings: Settings) -> LLMProvider | None:
     """Return a provider instance, or ``None`` to use offline fallbacks.
 
