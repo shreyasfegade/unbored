@@ -1,15 +1,73 @@
 .background {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, #0c0b09 0%, #141310 50%, #1e1b16 100%);
   z-index: var(--z-background);
   overflow: hidden;
+  pointer-events: none;
 }
 
-.particle {
+.base {
   position: absolute;
-  width: 2px;
-  height: 2px;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, #1a1712 0%, transparent 60%),
+    linear-gradient(170deg, #0d0c0a 0%, #100e0b 45%, #0a0907 100%);
+}
+
+/* Large soft colour blooms that slowly drift to give the void depth + warmth. */
+.bloom {
+  position: absolute;
   border-radius: 50%;
-  background: rgba(201, 136, 74, 0.2);
+  filter: blur(90px);
+  will-change: transform;
+}
+
+.bloomGold {
+  top: -14%;
+  left: 4%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 760px;
+  max-height: 760px;
+  background: radial-gradient(circle, rgba(216, 154, 82, 0.42) 0%, transparent 70%);
+}
+
+.bloomEmber {
+  bottom: -20%;
+  right: 0%;
+  width: 56vw;
+  height: 56vw;
+  max-width: 860px;
+  max-height: 860px;
+  background: radial-gradient(circle, rgba(190, 74, 54, 0.30) 0%, transparent 70%);
+}
+
+.bloomCool {
+  top: 26%;
+  right: 22%;
+  width: 44vw;
+  height: 44vw;
+  max-width: 660px;
+  max-height: 660px;
+  background: radial-gradient(circle, rgba(84, 104, 180, 0.26) 0%, transparent 70%);
+}
+
+/* Subtle film grain for cinematic texture. */
+.grain {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+}
+
+/* Edge vignette to focus the centre. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 85% 80% at 50% 42%, transparent 62%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain { display: none; }
 }

@@ -25,19 +25,24 @@
   font-size: var(--text-5xl);
   font-weight: var(--font-bold);
   letter-spacing: var(--tracking-widest);
-  color: var(--color-text-primary);
-  opacity: 0.9;
   text-align: center;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  background: linear-gradient(180deg, #fbeede 0%, var(--color-accent-bright) 55%, var(--color-accent-end) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--color-accent-bright);
+  filter: drop-shadow(0 2px 24px rgba(217, 154, 82, 0.35));
 }
 
 .tagline {
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
   color: var(--color-text-secondary);
-  opacity: 0.5;
   text-align: center;
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-12);
 }
 
 .timeSection {
