@@ -4,22 +4,25 @@ import styles from "./WhyNow.module.css";
 interface WhyNowProps {
   text: string;
   attribution?: string | null;
+  emphasis?: boolean;
 }
 
-export function WhyNow({ text, attribution }: WhyNowProps) {
+export function WhyNow({ text, attribution, emphasis }: WhyNowProps) {
   return (
     <div className={styles.wrap}>
+      {attribution && (
+        <span className={`${styles.attribution} ${emphasis ? styles.ai : ""}`}>
+          {emphasis && <span className={styles.spark} aria-hidden="true">✦</span>}
+          {attribution}
+        </span>
+      )}
       <motion.p
-        className={styles.text}
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 0.85 },
-        }}
+        className={`${styles.text} ${emphasis ? styles.textAi : ""}`}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
         transition={{ duration: 0.6 }}
       >
         {text}
       </motion.p>
-      {attribution && <span className={styles.attribution}>{attribution}</span>}
     </div>
   );
 }

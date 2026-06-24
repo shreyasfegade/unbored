@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { ScoredMediaItem, WhyNowResult } from "../../types/recommendation";
+import type { ScoredMediaItem } from "../../types/recommendation";
 import type { ConfidenceLevel } from "../../types/mood";
 import { ConfidenceBadge } from "./ConfidenceBadge";
 import { WhyNow } from "./WhyNow";
@@ -10,7 +10,9 @@ import styles from "./InfoCascade.module.css";
 interface InfoCascadeProps {
   primary: ScoredMediaItem;
   confidence: ConfidenceLevel;
-  whyNow: WhyNowResult | null;
+  rationale: string | null;
+  pickedBy: "ai" | "engine" | null;
+  provider: string | null;
   alternates: ScoredMediaItem[];
   onAlternateSelect: (index: number) => void;
   onRegenerate: () => void;
@@ -20,7 +22,9 @@ interface InfoCascadeProps {
 export function InfoCascade({
   primary,
   confidence,
-  whyNow,
+  rationale,
+  pickedBy,
+  provider,
   alternates,
   onAlternateSelect,
   onRegenerate,
@@ -91,21 +95,22 @@ export function InfoCascade({
         <ConfidenceBadge level={confidence} />
       </motion.div>
 
-      {whyNow && (
+      {rationale && (
         <motion.div
           variants={{
             hidden: { opacity: 0 },
-            visible: { opacity: 0.7 },
+            visible: { opacity: 1 },
           }}
           transition={{ duration: 0.6 }}
         >
           <WhyNow
-            text={whyNow.sentence}
+            text={rationale}
             attribution={
-              whyNow.source !== "fallback" && whyNow.provider
-                ? `Reasoned by ${whyNow.provider}`
-                : null
+              pickedBy === "ai" && provider
+                ? `AI pick · ${provider}`
+                : "Engine pick"
             }
+            emphasis={pickedBy === "ai"}
           />
         </motion.div>
       )}

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ScoredMediaItem, RecommendationResponse, WhyNowResult } from '../types/recommendation';
+import type { ScoredMediaItem, RecommendationResponse } from '../types/recommendation';
 import type { ConfidenceLevel } from '../types/mood';
 
 type Status = 'idle' | 'loading' | 'revealed' | 'regenerating' | 'error';
@@ -8,7 +8,9 @@ interface RecommendationState {
   status: Status;
   primary: ScoredMediaItem | null;
   alternates: ScoredMediaItem[];
-  whyNow: WhyNowResult | null;
+  rationale: string | null;
+  pickedBy: 'ai' | 'engine' | null;
+  provider: string | null;
   confidence: ConfidenceLevel | null;
   requestId: string | null;
   excludedIds: string[];
@@ -27,7 +29,9 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
   status: 'idle',
   primary: null,
   alternates: [],
-  whyNow: null,
+  rationale: null,
+  pickedBy: null,
+  provider: null,
   confidence: null,
   requestId: null,
   excludedIds: [],
@@ -40,30 +44,31 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
       status: 'revealed',
       primary: res.primary,
       alternates: res.alternates,
-      whyNow: res.why_now,
+      rationale: res.rationale,
+      pickedBy: res.picked_by,
+      provider: res.provider,
       confidence: res.confidence,
       requestId: res.request_id,
       error: null,
     }),
   setError: (msg) => set({ status: 'error', error: msg }),
-  addExcludedId: (id) =>
-    set((state) => ({
-      excludedIds: [...state.excludedIds, id],
-    })),
+  addExcludedId: (id) => set((state) => ({ excludedIds: [...state.excludedIds, id] })),
   swapAlternate: (index) =>
     set((state) => {
       const alt = state.alternates[index];
       if (!alt || !state.primary) return state;
       const newAlternates = [...state.alternates];
       newAlternates[index] = state.primary;
-      return { primary: alt, alternates: newAlternates, whyNow: null };
+      return { primary: alt, alternates: newAlternates };
     }),
   reset: () =>
     set({
       status: 'idle',
       primary: null,
       alternates: [],
-      whyNow: null,
+      rationale: null,
+      pickedBy: null,
+      provider: null,
       confidence: null,
       requestId: null,
       error: null,

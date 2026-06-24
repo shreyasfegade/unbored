@@ -1,0 +1,58 @@
+.on,
+.off {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.on {
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.06);
+  color: var(--color-text-secondary);
+}
+
+.on:hover {
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.provider {
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+  font-weight: var(--font-medium);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 8px 1px rgba(74, 222, 128, 0.6);
+}
+
+.off {
+  border: 1px solid rgba(201, 136, 74, 0.35);
+  background: var(--color-accent-glow);
+  color: var(--color-text-accent);
+  font-weight: var(--font-medium);
+}
+
+.off:hover {
+  border-color: var(--color-accent-solid);
+  color: var(--color-text-primary);
+}
+
+.spark {
+  font-size: 0.85em;
+}
+
+.arrow {
+  transition: transform var(--transition-fast);
+}
+
+.off:hover .arrow {
+  transform: translateX(3px);
+}

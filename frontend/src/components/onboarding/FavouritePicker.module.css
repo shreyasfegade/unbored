@@ -24,7 +24,21 @@
   font-size: var(--text-base);
   color: var(--color-text-secondary);
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-5);
+  max-width: 44ch;
+}
+
+.searchRow {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto var(--space-4);
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  padding: var(--space-12) var(--space-4);
 }
 
 .scrollArea {

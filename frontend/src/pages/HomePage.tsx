@@ -7,8 +7,10 @@ import { useToastStore } from "../stores/toastStore";
 import { useRecommendation } from "../hooks/useRecommendation";
 import { MoodSelector } from "../components/mood";
 import { TimeSelector } from "../components/ui/TimeSelector";
+import { MediaTypeSelector } from "../components/ui/MediaTypeSelector";
 import { OracleButton } from "../components/ui/OracleButton";
 import { RevealOracle } from "../components/reveal";
+import { AIStatusBanner } from "../components/llm/AIStatusBanner";
 import styles from "./HomePage.module.css";
 
 const WORDMARK_ANIMATED_KEY = "unbored-home-wordmark-animated";
@@ -26,9 +28,11 @@ function mapRecError(raw: string): string {
 export default function HomePage() {
   const selectedMood = useUIStore((s) => s.selectedMood);
   const selectedTimeSlot = useUIStore((s) => s.selectedTimeSlot);
+  const selectedMediaType = useUIStore((s) => s.selectedMediaType);
   const showMoodPrompt = useUIStore((s) => s.showMoodPrompt);
   const setMood = useUIStore((s) => s.setMood);
   const setTimeSlot = useUIStore((s) => s.setTimeSlot);
+  const setMediaType = useUIStore((s) => s.setMediaType);
   const setShowMoodPrompt = useUIStore((s) => s.setShowMoodPrompt);
   const resetSelections = useUIStore((s) => s.resetSelections);
 
@@ -119,6 +123,10 @@ export default function HomePage() {
               One tap. One perfect pick.
             </motion.p>
 
+            <div className={styles.aiBanner}>
+              <AIStatusBanner />
+            </div>
+
             <MoodSelector
               selectedMood={selectedMood}
               onMoodSelect={setMood}
@@ -141,6 +149,10 @@ export default function HomePage() {
 
             <div className={styles.timeSection}>
               <TimeSelector selectedSlot={selectedTimeSlot} onSelect={setTimeSlot} />
+            </div>
+
+            <div className={styles.mediaSection}>
+              <MediaTypeSelector selected={selectedMediaType} onSelect={setMediaType} />
             </div>
 
             <OracleButton

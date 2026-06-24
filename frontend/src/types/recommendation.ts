@@ -1,13 +1,13 @@
 import type { MediaItem } from "./media";
 import type { MoodType, TimeSlot, TimeOfDay, ConfidenceLevel } from "./mood";
 
+export type MediaTypeChoice = "movie" | "tv" | "anime" | "surprise";
+
 export interface ScoreBreakdown {
-  genre: number;
-  keyword: number;
+  relevance: number;
   mood: number;
   runtime: number;
-  rating: number;
-  diversity: number;
+  quality: number;
 }
 
 export interface ScoredMediaItem {
@@ -21,19 +21,16 @@ export interface RecommendationRequest {
   mood: MoodType;
   time_available: TimeSlot;
   time_of_day: TimeOfDay;
+  media_type: MediaTypeChoice;
   excluded_ids: string[];
-}
-
-export interface WhyNowResult {
-  sentence: string;
-  source: "llm" | "fallback" | "cache" | string;
-  provider?: string | null;
 }
 
 export interface RecommendationResponse {
   primary: ScoredMediaItem;
   alternates: [ScoredMediaItem, ScoredMediaItem];
-  why_now: WhyNowResult;
+  rationale: string;
+  picked_by: "ai" | "engine";
+  provider: string | null;
   confidence: ConfidenceLevel;
   request_id: string;
 }
@@ -43,6 +40,7 @@ export interface RegenerateRequest {
   mood: MoodType;
   time_available: TimeSlot;
   time_of_day: TimeOfDay;
+  media_type: MediaTypeChoice;
   original_request_id: string;
   excluded_ids: string[];
 }

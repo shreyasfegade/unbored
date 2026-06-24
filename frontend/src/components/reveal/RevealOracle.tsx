@@ -16,7 +16,9 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
   const { phase, takingLonger } = useRevealAnimation();
   const primary = useRecommendationStore((s) => s.primary);
   const alternates = useRecommendationStore((s) => s.alternates);
-  const whyNow = useRecommendationStore((s) => s.whyNow);
+  const rationale = useRecommendationStore((s) => s.rationale);
+  const pickedBy = useRecommendationStore((s) => s.pickedBy);
+  const provider = useRecommendationStore((s) => s.provider);
   const confidence = useRecommendationStore((s) => s.confidence);
   const swapAlternate = useRecommendationStore((s) => s.swapAlternate);
   const addToast = useToastStore((s) => s.addToast);
@@ -63,7 +65,9 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
               <InfoCascade
                 primary={primary}
                 confidence={confidence}
-                whyNow={whyNow}
+                rationale={rationale}
+                pickedBy={pickedBy}
+                provider={provider}
                 alternates={alternates}
                 onAlternateSelect={handleAlternateSwap}
                 onRegenerate={onRegenerate}

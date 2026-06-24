@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from "framer-motion";
 import type { MediaItem } from '../../types/media';
 import { useTasteVector } from '../../hooks/useTasteVector';
+import { useDebounce } from '../../hooks/useDebounce';
+import { searchMulti } from '../../api/search';
+import { SearchBar } from '../ui/SearchBar';
 import PosterGrid from '../poster/PosterGrid';
 import SelectionCounter from './SelectionCounter';
 import DoneButton from './DoneButton';
@@ -24,9 +27,29 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
     removeFavourite,
   } = useTasteVector();
 
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<MediaItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounced = useDebounce(query, 300);
+
   useEffect(() => {
     fetchCuratedShortlist();
   }, [fetchCuratedShortlist]);
+
+  useEffect(() => {
+    const q = debounced.trim();
+    if (q.length < 1) {
+      setResults([]);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    searchMulti(q)
+      .then((res) => { if (!cancelled) setResults(res.data.results || []); })
+      .catch(() => { if (!cancelled) setResults([]); })
+      .finally(() => { if (!cancelled) setSearching(false); });
+    return () => { cancelled = true; };
+  }, [debounced]);
 
   const handleToggle = (item: MediaItem) => {
     if (selectedFavourites.some((f) => f.id === item.id)) {
@@ -42,11 +65,13 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
       await createFromFavourites(selectedFavourites);
       onComplete(selectedFavourites);
     } catch {
-      // Error is set in the hook via setError
+      // Error is surfaced via the hook.
     }
   };
 
   const selectedIds = selectedFavourites.map((f) => f.id);
+  const searchActive = query.trim().length > 0;
+  const gridItems = searchActive ? results : curatedShortlist;
 
   return (
     <div className={styles.container}>
@@ -56,41 +81,46 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        Pick 5 favourites
+        What do you love?
       </motion.h1>
       <motion.p
         className={styles.subtitle}
         initial={prefersReduced ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ delay: 0.1, duration: 0.35 }}
       >
-        These shape your first recommendation.
+        Pick 5 across movies, TV, and anime — search for anything, or choose from below.
       </motion.p>
+
+      <div className={styles.searchRow}>
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Search any movie, show, or anime…"
+          loading={searching}
+        />
+      </div>
 
       <SelectionCounter current={selectedFavourites.length} target={5} />
 
-      {error ? (
-        <motion.div
-          className={styles.error}
-          role="alert"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+      {error && !searchActive ? (
+        <motion.div className={styles.error} role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <p>{error}</p>
-          <button className={styles.retryButton} onClick={fetchCuratedShortlist}>
-            Try Again
-          </button>
+          <button className={styles.retryButton} onClick={fetchCuratedShortlist}>Try again</button>
         </motion.div>
       ) : (
         <div className={styles.scrollArea}>
-          <PosterGrid
-            items={curatedShortlist}
-            selectedIds={selectedIds}
-            onToggle={handleToggle}
-            maxSelections={5}
-            loading={isLoading && !error}
-          />
+          {searchActive && results.length === 0 && !searching ? (
+            <p className={styles.empty}>No matches for “{query.trim()}”. Try another title.</p>
+          ) : (
+            <PosterGrid
+              items={gridItems}
+              selectedIds={selectedIds}
+              onToggle={handleToggle}
+              maxSelections={5}
+              loading={!searchActive && isLoading && !error}
+            />
+          )}
         </div>
       )}
 

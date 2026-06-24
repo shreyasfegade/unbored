@@ -15,7 +15,7 @@ export function useRecommendation() {
     const vectorId = tasteStore.vectorId;
     if (!vectorId) throw new Error("No taste vector");
 
-    const { selectedMood, selectedTimeSlot } = uiStore;
+    const { selectedMood, selectedTimeSlot, selectedMediaType } = uiStore;
     if (!selectedMood || !selectedTimeSlot) return;
 
     const excludedIds = recStore.excludedIds;
@@ -29,6 +29,7 @@ export function useRecommendation() {
         mood: selectedMood,
         time_available: selectedTimeSlot,
         time_of_day: timeOfDay,
+        media_type: selectedMediaType,
         excluded_ids: excludedIds,
       });
 
@@ -45,7 +46,7 @@ export function useRecommendation() {
     const vectorId = tasteStore.vectorId;
     if (!vectorId) throw new Error("No taste vector");
 
-    const { selectedMood, selectedTimeSlot } = uiStore;
+    const { selectedMood, selectedTimeSlot, selectedMediaType } = uiStore;
     if (!selectedMood || !selectedTimeSlot) return;
 
     const { excludedIds, requestId, primary } = recStore;
@@ -65,6 +66,7 @@ export function useRecommendation() {
         mood: selectedMood,
         time_available: selectedTimeSlot,
         time_of_day: timeOfDay,
+        media_type: selectedMediaType,
         original_request_id: requestId,
         excluded_ids: primary ? [...excludedIds, primary.media.id] : excludedIds,
       });

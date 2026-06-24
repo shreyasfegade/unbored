@@ -1,0 +1,128 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: var(--space-8) var(--space-4);
+  width: 100%;
+}
+
+.full {
+  width: 100%;
+}
+
+.welcome,
+.connect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 600px;
+  gap: var(--space-4);
+}
+
+.kicker {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-primary);
+  margin: var(--space-1) 0;
+}
+
+.pitch {
+  font-size: var(--text-xl);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+  max-width: 30ch;
+}
+
+.pitch strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-semibold);
+}
+
+.sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  text-align: left;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.steps li em {
+  color: var(--color-text-tertiary);
+  font-style: normal;
+}
+
+.steps li span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  color: var(--color-text-accent);
+}
+
+.cta {
+  margin-top: var(--space-2);
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent-start), var(--color-accent-end));
+  color: #fff;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  box-shadow: var(--glow-accent);
+}
+
+.connectHeading {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-text-primary);
+}
+
+.connectPitch {
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+  max-width: 42ch;
+}
+
+.connectPitch strong {
+  color: var(--color-text-accent);
+}
+
+.connectSub {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  max-width: 44ch;
+  margin-bottom: var(--space-2);
+}

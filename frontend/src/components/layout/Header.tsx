@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { useStatusStore } from '../../stores/statusStore';
+import { useLlmStore } from '../../stores/llmStore';
 import styles from './Header.module.css';
 
 const letters = "UNBORED".split("");
@@ -9,8 +9,7 @@ const ANIMATED_KEY = "unbored-wordmark-animated";
 
 export default function Header() {
   const prefersReduced = useReducedMotion();
-  const status = useStatusStore((s) => s.status);
-  const isDemo = status?.catalogMode === 'demo';
+  const aiConnected = useLlmStore((s) => s.validated);
   const hasAnimated = sessionStorage.getItem(ANIMATED_KEY) !== null;
 
   if (!hasAnimated) {
@@ -46,9 +45,9 @@ export default function Header() {
         )}
       </Link>
       <div className={styles.right}>
-        {isDemo && (
-          <Link to="/settings" className={styles.demoBadge} title="Running on the built-in demo catalog — add a TMDB key in Settings to go live">
-            Demo
+        {aiConnected && (
+          <Link to="/settings" className={styles.aiBadge} title="AI picks are on — manage in Settings">
+            <span className={styles.aiSpark} aria-hidden="true">✦</span> AI
           </Link>
         )}
         <Link to="/settings" className={styles.settingsLink} aria-label="Settings">
