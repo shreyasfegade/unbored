@@ -2,21 +2,43 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  width: 100%;
 }
 
+/* Primary: the thing you actually want to do with your pick. */
+.watch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-3) var(--space-10);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent-start), var(--color-accent-end));
+  color: #fff;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  box-shadow: var(--glow-accent);
+  cursor: pointer;
+}
+
+.play {
+  font-size: 0.75em;
+}
+
+/* Secondary: regenerate. */
 .regenerate {
-  padding: var(--space-3) var(--space-8);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-6);
   border: 1px solid var(--color-glass-border);
   border-radius: var(--radius-full);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: var(--text-sm);
   font-family: var(--font-body);
+  font-size: var(--text-sm);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  min-height: 44px;
-  min-width: 44px;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .regenerate:hover {
@@ -24,72 +46,40 @@
   color: var(--color-text-primary);
 }
 
-.regenerate:active {
-  transform: scale(0.96);
+.regenerate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.regenerate:disabled {
+/* Tertiary: small inline links. */
+.minor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.link {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--color-text-secondary);
+}
+
+.link:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.watchLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: color var(--transition-fast), transform var(--transition-fast);
-}
-
-.watchLink:hover {
-  color: var(--color-accent-solid);
-}
-
-.watchLink:active {
-  transform: scale(0.96);
-}
-
-.startOver {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-  border: none;
-  background: none;
-  font-family: var(--font-body);
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-
-.startOver:hover {
-  opacity: 0.8;
-}
-
-.startOver:active {
-  transform: scale(0.96);
-}
-
-.enrichLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  min-width: 44px;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-xs);
+.dot {
   color: var(--color-text-tertiary);
   opacity: 0.5;
-  transition: opacity var(--transition-fast), color var(--transition-fast);
-}
-
-.enrichLink:hover {
-  opacity: 0.9;
-  color: var(--color-accent-solid);
 }

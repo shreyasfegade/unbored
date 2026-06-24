@@ -5,8 +5,11 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  width: 132px;
+  flex: 0 1 calc(33.333% - var(--space-3));
+  min-width: 92px;
+  max-width: 150px;
   height: 116px;
+  padding: var(--space-2);
   border-radius: var(--radius-xl);
   border: 1px solid color-mix(in srgb, var(--mood-color) 32%, transparent);
   background:
