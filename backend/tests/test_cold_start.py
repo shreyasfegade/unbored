@@ -9,7 +9,6 @@ from app.services.taste_builder import (
     augment_with_archetype,
     apply_cold_start_augmentation,
     get_archetype_strength,
-    get_fallback_recommendation,
     NoRecommendationError,
 )
 
@@ -321,88 +320,3 @@ def test_strength_fading():
 def test_strength_gone():
     vector = _make_vector(favourites_count=35)
     assert get_archetype_strength(vector) == 0.0
-
-
-# ── Fallback recommendation ──────────────────────────────────
-
-
-def test_fallback_returns_primary_and_two_alternates():
-    pool_candidates = [
-        _make_candidate(id="tmdb_1", title="Movie 1", original_title="Movie 1", popularity=100.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_2", title="Movie 2", original_title="Movie 2", popularity=80.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_3", title="Movie 3", original_title="Movie 3", popularity=60.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_4", title="Movie 4", original_title="Movie 4", popularity=40.0, runtime_minutes=90),
-    ]
-
-    class FakePool:
-        def get_candidates(self, exclude_ids=None):
-            exclude_set = set(exclude_ids or [])
-            return [c for c in pool_candidates if c.id not in exclude_set]
-
-    pool = FakePool()
-    result = get_fallback_recommendation(pool, TimeSlot.MEDIUM, MoodType.HAPPY_ENERGETIC, [])
-
-    assert result.primary.media.id == "tmdb_1"
-    assert len(result.alternates) == 2
-    assert result.alternates[0].media.id == "tmdb_2"
-    assert result.alternates[1].media.id == "tmdb_3"
-    assert result.confidence == "moderate"
-    assert result.primary.score == 0.35
-
-
-def test_fallback_filters_below_rating():
-    pool_candidates = [
-        _make_candidate(id="tmdb_bad", title="Bad", original_title="Bad", vote_average=5.0, popularity=100.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_ok", title="OK", original_title="OK", vote_average=7.0, popularity=80.0, runtime_minutes=90),
-    ]
-
-    class FakePool:
-        def get_candidates(self, exclude_ids=None):
-            return pool_candidates
-
-    pool = FakePool()
-    result = get_fallback_recommendation(pool, TimeSlot.MEDIUM, MoodType.HAPPY_ENERGETIC, [])
-    assert result.primary.media.id == "tmdb_ok"
-
-
-def test_fallback_relaxes_filters_when_few_candidates():
-    pool_candidates = [
-        _make_candidate(id="tmdb_1", title="Only", original_title="Only", vote_average=5.5, popularity=10.0, runtime_minutes=200),
-    ]
-
-    class FakePool:
-        def get_candidates(self, exclude_ids=None):
-            return pool_candidates
-
-    pool = FakePool()
-    result = get_fallback_recommendation(pool, TimeSlot.SHORT, MoodType.HAPPY_ENERGETIC, [])
-    assert len(result.alternates) == 2
-
-
-def test_fallback_excludes_ids():
-    pool_candidates = [
-        _make_candidate(id="tmdb_1", title="Movie 1", original_title="Movie 1", popularity=100.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_2", title="Movie 2", original_title="Movie 2", popularity=80.0, runtime_minutes=90),
-        _make_candidate(id="tmdb_3", title="Movie 3", original_title="Movie 3", popularity=60.0, runtime_minutes=90),
-    ]
-
-    class FakePool:
-        def get_candidates(self, exclude_ids=None):
-            exclude_set = set(exclude_ids or [])
-            return [c for c in pool_candidates if c.id not in exclude_set]
-
-    pool = FakePool()
-    result = get_fallback_recommendation(pool, TimeSlot.MEDIUM, MoodType.HAPPY_ENERGETIC, ["tmdb_1"])
-    assert result.primary.media.id == "tmdb_2"
-
-
-def test_fallback_raises_when_no_candidates():
-    pool_candidates: list[MediaItem] = []
-
-    class FakePool:
-        def get_candidates(self, exclude_ids=None):
-            return pool_candidates
-
-    pool = FakePool()
-    with pytest.raises(NoRecommendationError):
-        get_fallback_recommendation(pool, TimeSlot.MEDIUM, MoodType.HAPPY_ENERGETIC, [])

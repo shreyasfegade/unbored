@@ -10,8 +10,7 @@ from typing import Optional
 from uuid import uuid4
 
 from app.models.media import MediaItem, MediaSource, YouTubeTasteSignals
-from app.models.mood import ConfidenceLevel, MoodType, TimeOfDay, TimeSlot
-from app.models.recommendation import RecommendationResponse, ScoreBreakdown, ScoredMediaItem, WhyNowResult
+from app.models.mood import MoodType, TimeOfDay, TimeSlot
 from app.models.taste import (
     EnrichmentSource,
     PacingPreference,
@@ -462,74 +461,3 @@ class TasteBuilder:
         logger.info("Updated taste vector %s via enrichment", vector_updated.id)
 
         return vector_updated
-
-
-# ── Fallback recommendation ──────────────────────────────────
-
-
-def _runtime_fits_slot(item: MediaItem, time_slot: TimeSlot) -> bool:
-    """Check if item runtime fits within the given timeslot constraints."""
-    ranges: dict[TimeSlot, tuple[int, int]] = {
-        TimeSlot.SHORT: (0, 45),
-        TimeSlot.MEDIUM: (15, 120),
-        TimeSlot.LONG: (30, 999),
-    }
-    if item.runtime_minutes is None:
-        return True
-    lo, hi = ranges.get(time_slot, (0, 999))
-    return lo <= item.runtime_minutes <= hi
-
-
-def get_fallback_recommendation(
-    pool: "CandidatePool",
-    time_available: TimeSlot,
-    mood: MoodType,
-    excluded_ids: list[str],
-) -> RecommendationResponse:
-    candidates = pool.get_candidates(exclude_ids=excluded_ids)
-    time_filtered = [c for c in candidates if _runtime_fits_slot(c, time_available)]
-    rated = [c for c in time_filtered if c.vote_average >= 6.5]
-    sorted_candidates = sorted(rated, key=lambda c: c.popularity, reverse=True)
-
-    if len(sorted_candidates) < 3:
-        # Relax runtime filter
-        rated_loose = [c for c in candidates if c.vote_average >= 6.5]
-        sorted_candidates = sorted(rated_loose, key=lambda c: c.popularity, reverse=True)
-
-    if len(sorted_candidates) < 3:
-        # Relax rating floor
-        rated_loose = [c for c in candidates if c.vote_average >= 5.5]
-        sorted_candidates = sorted(rated_loose, key=lambda c: c.popularity, reverse=True)
-
-    if not sorted_candidates:
-        raise NoRecommendationError("No content matches your current filters.")
-
-    primary = sorted_candidates[0]
-    alternates = sorted_candidates[1:3]
-
-    # Pad alternates if needed
-    while len(alternates) < 2:
-        alternates.append(primary)
-
-    return RecommendationResponse(
-        primary=ScoredMediaItem(
-            media=primary,
-            score=0.35,
-            score_breakdown=ScoreBreakdown(
-                genre=0.0, keyword=0.0, mood=0.0, runtime=1.0, rating=0.5, diversity=0.0,
-            ),
-        ),
-        alternates=[
-            ScoredMediaItem(
-                media=alt,
-                score=0.3,
-                score_breakdown=ScoreBreakdown(
-                    genre=0.0, keyword=0.0, mood=0.0, runtime=1.0, rating=0.5, diversity=0.0,
-                ),
-            )
-            for alt in alternates
-        ],
-        why_now=WhyNowResult(sentence="A popular pick that fits the time you have.", source="fallback"),
-        confidence=ConfidenceLevel.MODERATE,
-        request_id=str(uuid4()),
-    )
