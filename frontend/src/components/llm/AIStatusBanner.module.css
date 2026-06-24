@@ -34,10 +34,12 @@
 }
 
 .off {
-  border: 1px solid rgba(201, 136, 74, 0.35);
-  background: var(--color-accent-glow);
-  color: var(--color-text-accent);
-  font-weight: var(--font-medium);
+  border: 1px solid rgba(201, 136, 74, 0.45);
+  background: linear-gradient(135deg, rgba(201, 136, 74, 0.16), rgba(201, 136, 74, 0.05));
+  color: var(--color-text-primary);
+  font-weight: var(--font-semibold);
+  padding: var(--space-3) var(--space-5);
+  box-shadow: var(--glow-accent);
 }
 
 .off:hover {

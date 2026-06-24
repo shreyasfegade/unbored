@@ -92,11 +92,12 @@ def _patch_anilist_with_curl(anilist: AniListService) -> None:
 
 OUT_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "catalog.json"
 
-# How much to pull. TMDB pages are 20 items each.
-POPULAR_MOVIE_PAGES = 12
-TOP_RATED_MOVIE_PAGES = 12
-POPULAR_TV_PAGES = 10
-ANILIST_PAGES = 6  # 50 per page, trending + top-rated
+# How much to pull. TMDB pages are 20 items each. Weighted toward movies/TV so
+# a typical viewer's "surprise me" isn't dominated by anime.
+POPULAR_MOVIE_PAGES = 25
+TOP_RATED_MOVIE_PAGES = 18
+POPULAR_TV_PAGES = 16
+ANILIST_PAGES = 3  # 50 per page, trending + top-rated
 
 # Quality floors so the catalog stays strong.
 MIN_VOTE_MOVIE_TV = 6.3

@@ -3,6 +3,7 @@ import type { ScoredMediaItem } from "../../types/recommendation";
 import type { ConfidenceLevel } from "../../types/mood";
 import { ConfidenceBadge } from "./ConfidenceBadge";
 import { WhyNow } from "./WhyNow";
+import { UpgradePrompt } from "./UpgradePrompt";
 import { AlternatePicks } from "./AlternatePicks";
 import { ActionButtons } from "./ActionButtons";
 import styles from "./InfoCascade.module.css";
@@ -114,6 +115,8 @@ export function InfoCascade({
           />
         </motion.div>
       )}
+
+      {pickedBy === "engine" && <UpgradePrompt />}
 
       <motion.div
         variants={{
