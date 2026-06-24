@@ -13,7 +13,7 @@ confident thing to watch — right now. No infinite scroll, no twenty-minute
 
 ### ▶ [Live demo → unbored-five.vercel.app](https://unbored-five.vercel.app)
 
-Runs in zero-key demo mode (38 curated titles). The free-tier backend may take ~50s to wake on the first visit.
+Live TMDB catalog with real posters across movies, TV, and anime. The free-tier backend may take ~50s to wake on the first visit.
 
 ![Unbored — mood selector](screenshots/hero.png)
 
