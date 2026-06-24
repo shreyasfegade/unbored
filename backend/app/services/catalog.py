@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 _DATA = Path(__file__).resolve().parent.parent / "data"
 _CATALOG = _DATA / "catalog.json"
+_EMBEDDINGS = _DATA / "catalog_embeddings.json"
 
 
 @lru_cache(maxsize=1)
@@ -40,3 +41,20 @@ def load_catalog() -> list[MediaItem]:
 
     logger.info("Loaded %d catalog items from %s", len(items), path.name)
     return items
+
+
+@lru_cache(maxsize=1)
+def load_embeddings() -> dict[str, list[float]]:
+    """Load precomputed semantic embeddings (id -> normalized vector). Empty if
+    the file is absent — the engine then runs BM25-only."""
+    if not _EMBEDDINGS.exists():
+        logger.info("No catalog_embeddings.json — engine runs BM25-only.")
+        return {}
+    try:
+        raw = json.loads(_EMBEDDINGS.read_text(encoding="utf-8"))
+        vectors = raw.get("vectors", {})
+        logger.info("Loaded %d catalog embeddings (%s)", len(vectors), raw.get("model", "?"))
+        return vectors
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.error("Failed to read embeddings: %s", exc)
+        return {}

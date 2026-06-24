@@ -36,8 +36,11 @@ async def lifespan(app: FastAPI):
     pool = CandidatePool(tmdb, anilist)
     await pool.refresh()
 
-    index = ContentIndex(pool.candidates)
-    logger.info("Content index built over %d items", len(pool.candidates))
+    from app.services.catalog import load_embeddings
+    index = ContentIndex(pool.candidates, load_embeddings())
+    logger.info(
+        "Content index built over %d items (dense=%s)", len(pool.candidates), index.has_dense
+    )
 
     app.state.tmdb = tmdb
     app.state.anilist = anilist

@@ -14,12 +14,17 @@ from __future__ import annotations
 
 import math
 import re
+from dataclasses import dataclass
 
 from app.models.media import MediaItem
 
 # BM25 parameters.
 _K1 = 1.5
 _B = 0.75
+
+# Hybrid blend: dense (semantic) leads, sparse (BM25) sharpens exact matches.
+_W_DENSE = 0.65
+_W_SPARSE = 0.35
 
 # Field weights (how strongly each field contributes to the term counts).
 _W_TITLE = 3.0
@@ -86,10 +91,47 @@ def cosine(a: dict[str, float], b: dict[str, float]) -> float:
     return sum(w * b.get(t, 0.0) for t, w in a.items())
 
 
-class ContentIndex:
-    """BM25-weighted, L2-normalized content vectors over a catalog."""
+@dataclass
+class TasteProfile:
+    """A user's taste in both spaces: sparse (BM25) and dense (embeddings)."""
+    sparse_centroid: dict[str, float]
+    sparse_liked: list[dict[str, float]]
+    dense_centroid: list[float]
+    dense_liked: list[list[float]]
+    n_liked: int
 
-    def __init__(self, items: list[MediaItem]) -> None:
+
+def _dense_norm(v: list[float]) -> list[float]:
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / n for x in v]
+
+
+def _dense_dot(a: list[float], b: list[float]) -> float:
+    return sum(x * y for x, y in zip(a, b)) if a and b else 0.0
+
+
+def _knn_centroid_score(cand, centroid, liked, dot, k: int, knn_weight: float) -> float:
+    """Shared hybrid kNN+centroid scoring for either space."""
+    sim_centroid = dot(cand, centroid) if centroid else 0.0
+    if liked:
+        sims = sorted((dot(cand, lv) for lv in liked), reverse=True)[:k]
+        denom = sum(sims)
+        sim_knn = (sum(s * s for s in sims) / denom) if denom > 0 else 0.0
+    else:
+        sim_knn = 0.0
+    return knn_weight * sim_knn + (1.0 - knn_weight) * sim_centroid
+
+
+class ContentIndex:
+    """Hybrid content index: BM25 sparse vectors + dense semantic embeddings.
+
+    Relevance blends a dense, *meaning-aware* similarity (precomputed sentence
+    embeddings) with a sparse BM25 similarity that nails exact title / keyword /
+    person matches. Embeddings are optional — without them the index degrades
+    gracefully to BM25-only.
+    """
+
+    def __init__(self, items: list[MediaItem], embeddings: dict[str, list[float]] | None = None) -> None:
         self._tf: dict[str, dict[str, float]] = {}
         self._len: dict[str, float] = {}
         df: dict[str, int] = {}
@@ -112,6 +154,12 @@ class ContentIndex:
             item_id: self._bm25_vector(item_id) for item_id in self._tf
         }
 
+        # Dense embeddings (precomputed offline, already L2-normalized). Optional.
+        self._dense: dict[str, list[float]] = {}
+        if embeddings:
+            self._dense = {i: embeddings[i] for i in self._tf if i in embeddings}
+        self.has_dense = len(self._dense) > 0
+
     def _bm25_vector(self, item_id: str) -> dict[str, float]:
         tf = self._tf[item_id]
         dl = self._len[item_id]
@@ -131,8 +179,7 @@ class ContentIndex:
     def vector(self, item_id: str) -> dict[str, float]:
         return self._vectors.get(item_id, {})
 
-    def centroid(self, item_ids: list[str]) -> dict[str, float]:
-        """L2-normalized mean of the given items' vectors (those present)."""
+    def _sparse_centroid(self, item_ids: list[str]) -> dict[str, float]:
         acc: dict[str, float] = {}
         count = 0
         for item_id in item_ids:
@@ -142,43 +189,44 @@ class ContentIndex:
             count += 1
             for term, w in vec.items():
                 acc[term] = acc.get(term, 0.0) + w
-        if count == 0:
-            return {}
-        return _normalize({t: w / count for t, w in acc.items()})
+        return _normalize({t: w / count for t, w in acc.items()}) if count else {}
 
-    def liked_vectors(self, item_ids: list[str]) -> list[dict[str, float]]:
-        return [self._vectors[i] for i in item_ids if i in self._vectors]
+    def _dense_centroid(self, item_ids: list[str]) -> list[float]:
+        vecs = [self._dense[i] for i in item_ids if i in self._dense]
+        if not vecs:
+            return []
+        dim = len(vecs[0])
+        mean = [sum(v[d] for v in vecs) / len(vecs) for d in range(dim)]
+        return _dense_norm(mean)
 
-    def relevance(
-        self,
-        candidate_id: str,
-        centroid: dict[str, float],
-        liked_vectors: list[dict[str, float]],
-        *,
-        k: int = 3,
-        knn_weight: float = 0.55,
-    ) -> float:
-        """Hybrid kNN + centroid similarity of a candidate to the taste profile.
+    def build_profile(self, item_ids: list[str]) -> TasteProfile:
+        """Precompute the user's taste centroids + neighbours in both spaces."""
+        return TasteProfile(
+            sparse_centroid=self._sparse_centroid(item_ids),
+            sparse_liked=[self._vectors[i] for i in item_ids if i in self._vectors],
+            dense_centroid=self._dense_centroid(item_ids),
+            dense_liked=[self._dense[i] for i in item_ids if i in self._dense],
+            n_liked=sum(1 for i in item_ids if i in self._vectors),
+        )
 
-        The centroid captures the user's overall taste; the kNN term (mean of the
-        top-k most similar liked items) preserves users with several distinct
-        tastes that a single centroid would average away.
+    def relevance(self, candidate_id: str, profile: TasteProfile, *, k: int = 3) -> float:
+        """Hybrid relevance: dense semantic similarity blended with sparse BM25.
+
+        Each space uses a kNN+centroid score (centroid = overall taste; kNN =
+        nearest liked items, so several distinct tastes aren't averaged away).
         """
-        cand = self._vectors.get(candidate_id)
-        if not cand:
+        cand_sparse = self._vectors.get(candidate_id)
+        if cand_sparse is None:
             return 0.0
 
-        sim_centroid = cosine(cand, centroid) if centroid else 0.0
+        sparse = _knn_centroid_score(
+            cand_sparse, profile.sparse_centroid, profile.sparse_liked, cosine, k, 0.55
+        )
 
-        if liked_vectors:
-            sims = sorted((cosine(cand, lv) for lv in liked_vectors), reverse=True)
-            top = sims[:k]
-            # Similarity-weighted (contraharmonic) mean: the nearest neighbours
-            # dominate, so a candidate matching ONE of several distinct taste
-            # clusters isn't diluted by the user's other tastes.
-            denom = sum(top)
-            sim_knn = (sum(s * s for s in top) / denom) if denom > 0 else 0.0
-        else:
-            sim_knn = 0.0
-
-        return knn_weight * sim_knn + (1.0 - knn_weight) * sim_centroid
+        cand_dense = self._dense.get(candidate_id)
+        if cand_dense and (profile.dense_centroid or profile.dense_liked):
+            dense = _knn_centroid_score(
+                cand_dense, profile.dense_centroid, profile.dense_liked, _dense_dot, k, 0.55
+            )
+            return _W_DENSE * dense + _W_SPARSE * sparse
+        return sparse

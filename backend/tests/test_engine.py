@@ -55,9 +55,29 @@ def test_relevance_prefers_similar_content():
     far = make_item("C2", "Paddington", ["family", "comedy"], keywords=["wholesome", "bear"],
                     overview="A polite bear from Peru moves in with a London family.")
     idx = ContentIndex(liked + [near, far])
-    centroid = idx.centroid(["L1", "L2"])
-    lv = idx.liked_vectors(["L1", "L2"])
-    assert idx.relevance("C1", centroid, lv) > idx.relevance("C2", centroid, lv)
+    profile = idx.build_profile(["L1", "L2"])
+    assert idx.relevance("C1", profile) > idx.relevance("C2", profile)
+
+
+def test_dense_embeddings_boost_semantic_match():
+    # Candidates share NO words with the liked items, so BM25 alone can't tell
+    # them apart. Dense embeddings make the semantically-close one win.
+    liked = make_item("L", "Manchester by the Sea", ["drama"], overview="grief")
+    near = make_item("N", "Aftersun", ["drama"], overview="loss")          # close embedding
+    far = make_item("F", "Crank", ["action"], overview="adrenaline")        # far embedding
+    emb = {"L": [1.0, 0.0, 0.0], "N": [0.92, 0.39, 0.0], "F": [0.0, 0.0, 1.0]}
+    idx = ContentIndex([liked, near, far], emb)
+    assert idx.has_dense
+    profile = idx.build_profile(["L"])
+    assert idx.relevance("N", profile) > idx.relevance("F", profile)
+
+
+def test_engine_works_without_embeddings():
+    # No embeddings provided -> graceful BM25-only.
+    idx = ContentIndex(_catalog())
+    assert idx.has_dense is False
+    profile = idx.build_profile(["L1"])
+    assert idx.relevance("c_drama", profile) >= 0.0
 
 
 def test_knn_preserves_split_taste():
@@ -71,11 +91,10 @@ def test_knn_preserves_split_taste():
     horror_cand = make_item("HC", "Midsommar", ["horror"], keywords=["dread", "folk"], overview="A grieving woman joins a sinister festival.")
     neutral = make_item("NC", "Planet Earth", ["documentary"], keywords=["nature"], overview="A documentary about wildlife and landscapes.")
     idx = ContentIndex(liked + [horror_cand, neutral])
-    centroid = idx.centroid(["H1", "H2", "R1", "R2"])
-    lv = idx.liked_vectors(["H1", "H2", "R1", "R2"])
+    profile = idx.build_profile(["H1", "H2", "R1", "R2"])
     # A candidate matching ONE taste cluster (horror) must beat one matching
     # neither, even though the centroid is split across horror + rom-com.
-    assert idx.relevance("HC", centroid, lv) > idx.relevance("NC", centroid, lv)
+    assert idx.relevance("HC", profile) > idx.relevance("NC", profile)
 
 
 # ── tone / mood ─────────────────────────────────────────────

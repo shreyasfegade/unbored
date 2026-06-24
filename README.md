@@ -7,7 +7,7 @@ No infinite scroll, no twenty-minute "what should we watch" negotiation.
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-187_passing-4ade80?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-189_passing-4ade80?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ### ▶ [Live demo → unbored-five.vercel.app](https://unbored-five.vercel.app)
@@ -38,9 +38,11 @@ exact things you said you love.
 **1. Tell it what you love.** A 30-second onboarding: search and pick a few
 favourites across movies, TV, and anime.
 
-**2. A real engine narrows the field.** Every title is a BM25-weighted content
-vector; your taste is the centroid of (and nearest neighbours among) the things
-you picked. The engine ranks the whole catalog by a hybrid kNN+centroid
+**2. A real engine narrows the field.** Every title is both a **dense semantic
+embedding** (it understands *meaning* — "a film about grief" matches "a story of
+loss" with zero shared words) **and** a BM25 sparse vector (it nails exact title /
+keyword / cast matches). Your taste is the centroid of, and nearest neighbours
+among, the things you picked. The engine ranks the whole catalog by this hybrid
 similarity, then re-ranks the top matches by your mood and the time you have.
 This is genuinely good *on its own* — no LLM required.
 
@@ -59,11 +61,15 @@ with science will make you laugh."*
 
 ## The engine (no LLM needed)
 
-The deterministic engine is the centrepiece, and it's pure-Python with **no ML
-dependencies**:
+The deterministic engine is the centrepiece. Embeddings are precomputed offline,
+so the **runtime is pure-Python with no ML dependencies** — it just loads vectors
+and does dot products:
 
-- **BM25-weighted content vectors** over title, genres, keywords, overview, and
-  people — cosine similarity in a real vector space, not exact string matching.
+- **Hybrid dense + sparse retrieval.** A dense semantic embedding
+  (`bge-small-en-v1.5`, precomputed at build time) captures *meaning*; a
+  **BM25-weighted** sparse vector over title, genres, keywords, overview, and
+  people captures exact matches. The two are blended (dense-led) — this is the
+  same dense+sparse hybrid that powers modern search.
 - **Hybrid kNN + centroid relevance** with a similarity-weighted neighbour mean,
   so loving *both* horror and rom-coms doesn't average into mush.
 - **Tone model** — five interpretable axes (energy, darkness, warmth, intensity,
@@ -168,8 +174,9 @@ python -m pytest                    # 187 tests
 npm run dev                         # http://localhost:5173
 npm run build
 
-# Rebuild the catalog (needs a TMDB key in backend/.env)
+# Rebuild the catalog (needs a TMDB key in backend/.env), then its embeddings
 python scripts/build_catalog.py
+python scripts/build_embeddings.py   # build-time only (pip install fastembed)
 ```
 
 API docs at `http://localhost:8000/docs`.

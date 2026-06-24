@@ -97,9 +97,8 @@ class RecommendationEngine:
         self._mood = mood
         self._slot = time_available
         self._media_type = media_type if media_type in {"movie", "tv", "anime"} else None
-        self._liked_vectors = index.liked_vectors(liked_ids)
-        self._centroid = index.centroid(liked_ids)
-        self._n_liked = len(self._liked_vectors)
+        self._profile = index.build_profile(liked_ids)
+        self._n_liked = self._profile.n_liked
 
     def _weights(self) -> tuple[float, float, float, float]:
         """Relevance leans out when the taste profile is too thin (cold start)."""
@@ -118,9 +117,7 @@ class RecommendationEngine:
             if not pool:
                 pool = candidates  # don't return nothing if the filter empties it
 
-        raw_rel = {
-            c.id: self._index.relevance(c.id, self._centroid, self._liked_vectors) for c in pool
-        }
+        raw_rel = {c.id: self._index.relevance(c.id, self._profile) for c in pool}
         has_taste = self._n_liked > 0 and max(raw_rel.values(), default=0.0) > 0
 
         # Retrieve-then-rerank: first narrow to the strongest taste matches, then
