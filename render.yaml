@@ -14,7 +14,10 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
     envVars:
-      # Set to the Vercel frontend origin once it's deployed.
+      # Optional: set to the Vercel frontend origin if it calls the API
+      # cross-origin. With the vercel.json proxy, requests are same-origin and
+      # this isn't needed.
       - key: CORS_ORIGINS
         sync: false
-      # All catalog/LLM keys are optional — unset means polished demo mode.
+      # No keys required: the API serves the bundled catalog, and AI picks are
+      # bring-your-own-key (sent per request by the browser, never stored here).
