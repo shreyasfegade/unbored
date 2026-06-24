@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import styles from "./EnrichTabs.module.css";
 
-export type EnrichTab = "movies" | "tv" | "anime" | "youtube";
+export type EnrichTab = "movies" | "tv" | "anime";
 
 interface EnrichTabsProps {
   activeTab: EnrichTab;
@@ -13,7 +13,6 @@ const TABS: { key: EnrichTab; label: string }[] = [
   { key: "movies", label: "Movies" },
   { key: "tv", label: "TV Shows" },
   { key: "anime", label: "Anime" },
-  { key: "youtube", label: "YouTube" },
 ];
 
 export function EnrichTabs({ activeTab, onTabChange }: EnrichTabsProps) {

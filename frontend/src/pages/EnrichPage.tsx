@@ -4,14 +4,15 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useDebounce } from "../hooks/useDebounce";
 import { searchMulti } from "../api/search";
-import { updateTasteVector } from "../api/taste";
-import type { MediaItem, YouTubeImportResult } from "../types/media";
+import { updateTasteVector, fetchCuratedShortlist } from "../api/taste";
+import type { MediaItem } from "../types/media";
 import { EnrichTabs } from "../components/onboarding/EnrichTabs";
 import type { EnrichTab } from "../components/onboarding/EnrichTabs";
 import { SearchBar } from "../components/ui/SearchBar";
 import PosterGrid from "../components/poster/PosterGrid";
-import { YouTubeDropzone } from "../components/onboarding/YouTubeDropzone";
 import styles from "./EnrichPage.module.css";
+
+const TAB_TYPE: Record<EnrichTab, string> = { movies: "movie", tv: "tv", anime: "anime" };
 
 export default function EnrichPage() {
   const navigate = useNavigate();
@@ -23,54 +24,33 @@ export default function EnrichPage() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300);
   const [results, setResults] = useState<MediaItem[]>([]);
+  const [suggestions, setSuggestions] = useState<MediaItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<YouTubeImportResult | null>(null);
+
+  // Curated suggestions so the page is never an empty void.
+  useEffect(() => {
+    fetchCuratedShortlist()
+      .then((res) => setSuggestions(res.data.items || []))
+      .catch(() => setSuggestions([]));
+  }, []);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 2) {
-      Promise.resolve().then(() => {
-        setResults([]);
-      });
+    const q = debouncedQuery.trim();
+    if (q.length < 1) {
+      setResults([]);
       return;
     }
-
     let cancelled = false;
-    Promise.resolve().then(() => {
-      setSearchLoading(true);
-      setSearchError(null);
-    });
-
-    searchMulti(debouncedQuery)
-      .then((res) => {
-        if (!cancelled) {
-          const allResults = res.data.results || [];
-          const filtered =
-            activeTab === "movies"
-              ? allResults.filter((r: MediaItem) => r.media_type === "movie")
-              : activeTab === "tv"
-                ? allResults.filter((r: MediaItem) => r.media_type === "tv")
-                : activeTab === "anime"
-                  ? allResults.filter((r: MediaItem) => r.media_type === "anime")
-                  : allResults;
-          setResults(filtered);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSearchError("Search unavailable. Try again.");
-          setResults([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSearchLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    setSearchLoading(true);
+    setSearchError(null);
+    searchMulti(q, TAB_TYPE[activeTab])
+      .then((res) => { if (!cancelled) setResults(res.data.results || []); })
+      .catch(() => { if (!cancelled) { setSearchError("Search unavailable. Try again."); setResults([]); } })
+      .finally(() => { if (!cancelled) setSearchLoading(false); });
+    return () => { cancelled = true; };
   }, [debouncedQuery, activeTab]);
 
   const handleTabChange = useCallback((tab: EnrichTab) => {
@@ -78,7 +58,6 @@ export default function EnrichPage() {
     setQuery("");
     setResults([]);
     setSearchError(null);
-    if (tab !== "youtube") setImportResult(null);
   }, []);
 
   const handleToggle = useCallback((item: MediaItem) => {
@@ -94,26 +73,22 @@ export default function EnrichPage() {
     setUpdating(true);
     setUpdateError(null);
     try {
-      await updateTasteVector(vectorId, {
-        add_favourites: store.enrichmentItems.map((item) => item.id),
-      });
+      await updateTasteVector(vectorId, { add_favourites: store.enrichmentItems.map((i) => i.id) });
       sessionStorage.setItem("unbored-enrich-success", String(store.enrichmentItems.length));
       navigate("/", { replace: true });
     } catch (e) {
-      setUpdateError(
-        e instanceof Error ? e.message : "Failed to update taste."
-      );
+      setUpdateError(e instanceof Error ? e.message : "Failed to update taste.");
     } finally {
       setUpdating(false);
     }
   }, [vectorId, store.enrichmentItems, navigate]);
 
-  const handleImportComplete = useCallback((result: YouTubeImportResult) => {
-    setImportResult(result);
-  }, []);
-
   const enrichmentCount = store.enrichmentItems.length;
   const selectedIds = store.enrichmentItems.map((ei: MediaItem) => ei.id);
+  const searching = query.trim().length > 0;
+  const gridItems = searching
+    ? results
+    : suggestions.filter((s) => s.media_type === TAB_TYPE[activeTab]);
 
   return (
     <div className={styles.page}>
@@ -122,7 +97,7 @@ export default function EnrichPage() {
         onClick={() => navigate("/")}
         initial={prefersReduced ? false : { opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ delay: 0.1, duration: 0.3 }}
         whileHover={prefersReduced ? {} : { x: -4 }}
         whileTap={prefersReduced ? {} : { scale: 0.95 }}
       >
@@ -137,86 +112,47 @@ export default function EnrichPage() {
       >
         Add more to sharpen your taste
       </motion.h1>
+      <motion.p
+        className={styles.subtitle}
+        initial={prefersReduced ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.35 }}
+      >
+        The more you add, the sharper your picks get.
+      </motion.p>
 
-      {activeTab !== "youtube" && (
-        <motion.div
-          className={styles.searchSection}
-          initial={prefersReduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <EnrichTabs activeTab={activeTab} onTabChange={handleTabChange} />
-          <SearchBar
-            value={query}
-            onChange={setQuery}
-            placeholder={`Search ${activeTab === "anime" ? "anime" : activeTab === "tv" ? "TV shows" : "movies"}...`}
-            loading={searchLoading}
-          />
-        </motion.div>
-      )}
+      <motion.div
+        className={styles.searchSection}
+        initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.35 }}
+      >
+        <EnrichTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder={`Search ${activeTab === "anime" ? "anime" : activeTab === "tv" ? "TV shows" : "movies"}…`}
+          loading={searchLoading}
+        />
+      </motion.div>
 
-      {activeTab === "youtube" ? (
-        <motion.div
-          className={styles.youtubeSection}
-          initial={prefersReduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <EnrichTabs activeTab={activeTab} onTabChange={handleTabChange} />
-          <YouTubeDropzone
-            vectorId={vectorId}
-            onComplete={handleImportComplete}
-          />
-          <AnimatePresence>
-            {importResult && (
-              <motion.div
-                className={styles.importResult}
-                initial={{ opacity: 0, y: 16, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-              >
-                <p>✓ Found {Object.keys(importResult.extracted_genres).length} genre signals</p>
-                <p>✓ Found {Object.keys(importResult.extracted_keywords).length} keyword patterns</p>
-                <p>✓ Taste profile updated</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      ) : (
-        <div className={styles.scrollArea}>
-          <PosterGrid
-            items={results}
-            selectedIds={selectedIds}
-            onToggle={handleToggle}
-            maxSelections={99}
-            loading={searchLoading}
-          />
-          <AnimatePresence>
-            {searchError && (
-              <motion.p
-                className={styles.error}
-                role="alert"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-              >
-                {searchError}
-              </motion.p>
-            )}
-          </AnimatePresence>
-          {!searchLoading && debouncedQuery.length >= 2 && results.length === 0 && !searchError && (
-            <motion.p
-              className={styles.empty}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              No results found.
+      <div className={styles.scrollArea}>
+        {!searching && gridItems.length > 0 && (
+          <p className={styles.sectionLabel}>Popular picks</p>
+        )}
+        {searching && results.length === 0 && !searchLoading && !searchError ? (
+          <p className={styles.empty}>No matches for “{query.trim()}”.</p>
+        ) : (
+          <PosterGrid items={gridItems} selectedIds={selectedIds} onToggle={handleToggle} maxSelections={99} loading={searchLoading} />
+        )}
+        <AnimatePresence>
+          {searchError && (
+            <motion.p className={styles.error} role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {searchError}
             </motion.p>
           )}
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {enrichmentCount > 0 && (
@@ -231,22 +167,14 @@ export default function EnrichPage() {
             whileHover={!updating && !prefersReduced ? { scale: 1.03 } : {}}
             whileTap={!updating && !prefersReduced ? { scale: 0.96 } : {}}
           >
-            {updating
-              ? "Updating..."
-              : `Update my taste (${enrichmentCount} item${enrichmentCount === 1 ? "" : "s"})`}
+            {updating ? "Updating…" : `Add ${enrichmentCount} to my taste`}
           </motion.button>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {updateError && (
-          <motion.p
-            className={styles.error}
-            role="alert"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.p className={styles.error} role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {updateError}
           </motion.p>
         )}

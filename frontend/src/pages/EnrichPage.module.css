@@ -38,8 +38,25 @@
   font-size: var(--text-2xl);
   color: var(--color-text-primary);
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-2);
   font-weight: var(--font-semibold);
+}
+
+.subtitle {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-6);
+}
+
+.sectionLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  margin-bottom: var(--space-4);
 }
 
 .searchSection {
