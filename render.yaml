@@ -1,0 +1,20 @@
+# Render Blueprint for the Unbored backend (FastAPI).
+# Frontend deploys separately to Vercel; this is the API only.
+#
+# Deploy: Render dashboard → New → Blueprint → pick this repo. Or it is created
+# via the Render API. The free plan spins down after inactivity (cold start
+# ~50s on first request); fine for a demo.
+services:
+  - type: web
+    name: unbored-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      # Set to the Vercel frontend origin once it's deployed.
+      - key: CORS_ORIGINS
+        sync: false
+      # All catalog/LLM keys are optional — unset means polished demo mode.
