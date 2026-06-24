@@ -217,6 +217,37 @@ configuration summary at `http://localhost:8000/api/status`.
 
 ---
 
+## Deploy — Vercel (frontend) + Railway (backend)
+
+Unbored splits cleanly: the Vite frontend goes to **Vercel**, the FastAPI
+backend to **Railway**. The frontend calls `/api/*`, which Vercel proxies to
+Railway (see [`frontend/vercel.json`](frontend/vercel.json)) — so requests are
+same-origin (no CORS) and no backend URL is baked into the bundle.
+
+**1. Backend → Railway**
+
+- New project → *Deploy from GitHub repo* → set **Root Directory** to `backend`.
+- Railway installs `requirements.txt` and runs the [`Procfile`](backend/Procfile)
+  (`uvicorn app.main:app --host 0.0.0.0 --port $PORT`).
+- **Environment variables are all optional** — with none set, the demo catalog
+  + offline "Why now?" sentences work out of the box. Add `TMDB_API_KEY` for the
+  live catalog and `GEMINI_API_KEY` (or any provider) for AI-written picks. See
+  [`backend/.env.example`](backend/.env.example).
+- *(Optional)* Mount a Railway volume and set `STORAGE_DIR` to it to persist
+  taste profiles across restarts.
+- Copy the public URL, e.g. `https://unbored-production.up.railway.app`.
+
+**2. Frontend → Vercel**
+
+- Edit [`frontend/vercel.json`](frontend/vercel.json) and replace
+  `REPLACE-WITH-YOUR-RAILWAY-BACKEND.up.railway.app` with your Railway host. Commit.
+- New Vercel project → import this repo → set **Root Directory** to `frontend`.
+  Vercel auto-detects Vite (build `npm run build`, output `dist`).
+- Deploy. The app loads in demo mode instantly; mood → time → "Just decide for
+  me" works with zero keys.
+
+---
+
 ## Tech stack
 
 **Frontend** — React 19, Vite, TypeScript, Zustand, Framer Motion, CSS Modules.
