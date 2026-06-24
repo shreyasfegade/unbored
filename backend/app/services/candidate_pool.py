@@ -1,119 +1,35 @@
-import asyncio
+"""In-memory candidate pool, served from the self-owned catalog.
+
+The pool is the whole catalog loaded once at startup. No live TMDB/AniList calls
+happen in the request path — that data was baked in offline by
+scripts/build_catalog.py, so the app is fast and never blocked on a flaky API.
+"""
+
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timezone
-from difflib import SequenceMatcher
 from typing import Optional
 
-from app.config import settings
-from app.models.media import MediaItem, MediaSource
-from app.services.offline_catalog import load_offline_catalog
-from app.services.tmdb_service import TMDBService
-from app.services.anilist_service import AniListService
+from app.models.media import MediaItem
+from app.services.catalog import load_catalog
 
 logger = logging.getLogger(__name__)
 
 
 class CandidatePool:
-    """In-memory pool of candidate content for recommendations.
-
-    With a TMDB key, the pool is built from live TMDB + AniList data. Without
-    one (demo mode), or if the live fetch yields nothing, it falls back to the
-    bundled offline catalog so recommendations always work.
-    """
-
-    def __init__(self, tmdb: TMDBService, anilist: Optional[AniListService] = None) -> None:
-        self.tmdb = tmdb
-        self.anilist = anilist
+    def __init__(self, tmdb=None, anilist=None) -> None:
+        # tmdb/anilist accepted for compatibility; unused at runtime.
         self.candidates: list[MediaItem] = []
         self.last_refresh: Optional[datetime] = None
 
     async def refresh(self) -> None:
-        """Refresh candidates from live sources, falling back to the offline catalog."""
-        if not settings.has_tmdb:
-            self.candidates = list(load_offline_catalog())
-            self.last_refresh = datetime.now(timezone.utc)
-            logger.info("Demo mode: serving %d offline catalog items", len(self.candidates))
-            return
-
-        logger.info("Refreshing candidate pool...")
-        all_items: list[MediaItem] = []
-
-        try:
-            tmdb_items = await self.tmdb.get_full_candidate_pool()
-            all_items.extend(tmdb_items)
-        except Exception as e:
-            logger.error("Failed to fetch TMDB candidate pool: %s", e)
-
-        if self.anilist:
-            anilist_tasks = [
-                self.anilist.get_trending(page=1),
-                self.anilist.get_trending(page=2),
-                self.anilist.get_top_rated(page=1),
-                self.anilist.get_top_rated(page=2),
-            ]
-            results = await asyncio.gather(*anilist_tasks, return_exceptions=True)
-            for i, res in enumerate(results):
-                if isinstance(res, Exception):
-                    logger.warning("Failed to fetch AniList page (task index %d): %s", i, res)
-                else:
-                    all_items.extend(res)
-
-        seen_ids: set[str] = set()
-        unique_by_id: list[MediaItem] = []
-        for item in all_items:
-            if item.id not in seen_ids:
-                seen_ids.add(item.id)
-                unique_by_id.append(item)
-
-        al_items = [item for item in unique_by_id if item.source == MediaSource.ANILIST]
-        tmdb_items = [
-            item for item in unique_by_id
-            if item.source in (MediaSource.TMDB_MOVIE, MediaSource.TMDB_TV)
-        ]
-
-        excluded_tmdb_ids: set[str] = set()
-
-        for al_item in al_items:
-            al_titles = {al_item.title.lower().strip(), al_item.original_title.lower().strip()}
-            al_titles.discard("")
-
-            best_tmdb_match: Optional[MediaItem] = None
-            best_ratio = 0.85
-
-            for tmdb_item in tmdb_items:
-                tmdb_titles = {tmdb_item.title.lower().strip(), tmdb_item.original_title.lower().strip()}
-                tmdb_titles.discard("")
-
-                for al_t in al_titles:
-                    for tmdb_t in tmdb_titles:
-                        ratio = SequenceMatcher(None, al_t, tmdb_t).ratio()
-                        if ratio > best_ratio:
-                            best_ratio = ratio
-                            best_tmdb_match = tmdb_item
-
-            if best_tmdb_match:
-                logger.info(
-                    "Fuzzy match found: AniList '%s' matches TMDB '%s' (ratio: %.2f). Merging ID...",
-                    al_item.title, best_tmdb_match.title, best_ratio,
-                )
-                al_item.tmdb_id = best_tmdb_match.tmdb_id
-                excluded_tmdb_ids.add(best_tmdb_match.id)
-
-        final_candidates = al_items + [
-            item for item in tmdb_items if item.id not in excluded_tmdb_ids
-        ]
-
-        if not final_candidates:
-            logger.warning("Live sources returned no candidates; using offline catalog")
-            final_candidates = list(load_offline_catalog())
-
-        self.candidates = final_candidates
+        self.candidates = list(load_catalog())
         self.last_refresh = datetime.now(timezone.utc)
-        logger.info("Pool refresh complete. Total candidates: %d", len(self.candidates))
+        logger.info("Candidate pool loaded: %d catalog items", len(self.candidates))
 
     def get_candidates(self, exclude_ids: Optional[list[str]] = None) -> list[MediaItem]:
-        """Return candidates with exclusions applied."""
         if not exclude_ids:
             return list(self.candidates)
-        exclude_set = set(exclude_ids)
-        return [c for c in self.candidates if c.id not in exclude_set]
+        exclude = set(exclude_ids)
+        return [c for c in self.candidates if c.id not in exclude]

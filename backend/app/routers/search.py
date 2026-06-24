@@ -1,186 +1,95 @@
-"""Multi-source search endpoint — TMDB + AniList with interleaving."""
+"""Search and onboarding-shortlist endpoints, served from the local catalog.
 
-import asyncio
+No live TMDB/AniList calls: both endpoints filter the pre-built catalog, so
+taste selection is instant and works offline. Users can search across movies,
+TV, and anime (optionally filtered to one type).
+"""
+
+from __future__ import annotations
+
 import logging
 
 from fastapi import APIRouter, Query, Request
 
-from app.config import settings
-from app.exceptions import AppError
-from app.models.media import SearchResponse
-from app.services.offline_catalog import load_offline_catalog
+from app.models.media import MediaItem, MediaType, SearchResponse
+from app.services.catalog import load_catalog
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-MIN_QUERY_LEN = 2
+MIN_QUERY_LEN = 1
 MAX_QUERY_LEN = 100
-MIN_PAGE = 1
-MAX_PAGE = 5
 MAX_RESULTS = 20
+SHORTLIST_SIZE = 36
 
-MOVIE_IDS = [27205, 157336, 155, 496243, 680, 550, 278, 603, 120, 244786]
-TV_IDS = [1396, 66732, 1399, 93405, 100088, 94997]
-ANIME_IDS = [16498, 1535, 21519, 101922, 113415, 21087]
-
-TRENDING_FALLBACK_MOVIES = [299536, 569094, 76600, 438631]
-TRENDING_FALLBACK_TV = [71912, 84958, 114410, 60625]
+_TYPE_MAP = {"movie": MediaType.MOVIE, "tv": MediaType.TV, "anime": MediaType.ANIME}
 
 
-def _title_match_key(item) -> str:
-    return item.title.lower().strip()
+def _match_rank(item: MediaItem, needle: str) -> int:
+    """Lower is better: 0 prefix, 1 word-start, 2 substring, 3 keyword/genre, 9 none."""
+    title = item.title.lower()
+    if title.startswith(needle):
+        return 0
+    if any(w.startswith(needle) for w in title.split()):
+        return 1
+    if needle in title:
+        return 2
+    if any(needle in kw for kw in item.keywords) or any(needle in g for g in item.genres):
+        return 3
+    return 9
 
 
 @router.get("/search/multi", response_model=SearchResponse)
 async def search_multi(
     request: Request,
     q: str = Query(..., min_length=MIN_QUERY_LEN, max_length=MAX_QUERY_LEN),
-    page: int = Query(1, ge=MIN_PAGE, le=MAX_PAGE),
+    type: str | None = Query(None),
 ):
-    if not settings.has_tmdb:
-        # Demo mode: search the bundled catalog locally.
-        needle = q.strip().lower()
-        matches = [
-            m for m in load_offline_catalog()
-            if needle in m.title.lower() or any(needle in kw for kw in m.keywords)
-        ]
-        return SearchResponse(results=matches[:MAX_RESULTS], total_results=len(matches), query=q)
+    needle = q.strip().lower()
+    catalog = load_catalog()
+    want = _TYPE_MAP.get((type or "").lower())
 
-    tmdb = request.app.state.tmdb
-    anilist = request.app.state.anilist
+    scored: list[tuple[int, float, MediaItem]] = []
+    for m in catalog:
+        if want and m.media_type != want:
+            continue
+        rank = _match_rank(m, needle)
+        if rank < 9:
+            scored.append((rank, -m.popularity, m))
 
-    tmdb_task = asyncio.create_task(tmdb.search_multi(q, page=page))
-    anilist_task = asyncio.create_task(anilist.search(q, page=page, per_page=10))
-
-    tmdb_results = None
-    anilist_results = None
-    tmdb_error = None
-    anilist_error = None
-
-    try:
-        tmdb_results = await tmdb_task
-    except Exception as e:
-        logger.warning("TMDB search failed for '%s': %s", q, e)
-        tmdb_error = e
-
-    try:
-        anilist_results = await anilist_task
-    except Exception as e:
-        logger.warning("AniList search failed for '%s': %s", q, e)
-        anilist_error = e
-
-    if tmdb_results is None and anilist_results is None:
-        raise AppError(
-            status_code=502,
-            detail="Both TMDB and AniList search APIs are currently unavailable.",
-            error_code="SEARCH_BACKEND_UNAVAILABLE",
-        )
-
-    tmdb_results = tmdb_results or []
-    anilist_results = anilist_results or []
-
-    # Deduplicate AniList titles against TMDB
-    tmdb_titles = {_title_match_key(m) for m in tmdb_results}
-    anilist_deduped = [m for m in anilist_results if _title_match_key(m) not in tmdb_titles]
-
-    # Interleave: 2 TMDB, 1 AniList, repeat
-    interleaved = []
-    tmdb_idx = 0
-    al_idx = 0
-
-    while len(interleaved) < MAX_RESULTS and (tmdb_idx < len(tmdb_results) or al_idx < len(anilist_deduped)):
-        for _ in range(2):
-            if tmdb_idx < len(tmdb_results) and len(interleaved) < MAX_RESULTS:
-                interleaved.append(tmdb_results[tmdb_idx])
-                tmdb_idx += 1
-
-        if al_idx < len(anilist_deduped) and len(interleaved) < MAX_RESULTS:
-            interleaved.append(anilist_deduped[al_idx])
-            al_idx += 1
-
-    total_results = len(tmdb_results) + len(anilist_results)
-
-    return SearchResponse(
-        results=interleaved[:MAX_RESULTS],
-        total_results=total_results,
-        query=q,
-    )
+    scored.sort(key=lambda t: (t[0], t[1]))
+    results = [m for _, _, m in scored[:MAX_RESULTS]]
+    return SearchResponse(results=results, total_results=len(scored), query=q)
 
 
 @router.get("/search/curated-shortlist")
 async def get_curated_shortlist(request: Request):
-    if not settings.has_tmdb:
-        # Demo mode: the bundled catalog is the shortlist.
-        return {"items": load_offline_catalog()}
+    """A diverse, high-quality starter set spanning movies, TV, and anime."""
+    catalog = load_catalog()
+    by_type: dict[MediaType, list[MediaItem]] = {MediaType.MOVIE: [], MediaType.TV: [], MediaType.ANIME: []}
+    for m in sorted(catalog, key=lambda c: c.popularity, reverse=True):
+        if m.poster_path and m.media_type in by_type:
+            by_type[m.media_type].append(m)
 
-    tmdb = request.app.state.tmdb
-    anilist = request.app.state.anilist
+    # Interleave so the grid feels varied (roughly half movies, then TV + anime).
+    quotas = {MediaType.MOVIE: 16, MediaType.TV: 10, MediaType.ANIME: 10}
+    picks: list[MediaItem] = []
+    for mtype, quota in quotas.items():
+        picks.extend(by_type[mtype][:quota])
 
-    items = []
+    seen: set[str] = set()
+    interleaved: list[MediaItem] = []
+    cursors = {t: 0 for t in by_type}
+    order = [MediaType.MOVIE, MediaType.MOVIE, MediaType.TV, MediaType.ANIME]
+    pool = {t: [m for m in by_type[t][:quotas[t]]] for t in by_type}
+    while len(interleaved) < SHORTLIST_SIZE and any(cursors[t] < len(pool[t]) for t in pool):
+        for t in order:
+            if cursors[t] < len(pool[t]):
+                item = pool[t][cursors[t]]
+                cursors[t] += 1
+                if item.id not in seen:
+                    seen.add(item.id)
+                    interleaved.append(item)
 
-    for mid in MOVIE_IDS:
-        try:
-            detail = await tmdb.get_movie_detail(mid)
-            if detail:
-                items.append(detail)
-        except Exception:
-            pass
-
-    for tid in TV_IDS:
-        try:
-            detail = await tmdb.get_tv_detail(tid)
-            if detail:
-                items.append(detail)
-        except Exception:
-            pass
-
-    for aid in ANIME_IDS:
-        try:
-            detail = await anilist.get_detail(aid)
-            if detail:
-                items.append(detail)
-        except Exception:
-            pass
-
-    # Try to fill with trending
-    try:
-        from app.services.tmdb_service import TMDBService
-        trending = await tmdb.get_trending_movies()
-        existing = {i.id for i in items}
-        for t in trending[:8]:
-            if t.id not in existing and len(items) < 30:
-                items.append(t)
-    except Exception:
-        pass
-
-    # Try trending TV
-    try:
-        trending_tv = await tmdb.get_trending_tv()
-        existing = {i.id for i in items}
-        for t in trending_tv[:8]:
-            if t.id not in existing and len(items) < 30:
-                items.append(t)
-    except Exception:
-        pass
-
-    # Fallback if not enough items
-    if len(items) < 20:
-        for mid in TRENDING_FALLBACK_MOVIES:
-            try:
-                detail = await tmdb.get_movie_detail(mid)
-                if detail and len(items) < 30:
-                    items.append(detail)
-            except Exception:
-                pass
-
-    if len(items) < 25:
-        for tid in TRENDING_FALLBACK_TV:
-            try:
-                detail = await tmdb.get_tv_detail(tid)
-                if detail and len(items) < 30:
-                    items.append(detail)
-            except Exception:
-                pass
-
-    return {"items": items[:30]}
+    return {"items": interleaved[:SHORTLIST_SIZE]}
