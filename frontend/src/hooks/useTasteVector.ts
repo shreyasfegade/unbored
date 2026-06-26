@@ -12,6 +12,7 @@ export function useTasteVector() {
   const setCuratedShortlist = useTasteStore((s) => s.setCuratedShortlist);
   const setVectorId = useTasteStore((s) => s.setVectorId);
   const setVector = useTasteStore((s) => s.setVector);
+  const setFavouriteIds = useTasteStore((s) => s.setFavouriteIds);
   const completeOnboarding = useTasteStore((s) => s.completeOnboarding);
   const addFavourite = useTasteStore((s) => s.addFavourite);
   const removeFavourite = useTasteStore((s) => s.removeFavourite);
@@ -43,6 +44,7 @@ export function useTasteVector() {
       const res = await apiCreateVector(ids);
       setVectorId(res.data.id);
       setVector(res.data);
+      setFavouriteIds(ids);
       completeOnboarding();
       return res.data;
     } catch (e) {
@@ -51,7 +53,7 @@ export function useTasteVector() {
     } finally {
       setIsLoading(false);
     }
-  }, [setVectorId, setVector, completeOnboarding]);
+  }, [setVectorId, setVector, setFavouriteIds, completeOnboarding]);
 
   return {
     vector,

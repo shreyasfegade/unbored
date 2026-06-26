@@ -7,6 +7,7 @@ interface TasteState {
   vectorId: string | null;
   vector: UserTasteVector | null;
   hasCompletedOnboarding: boolean;
+  favouriteIds: string[];
   selectedFavourites: MediaItem[];
   enrichmentItems: MediaItem[];
   curatedShortlist: MediaItem[];
@@ -14,6 +15,7 @@ interface TasteState {
 
   setVectorId: (id: string) => void;
   setVector: (v: UserTasteVector) => void;
+  setFavouriteIds: (ids: string[]) => void;
   addFavourite: (item: MediaItem) => void;
   removeFavourite: (id: string) => void;
   clearFavourites: () => void;
@@ -31,6 +33,7 @@ export const useTasteStore = create<TasteState>()(
       vectorId: null,
       vector: null,
       hasCompletedOnboarding: false,
+      favouriteIds: [],
       selectedFavourites: [],
       enrichmentItems: [],
       curatedShortlist: [],
@@ -38,6 +41,7 @@ export const useTasteStore = create<TasteState>()(
 
       setVectorId: (id) => set({ vectorId: id }),
       setVector: (v) => set({ vector: v }),
+      setFavouriteIds: (ids) => set({ favouriteIds: ids }),
       addFavourite: (item) =>
         set((state) => {
           if (state.selectedFavourites.length >= 5) return state;
@@ -65,6 +69,7 @@ export const useTasteStore = create<TasteState>()(
           vectorId: null,
           vector: null,
           hasCompletedOnboarding: false,
+          favouriteIds: [],
           selectedFavourites: [],
           enrichmentItems: [],
         }),
@@ -74,6 +79,7 @@ export const useTasteStore = create<TasteState>()(
       partialize: (state) => ({
         vectorId: state.vectorId,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
+        favouriteIds: state.favouriteIds,
       }),
     }
   )

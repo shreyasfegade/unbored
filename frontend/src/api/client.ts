@@ -22,7 +22,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const message = error.response?.data?.detail || 'Something went wrong';
-    return Promise.reject(new Error(message));
+    const err = new Error(message) as Error & { status?: number; errorCode?: string };
+    err.status = error.response?.status;
+    err.errorCode = error.response?.data?.error_code;
+    return Promise.reject(err);
   }
 );
 
