@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLibraryStore } from "../stores/libraryStore";
@@ -29,7 +29,11 @@ export default function LibraryPage() {
   // Seen / not-interested are stored as bare ids, so resolve them for display.
   const [resolved, setResolved] = useState<Record<string, MediaItem>>({});
 
-  const ids = tab === "seen" ? seen : tab === "notInterested" ? notInterested : [];
+  // Memoised so the resolver effect below doesn't re-run on every render.
+  const ids = useMemo(
+    () => (tab === "seen" ? seen : tab === "notInterested" ? notInterested : []),
+    [tab, seen, notInterested],
+  );
 
   useEffect(() => {
     let cancelled = false;

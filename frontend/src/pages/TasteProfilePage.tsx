@@ -23,8 +23,11 @@ export default function TasteProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+    });
     fetchTasteProfile(favouriteIds)
       .then((res) => { if (!cancelled) setProfile(res.data); })
       .catch((err) => { if (!cancelled) setError(describeApiError(err)); })

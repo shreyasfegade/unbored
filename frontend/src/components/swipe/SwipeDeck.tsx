@@ -19,9 +19,8 @@ const COMMIT_PX = 110;
 const LOW_WATER = 4;
 
 /**
- * A swipeable card stack. Dragging is done with pointer events rather than
- * framer's `drag`, because the app mounts LazyMotion with `domAnimation`, which
- * deliberately leaves the drag/layout features out of the bundle.
+ * A swipeable card stack. Dragging uses pointer events rather than framer's
+ * `drag` feature, which keeps the gesture independent of the animation layer.
  *
  * Every gesture has a keyboard and button equivalent — a deck you can only
  * operate by dragging would be unusable for anyone not using a mouse or touch.
@@ -30,7 +29,9 @@ export default function SwipeDeck({ items, onDecide, onRunningLow, emptyMessage 
   const [cursor, setCursor] = useState(0);
   const [dx, setDx] = useState(0);
   const [flyOut, setFlyOut] = useState<SwipeVerdict | null>(null);
-  const dragging = useRef(false);
+  // State, not a ref: the transition below is decided during render, and refs
+  // must not be read there.
+  const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
   const lowFired = useRef(false);
 
@@ -63,19 +64,19 @@ export default function SwipeDeck({ items, onDecide, onRunningLow, emptyMessage 
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (flyOut) return;
-    dragging.current = true;
+    setDragging(true);
     startX.current = e.clientX;
     (e.target as Element).setPointerCapture?.(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current || flyOut) return;
+    if (!dragging || flyOut) return;
     setDx(e.clientX - startX.current);
   };
 
   const onPointerUp = () => {
-    if (!dragging.current) return;
-    dragging.current = false;
+    if (!dragging) return;
+    setDragging(false);
     if (Math.abs(dx) >= COMMIT_PX) commit(dx > 0 ? "like" : "skip");
     else setDx(0);
   };
@@ -116,7 +117,7 @@ export default function SwipeDeck({ items, onDecide, onRunningLow, emptyMessage 
           className={styles.card}
           style={{
             transform: `translateX(${offset}px) rotate(${rotate}deg)`,
-            transition: dragging.current ? "none" : "transform 0.22s ease-out",
+            transition: dragging ? "none" : "transform 0.22s ease-out",
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

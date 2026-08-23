@@ -6,6 +6,9 @@
     "moduleResolution": "bundler",
     "strict": true,
     "noEmit": true,
+    // Matches tsconfig.app/node. Without it, third-party .d.ts files are
+    // typechecked — and vitest's nested copy of vite collides with ours.
+    "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "jsx": "react-jsx",

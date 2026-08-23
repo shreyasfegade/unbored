@@ -20,8 +20,12 @@ export default function SwipePage() {
   const decided = useRef<Set<string>>(new Set());
 
   const fetchDeck = useCallback(async (append: boolean) => {
-    if (!append) setLoading(true);
-    setError(false);
+    // Deferred: this runs from an effect on mount, and a synchronous setState
+    // there cascades an extra render before the request is even in flight.
+    queueMicrotask(() => {
+      if (!append) setLoading(true);
+      setError(false);
+    });
     try {
       const { data } = await getBrowseDeck({
         limit: 30,

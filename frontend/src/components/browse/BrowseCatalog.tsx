@@ -31,9 +31,14 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
 
   useEffect(() => {
     let cancelled = false;
-    setError(false);
-    setLoading(true);
-    setSlow(false);
+    // Deferred off the synchronous effect body so the reset doesn't cascade a
+    // second render before the fetch even starts.
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setError(false);
+      setLoading(true);
+      setSlow(false);
+    });
     // The backend sleeps on the free tier and can take ~50s to wake. Say so
     // instead of leaving the page looking broken.
     const slowTimer = setTimeout(() => { if (!cancelled) setSlow(true); }, 2500);
