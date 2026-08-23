@@ -18,6 +18,8 @@ const ROUTE_NAME: Record<string, string> = {
   "/enrich": "Tune your taste",
   "/settings": "Settings",
   "/library": "Your library",
+  "/taste": "Your taste",
+  "/together": "Watch together",
   "/swipe": "Swipe",
 };
 

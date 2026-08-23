@@ -140,6 +140,9 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
         <Link to="/enrich" className={styles.tune}>
           <span aria-hidden="true">✎</span> Tune your taste for sharper picks
         </Link>
+        <Link to="/taste" className={styles.tasteLink}>
+          see your taste
+        </Link>
       </motion.div>
 
       <motion.div

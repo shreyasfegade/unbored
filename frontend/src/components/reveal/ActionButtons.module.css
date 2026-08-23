@@ -147,3 +147,15 @@
   border-color: var(--color-accent-solid);
   background: var(--color-bg-hover, var(--color-bg-secondary));
 }
+
+.tasteLink {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  margin-left: var(--space-2);
+  align-self: center;
+}
+
+.tasteLink:hover {
+  color: var(--color-text-secondary);
+}

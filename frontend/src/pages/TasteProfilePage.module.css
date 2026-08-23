@@ -1,0 +1,264 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) var(--space-16);
+}
+
+.back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+
+.back:hover { color: var(--color-text-primary); }
+
+.heading {
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-2xl);
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  margin: var(--space-1, 4px) 0 var(--space-4);
+  text-align: center;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  align-items: stretch;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.cardTitle {
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+
+.statRow {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.stat { display: flex; flex-direction: column; }
+
+.statValue {
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-xl);
+  color: var(--color-text-primary);
+}
+
+.statLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Genre bars */
+.bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.barRow {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.barLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+  display: block;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-accent-solid), var(--color-accent-bright, #f0b27a));
+}
+
+.barValue {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-align: right;
+}
+
+/* Tone dials */
+.dials { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+
+.dial { display: flex; flex-direction: column; gap: 6px; }
+
+.dialLabel { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+.dialTrack {
+  position: relative;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  display: block;
+}
+
+.dialDot {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent-solid);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px var(--color-bg-secondary);
+}
+
+.dialEnds {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Decade histogram */
+.histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  height: 110px;
+}
+
+.histCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.histBar {
+  width: 100%;
+  max-width: 44px;
+  min-height: 4px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: linear-gradient(180deg, var(--color-accent-bright, #f0b27a), var(--color-accent-solid));
+}
+
+.histLabel { font-size: var(--text-xs); color: var(--color-text-tertiary); }
+
+/* Format split */
+.split {
+  display: flex;
+  height: 40px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  gap: 2px;
+}
+
+.splitPart {
+  background: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.splitPart:first-child { background: var(--color-accent-solid); }
+
+.splitLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+/* Recurring names */
+.nameRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.nameKind {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  min-width: 4.5rem;
+}
+
+.names { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.name {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.skeleton {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-bg-hover) 50%, var(--color-bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: tasteShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes tasteShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.empty { text-align: center; color: var(--color-text-secondary); padding: var(--space-6) 0; }
+
+.error { color: #ff7a7a; font-size: var(--text-sm); }
+
+.cta {
+  align-self: center;
+  display: inline-block;
+  margin-top: var(--space-2);
+  background: var(--color-accent-solid);
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}

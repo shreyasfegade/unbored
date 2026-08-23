@@ -15,6 +15,7 @@ const PickPage = lazy(() => import('./pages/PickPage'));
 const SwipePage = lazy(() => import('./pages/SwipePage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const TogetherPage = lazy(() => import('./pages/TogetherPage'));
+const TasteProfilePage = lazy(() => import('./pages/TasteProfilePage'));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -87,6 +88,20 @@ function AnimatedRoutes() {
               style={{ width: '100%', height: '100%' }}
             >
               <SettingsPage />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/taste"
+          element={
+            <motion.div
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <TasteProfilePage />
             </motion.div>
           }
         />
