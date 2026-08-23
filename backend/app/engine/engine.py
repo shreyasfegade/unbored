@@ -266,7 +266,7 @@ class RecommendationEngine:
                     ),
                 )
             )
-        scored.sort(key=lambda s: (s.score, s.media.vote_count, s.media.popularity), reverse=True)
+        scored.sort(key=lambda s: (s.score, s.media.vote_count, s.media.popularity_norm), reverse=True)
         return scored
 
     def _mmr_select(self, scored: list[ScoredMediaItem], n: int, lam: float = 0.72) -> list[ScoredMediaItem]:

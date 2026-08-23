@@ -1,7 +1,7 @@
 """Browse endpoints — a Netflix-style, shelf-organised view of the catalog.
 
 Both endpoints are pure functions of the frozen catalog: `/shelves` lists the
-rows (genres, media types, decades, curated collections) and `/shelf/{key}`
+rows (genres, media types, curated collections) and `/shelf/{key}`
 serves one row, paginated for infinite horizontal scrolling. No live TMDB/AniList
 calls, so browsing is instant and cache-friendly.
 """
@@ -30,8 +30,11 @@ _CATALOG_CACHE = "public, max-age=86400, immutable"
 
 MAX_LIMIT = 40
 DEFAULT_LIMIT = 24
-_GENRE_MIN = 12  # a genre needs this many titles to earn its own row
-_DECADE_MIN = 8
+_GENRE_MIN = 18  # a genre needs this many titles to earn its own row
+_CURATED_SIZE = 60  # trending / acclaimed / new are finite, curated lists
+_TYPE_CAP = 0.55  # no media type may exceed this share of a mixed row
+_ACCLAIM_MIN_VOTES = 400
+_ACCLAIM_PRIOR = 3000  # votes of "average" pulled toward the mean
 
 _TYPE_MAP = {"movie": MediaType.MOVIE, "tv": MediaType.TV, "anime": MediaType.ANIME}
 _TYPE_TITLE = {MediaType.MOVIE: "Movies", MediaType.TV: "TV Shows", MediaType.ANIME: "Anime"}
@@ -47,57 +50,143 @@ def _genre_title(slug: str) -> str:
     return _GENRE_TITLE.get(slug, slug.title())
 
 
-def _decade_of(year: int | None) -> int | None:
-    if not year:
-        return None
-    return (year // 10) * 10
+def _dedupe_franchise(items: list[MediaItem]) -> list[MediaItem]:
+    """One entry per series in a row, so a franchise can't fill the screen."""
+    seen: set[str] = set()
+    out: list[MediaItem] = []
+    for m in items:
+        key = m.franchise or m.id
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(m)
+    return out
+
+
+def _balance_types(items: list[MediaItem], cap: float = _TYPE_CAP) -> list[MediaItem]:
+    """Interleave media types so no single one owns a mixed row.
+
+    Without this, anime takes every slot: its popularity numbers come from a
+    different source on a different scale. Order is otherwise preserved.
+    """
+    buckets: dict[MediaType, list[MediaItem]] = {}
+    for m in items:
+        buckets.setdefault(m.media_type, []).append(m)
+    if len(buckets) < 2:
+        return items
+
+    total = len(items)
+    quota = {t: max(1, int(total * cap)) for t in buckets}
+    cursors = {t: 0 for t in buckets}
+    taken = {t: 0 for t in buckets}
+    order = sorted(buckets, key=lambda t: -len(buckets[t]))
+
+    out: list[MediaItem] = []
+    while len(out) < total:
+        progressed = False
+        for t in order:
+            pool = buckets[t]
+            if cursors[t] >= len(pool) or taken[t] >= quota[t]:
+                continue
+            out.append(pool[cursors[t]])
+            cursors[t] += 1
+            taken[t] += 1
+            progressed = True
+        if not progressed:
+            break
+    return out
 
 
 @lru_cache(maxsize=1)
 def _shelves() -> list[dict]:
     """Build the ordered shelf catalog once. Each entry carries the members
-    already sorted for display so `/shelf/{key}` is a slice."""
+    already sorted for display so `/shelf/{key}` is a slice.
+
+    Two rules keep browsing from feeling repetitive: every title gets one
+    *primary* genre row rather than appearing in all of them, and mixed rows are
+    balanced across media types. Previously a title showed up in 5.3 rows on
+    average (up to 10), which read as "the same stuff over and over".
+    """
     catalog = [m for m in load_catalog() if m.poster_path]
-    by_pop = sorted(catalog, key=lambda m: m.popularity, reverse=True)
+    # popularity_norm is comparable across TMDB and AniList; raw popularity isn't.
+    by_pop = sorted(catalog, key=lambda m: m.popularity_norm, reverse=True)
 
     shelves: list[dict] = []
 
-    def add(key: str, title: str, items: list[MediaItem]) -> None:
+    def add(key: str, title: str, items: list[MediaItem], balance: bool = True) -> None:
+        items = _dedupe_franchise(items)
+        if balance:
+            items = _balance_types(items)
         if items:
             shelves.append({"key": key, "title": title, "items": items})
 
-    # Curated collections.
-    add("trending", "Trending Now", by_pop[:120])
-    top_rated = sorted(
-        (m for m in catalog if m.vote_count >= 200),
-        key=lambda m: (m.vote_average, m.vote_count),
-        reverse=True,
+    # ── Curated rows. A title may appear in at most one of these. ──────
+    used_in_curated: set[str] = set()
+
+    def take(pool: list[MediaItem], limit: int) -> list[MediaItem]:
+        picked = [m for m in pool if m.id not in used_in_curated][:limit]
+        used_in_curated.update(m.id for m in picked)
+        return picked
+
+    # Weighted rating, not the raw average: a 9.5 from 210 votes is a curio,
+    # a 8.6 from 25,000 is a classic. Pulls obscure outliers back down.
+    rated = [m for m in catalog if m.vote_count >= _ACCLAIM_MIN_VOTES]
+    mean = (sum(m.vote_average for m in rated) / len(rated)) if rated else 0.0
+
+    def weighted(m: MediaItem) -> float:
+        v = m.vote_count
+        return (v / (v + _ACCLAIM_PRIOR)) * m.vote_average + (_ACCLAIM_PRIOR / (v + _ACCLAIM_PRIOR)) * mean
+
+    # Rank acclaim *within each source* for the same reason as popularity:
+    # AniList scores sit around 8.5+ while TMDB's span 6-8.7, so a straight
+    # sort hands the whole row to anime.
+    acclaim_pct: dict[str, float] = {}
+    by_src: dict[str, list[MediaItem]] = {}
+    for m in rated:
+        by_src.setdefault(m.source.value, []).append(m)
+    for group in by_src.values():
+        group.sort(key=weighted)
+        last = len(group) - 1 or 1
+        for rank, m in enumerate(group):
+            acclaim_pct[m.id] = rank / last
+
+    # Claimed most-specific-first so the narrow rows get their defining titles:
+    # trending is a huge pool and can afford to go last. Display order below is
+    # independent of this.
+    acclaimed = take(
+        sorted(rated, key=lambda m: acclaim_pct.get(m.id, 0.0), reverse=True), _CURATED_SIZE
     )
-    add("top_rated", "Critically Acclaimed", top_rated[:120])
-    add("new_releases", "New & Recent", [m for m in by_pop if (m.release_year or 0) >= 2023][:120])
+    recent = take([m for m in by_pop if (m.release_year or 0) >= 2023], _CURATED_SIZE)
+    trending = take(by_pop, _CURATED_SIZE)
 
-    # Media types.
+    add("trending", "Trending Now", trending)
+    add("top_rated", "Critically Acclaimed", acclaimed)
+    add("new_releases", "New & Recent", recent)
+
+    # ── One row per media type (these are meant to overlap the genre rows;
+    #    they're how someone browses "just films"). ─────────────────────
     for mt in (MediaType.MOVIE, MediaType.TV, MediaType.ANIME):
-        add(mt.value, _TYPE_TITLE[mt], [m for m in by_pop if m.media_type == mt])
+        add(mt.value, _TYPE_TITLE[mt], [m for m in by_pop if m.media_type == mt], balance=False)
 
-    # Decades (newest first).
-    decades: dict[int, list[MediaItem]] = {}
-    for m in by_pop:
-        d = _decade_of(m.release_year)
-        if d and d >= 1980:
-            decades.setdefault(d, []).append(m)
-    for d in sorted(decades, reverse=True):
-        if len(decades[d]) >= _DECADE_MIN:
-            add(f"decade:{d}s", f"{d}s", decades[d])
-
-    # Genres, largest first.
-    genres: dict[str, list[MediaItem]] = {}
-    for m in by_pop:
+    # ── Genre rows: each title lands in exactly one, its rarest genre, so
+    #    the same handful of blockbusters don't headline every row. ─────
+    genre_size: dict[str, int] = {}
+    for m in catalog:
         for g in m.genres:
-            genres.setdefault(g, []).append(m)
-    for g in sorted(genres, key=lambda k: len(genres[k]), reverse=True):
-        if len(genres[g]) >= _GENRE_MIN:
-            add(f"genre:{g}", _genre_title(g), genres[g])
+            genre_size[g] = genre_size.get(g, 0) + 1
+
+    primary: dict[str, list[MediaItem]] = {}
+    for m in by_pop:
+        usable = [g for g in m.genres if genre_size.get(g, 0) >= _GENRE_MIN]
+        if not usable:
+            continue
+        # Rarest qualifying genre is the most descriptive one.
+        best = min(usable, key=lambda g: genre_size[g])
+        primary.setdefault(best, []).append(m)
+
+    for g in sorted(primary, key=lambda k: len(primary[k]), reverse=True):
+        if len(primary[g]) >= _GENRE_MIN:
+            add(f"genre:{g}", _genre_title(g), primary[g])
 
     return shelves
 

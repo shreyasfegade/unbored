@@ -64,7 +64,8 @@ def _fill_alternates(
 def _popularity_fallback(candidates: list[MediaItem]) -> RecommendationResponse | None:
     if not candidates:
         return None
-    ranked = sorted(candidates, key=lambda c: c.popularity, reverse=True)
+    # popularity_norm, so the fallback isn't all anime on a cross-source scale.
+    ranked = sorted(candidates, key=lambda c: c.popularity_norm, reverse=True)
 
     def wrap(m: MediaItem) -> ScoredMediaItem:
         return ScoredMediaItem(media=m, score=0.5, score_breakdown=ScoreBreakdown())

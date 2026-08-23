@@ -32,13 +32,17 @@ async def test_shelves_are_well_formed():
 @pytest.mark.asyncio
 async def test_shelf_paginates_and_only_has_posters():
     async with _client() as c:
-        first = (await c.get("/api/browse/shelf/genre:action", params={"offset": 0, "limit": 6})).json()
-        assert first["key"] == "genre:action"
+        shelves = (await c.get("/api/browse/shelves")).json()["shelves"]
+        # Pick a real genre row rather than hardcoding one: which genres earn a
+        # row depends on the catalog.
+        key = next(s["key"] for s in shelves if s["key"].startswith("genre:") and s["count"] > 12)
+        first = (await c.get(f"/api/browse/shelf/{key}", params={"offset": 0, "limit": 6})).json()
+        assert first["key"] == key
         assert 0 < len(first["items"]) <= 6
         assert all(it["poster_path"] for it in first["items"])
         # Chain to the next page using next_offset.
         assert first["next_offset"] == 6
-        second = (await c.get("/api/browse/shelf/genre:action", params={"offset": 6, "limit": 6})).json()
+        second = (await c.get(f"/api/browse/shelf/{key}", params={"offset": 6, "limit": 6})).json()
     first_ids = {it["id"] for it in first["items"]}
     second_ids = {it["id"] for it in second["items"]}
     assert first_ids.isdisjoint(second_ids)
@@ -51,6 +55,57 @@ async def test_shelf_media_type_filter():
     body = resp.json()
     assert body["items"], "expected some anime in trending"
     assert all(it["media_type"] == "anime" for it in body["items"])
+
+
+def test_titles_do_not_repeat_across_many_shelves():
+    """The complaint was "half the stuff is repeated throughout" — a title used
+    to appear in 5.3 rows on average and up to 10."""
+    from collections import Counter
+
+    from app.routers.browse import _shelves
+
+    seen: Counter[str] = Counter()
+    for shelf in _shelves():
+        for item in shelf["items"]:
+            seen[item.id] += 1
+    counts = list(seen.values())
+    average = sum(counts) / len(counts)
+    assert average <= 2.5, f"titles appear in {average:.1f} rows on average"
+    assert max(counts) <= 4, f"one title appears in {max(counts)} rows"
+
+
+def test_no_shelf_repeats_a_franchise():
+    """One show must not fill a row with its own sequels or seasons."""
+    from app.routers.browse import _shelves
+
+    for shelf in _shelves():
+        franchises = [m.franchise for m in shelf["items"] if m.franchise]
+        assert len(franchises) == len(set(franchises)), f"{shelf['key']} repeats a franchise"
+
+
+def test_curated_shelves_span_media_types():
+    """AniList popularity is ~1000x TMDB's, so ranking the raw numbers together
+    made the front-page rows 100% anime.
+
+    Only the curated rows are checked: a genre row legitimately reflects its
+    genre (there are no history TV shows in the catalog, so that row is all
+    films), whereas Trending and Critically Acclaimed are meant to represent
+    the whole library.
+    """
+    from collections import Counter
+
+    from app.routers.browse import _shelves
+
+    for shelf in _shelves():
+        if shelf["key"] not in {"trending", "top_rated"}:
+            continue
+        head = shelf["items"][:20]
+        kinds = Counter(m.media_type.value for m in head)
+        assert len(kinds) >= 2, f"{shelf['key']} is entirely {list(kinds)}"
+        kind, count = kinds.most_common(1)[0]
+        assert count / len(head) <= 0.6, (
+            f"{shelf['key']} is {count}/{len(head)} {kind}"
+        )
 
 
 @pytest.mark.asyncio

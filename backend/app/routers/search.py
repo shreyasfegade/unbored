@@ -91,7 +91,7 @@ async def search_multi(
             continue
         rank = _match_rank(m, needle, tokens)
         if rank < 9:
-            scored.append((rank, -m.popularity, m))
+            scored.append((rank, -m.popularity_norm, m))
 
     scored.sort(key=lambda t: (t[0], t[1]))
     results = [m for _, _, m in scored[:MAX_RESULTS]]
@@ -104,7 +104,7 @@ async def get_curated_shortlist(request: Request, response: Response):
     response.headers["Cache-Control"] = _CATALOG_CACHE
     catalog = load_catalog()
     by_type: dict[MediaType, list[MediaItem]] = {MediaType.MOVIE: [], MediaType.TV: [], MediaType.ANIME: []}
-    for m in sorted(catalog, key=lambda c: c.popularity, reverse=True):
+    for m in sorted(catalog, key=lambda c: c.popularity_norm, reverse=True):
         if m.poster_path and m.media_type in by_type:
             by_type[m.media_type].append(m)
 
