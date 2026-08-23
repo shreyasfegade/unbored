@@ -1,7 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion } from "framer-motion";
-import { useReducedMotion } from '../../hooks/useReducedMotion';
 import Background from './Background';
 import Header from './Header';
 import { Toast } from '../ui/Toast';
@@ -25,7 +23,6 @@ const ROUTE_NAME: Record<string, string> = {
 };
 
 export default function AppShell({ children }: AppShellProps) {
-  const prefersReduced = useReducedMotion();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const [announce, setAnnounce] = useState("");
@@ -43,13 +40,11 @@ export default function AppShell({ children }: AppShellProps) {
     setAnnounce(`${name} page`);
   }, [location.pathname]);
 
+  // Not animated. This wraps the entire app, and fading it in from transparent
+  // meant one stalled animation frame hid everything — it was caught at opacity
+  // 0.17 in a background tab, with the whole UI invisible but present.
   return (
-    <motion.div
-      className={styles.shell}
-      initial={prefersReduced ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-    >
+    <div className={styles.shell}>
       <Background />
       <Header />
       <main id="main-content" className={styles.main} ref={mainRef} tabIndex={-1}>
@@ -61,6 +56,6 @@ export default function AppShell({ children }: AppShellProps) {
           replaces the old fire-and-forget warmup ping. */}
       <WakeGate />
       <Toast />
-    </motion.div>
+    </div>
   );
 }
