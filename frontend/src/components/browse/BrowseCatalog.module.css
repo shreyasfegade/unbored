@@ -47,6 +47,59 @@
   flex-direction: column;
 }
 
+.waking {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.railSkeleton {
+  margin-bottom: var(--space-5);
+}
+
+.titleSkeleton {
+  height: 18px;
+  width: 160px;
+  margin: 0 var(--space-3) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  animation: catalogShimmer 1.5s ease-in-out infinite;
+}
+
+.trackSkeleton {
+  display: flex;
+  gap: 10px;
+  padding: 4px var(--space-3) var(--space-2);
+  overflow: hidden;
+}
+
+.tileSkeleton {
+  flex: 0 0 auto;
+  width: 116px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-bg-hover) 50%, var(--color-bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: catalogShimmerSlide 1.5s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .tileSkeleton {
+    width: 140px;
+  }
+}
+
+@keyframes catalogShimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes catalogShimmerSlide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .error {
   text-align: center;
   color: var(--color-text-secondary);

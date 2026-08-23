@@ -30,6 +30,7 @@ export default function BrowseRail({
   const [offset, setOffset] = useState<number | null>(0); // null = exhausted
   const [loading, setLoading] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [failed, setFailed] = useState(false);
   const started = useRef(false);
   const rootRef = useRef<HTMLElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -41,6 +42,7 @@ export default function BrowseRail({
   const loadMore = useCallback(async () => {
     if (offset === null || loading) return;
     setLoading(true);
+    setFailed(false);
     try {
       const { data } = await getBrowseShelf(shelfKey, { offset, limit: PAGE, mediaType });
       setItems((prev) => [...prev, ...data.items]);
@@ -50,11 +52,18 @@ export default function BrowseRail({
         onEmpty?.(shelfKey);
       }
     } catch {
-      setOffset(null); // stop paging this rail on error
+      // Surface it and offer a retry. Silently stopping here used to leave the
+      // row shimmering forever — the failure looked identical to "still loading".
+      setFailed(true);
     } finally {
       setLoading(false);
     }
   }, [offset, loading, shelfKey, mediaType, onEmpty]);
+
+  const retry = useCallback(() => {
+    setFailed(false);
+    loadMore();
+  }, [loadMore]);
 
   // Lazy vertical load: fire page 0 once the rail is at (or near) the viewport,
   // then stop. A right-edge sentinel can't do this — it's clipped by the track's
@@ -75,7 +84,8 @@ export default function BrowseRail({
     };
 
     const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight + 300) {
+    // Already on screen, or no observer support to fall back on — load now.
+    if (rect.top < window.innerHeight + 300 || typeof IntersectionObserver === "undefined") {
       trigger();
       return;
     }
@@ -93,7 +103,7 @@ export default function BrowseRail({
   useEffect(() => {
     const el = sentinelRef.current;
     const root = trackRef.current;
-    if (!el || !root) return;
+    if (!el || !root || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) loadMore(); },
       { root, rootMargin: "0px 400px 0px 0px" },
@@ -119,10 +129,18 @@ export default function BrowseRail({
             />
           </div>
         ))}
-        {(loading || items.length === 0) &&
+        {loading &&
           Array.from({ length: 6 }).map((_, i) => (
             <div className={`${styles.tile} ${styles.skeleton}`} key={`sk-${i}`} />
           ))}
+        {failed && (
+          <div className={styles.failure}>
+            <span>Couldn&rsquo;t load</span>
+            <button type="button" className={styles.retry} onClick={retry}>
+              Retry
+            </button>
+          </div>
+        )}
         {/* Trailing sentinel — visible at the right edge (or on the empty rail). */}
         <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />
       </div>
