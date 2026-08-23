@@ -1,0 +1,46 @@
+name: Refresh catalog
+
+# Rebuilds the self-owned catalog + embeddings on a schedule and opens a PR with
+# the result, so the dataset the recommender serves never silently goes stale.
+# Needs a TMDB_API_KEY repo secret. Runs with plain httpx (no local DoH patch).
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps (+ embeddings)
+        run: |
+          pip install -r requirements-dev.txt
+          pip install fastembed
+      - name: Rebuild catalog
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: python scripts/build_catalog.py
+      - name: Rebuild embeddings
+        run: python scripts/build_embeddings.py
+      - name: Sanity-check the new catalog
+        run: python -m pytest tests/test_catalog.py tests/test_engine_quality.py -q
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: refresh catalog + embeddings"
+          branch: chore/refresh-catalog
+          title: "chore: weekly catalog refresh"
+          body: |
+            Automated weekly rebuild of `catalog.json` + `catalog_embeddings.json`.
+            The engine-quality eval harness ran against the new data before this PR opened.
+          add-paths: |
+            backend/app/data/catalog.json
+            backend/app/data/catalog_embeddings.json
