@@ -15,8 +15,19 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 
 from app.models.media import MediaItem
+
+# Dense embedding math runs a lot of 384-dim dot products per request. numpy
+# (already a build-time dependency via fastembed) makes them effectively free;
+# fall back to pure Python if it isn't installed so the engine still runs.
+try:
+    import numpy as _np
+    _HAS_NUMPY = True
+except ImportError:  # pragma: no cover
+    _np = None
+    _HAS_NUMPY = False
 
 # BM25 parameters.
 _K1 = 1.5
@@ -101,18 +112,40 @@ class TasteProfile:
     n_liked: int
 
 
-def _dense_norm(v: list[float]) -> list[float]:
+def _to_dense(v):
+    """Normalise a raw embedding into the working dense representation
+    (a numpy array when available, else a plain list). Idempotent."""
+    if _HAS_NUMPY:
+        return _np.asarray(v, dtype=_np.float32)
+    return list(v)
+
+
+def _dense_norm(v):
+    if _HAS_NUMPY:
+        arr = _np.asarray(v, dtype=_np.float32)
+        n = float(_np.linalg.norm(arr)) or 1.0
+        return arr / n
     n = math.sqrt(sum(x * x for x in v)) or 1.0
     return [x / n for x in v]
 
 
-def _dense_dot(a: list[float], b: list[float]) -> float:
+def _dense_dot(a, b) -> float:
+    if a is None or b is None:
+        return 0.0
+    if _HAS_NUMPY:
+        if len(a) == 0 or len(b) == 0:
+            return 0.0
+        return float(_np.dot(a, b))
     return sum(x * y for x, y in zip(a, b)) if a and b else 0.0
+
+
+def _is_empty(v) -> bool:
+    return v is None or len(v) == 0
 
 
 def _knn_centroid_score(cand, centroid, liked, dot, k: int, knn_weight: float) -> float:
     """Shared hybrid kNN+centroid scoring for either space."""
-    sim_centroid = dot(cand, centroid) if centroid else 0.0
+    sim_centroid = dot(cand, centroid) if not _is_empty(centroid) else 0.0
     if liked:
         sims = sorted((dot(cand, lv) for lv in liked), reverse=True)[:k]
         denom = sum(sims)
@@ -155,9 +188,10 @@ class ContentIndex:
         }
 
         # Dense embeddings (precomputed offline, already L2-normalized). Optional.
-        self._dense: dict[str, list[float]] = {}
+        # Stored as numpy arrays when available for fast dot products.
+        self._dense: dict = {}
         if embeddings:
-            self._dense = {i: embeddings[i] for i in self._tf if i in embeddings}
+            self._dense = {i: _to_dense(embeddings[i]) for i in self._tf if i in embeddings}
         self.has_dense = len(self._dense) > 0
 
     def _bm25_vector(self, item_id: str) -> dict[str, float]:
@@ -191,20 +225,30 @@ class ContentIndex:
                 acc[term] = acc.get(term, 0.0) + w
         return _normalize({t: w / count for t, w in acc.items()}) if count else {}
 
-    def _dense_centroid(self, item_ids: list[str]) -> list[float]:
+    def _dense_centroid(self, item_ids: list[str]):
         vecs = [self._dense[i] for i in item_ids if i in self._dense]
         if not vecs:
-            return []
+            return _to_dense([]) if _HAS_NUMPY else []
+        if _HAS_NUMPY:
+            return _dense_norm(_np.mean(_np.stack(vecs), axis=0))
         dim = len(vecs[0])
         mean = [sum(v[d] for v in vecs) / len(vecs) for d in range(dim)]
         return _dense_norm(mean)
 
     def build_profile(self, item_ids: list[str]) -> TasteProfile:
-        """Precompute the user's taste centroids + neighbours in both spaces."""
+        """Precompute the user's taste centroids + neighbours in both spaces.
+
+        Cached on the sorted id set: a user's favourites change rarely, so
+        repeat requests skip the centroid/kNN recompute entirely.
+        """
+        return self._build_profile_cached(tuple(sorted(set(item_ids))))
+
+    @lru_cache(maxsize=512)
+    def _build_profile_cached(self, item_ids: tuple[str, ...]) -> TasteProfile:
         return TasteProfile(
-            sparse_centroid=self._sparse_centroid(item_ids),
+            sparse_centroid=self._sparse_centroid(list(item_ids)),
             sparse_liked=[self._vectors[i] for i in item_ids if i in self._vectors],
-            dense_centroid=self._dense_centroid(item_ids),
+            dense_centroid=self._dense_centroid(list(item_ids)),
             dense_liked=[self._dense[i] for i in item_ids if i in self._dense],
             n_liked=sum(1 for i in item_ids if i in self._vectors),
         )
@@ -224,7 +268,7 @@ class ContentIndex:
         )
 
         cand_dense = self._dense.get(candidate_id)
-        if cand_dense and (profile.dense_centroid or profile.dense_liked):
+        if not _is_empty(cand_dense) and (not _is_empty(profile.dense_centroid) or profile.dense_liked):
             dense = _knn_centroid_score(
                 cand_dense, profile.dense_centroid, profile.dense_liked, _dense_dot, k, 0.55
             )

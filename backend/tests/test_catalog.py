@@ -4,13 +4,25 @@ import pytest
 
 from app.models.media import MediaItem, MediaType
 from app.services.candidate_pool import CandidatePool
-from app.services.catalog import load_catalog
+from app.services.catalog import catalog_metadata, load_catalog
 
 
 def test_catalog_loads_and_validates():
     items = load_catalog()
     assert len(items) >= 300
     assert all(isinstance(i, MediaItem) for i in items)
+
+
+def test_catalog_has_provenance():
+    """generated_at must be present and parseable so /api/status and the refresh
+    job can reason about the catalog's age."""
+    from datetime import datetime
+
+    meta = catalog_metadata()
+    assert meta.get("generated_at"), "catalog is missing generated_at"
+    # Parseable ISO timestamp.
+    datetime.fromisoformat(meta["generated_at"])
+    assert meta.get("attribution")
 
 
 def test_catalog_spans_all_media_types():

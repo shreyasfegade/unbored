@@ -18,13 +18,12 @@ from app.models.media import (
     TMDBMovie,
     TMDBTVKeywordsResponse,
     TMDBTVShow,
-    YouTubeChannelSignal,
-    YouTubeImportResult,
 )
 from app.models.mood import (
     CONFIDENCE_DISPLAY,
     TIME_SLOT_RANGES,
     ConfidenceLevel,
+    EraPreference,
     MoodType,
     TimeOfDay,
     TimeSlot,
@@ -32,18 +31,8 @@ from app.models.mood import (
 from app.models.recommendation import (
     RecommendationRequest,
     RecommendationResponse,
-    RegenerateRequest,
     ScoreBreakdown,
     ScoredMediaItem,
-)
-from app.models.taste import (
-    CreateTasteRequest,
-    EnrichmentSource,
-    PacingPreference,
-    RecommendationHistoryEntry,
-    RuntimePreference,
-    UpdateTasteRequest,
-    UserTasteVector,
 )
 
 __all__ = [
@@ -53,19 +42,14 @@ __all__ = [
     "AniListTitle",
     "CONFIDENCE_DISPLAY",
     "ConfidenceLevel",
-    "CreateTasteRequest",
-    "EnrichmentSource",
+    "EraPreference",
     "ErrorResponse",
     "MediaItem",
     "MediaSource",
     "MediaType",
     "MoodType",
-    "PacingPreference",
-    "RecommendationHistoryEntry",
     "RecommendationRequest",
     "RecommendationResponse",
-    "RegenerateRequest",
-    "RuntimePreference",
     "ScoreBreakdown",
     "ScoredMediaItem",
     "SearchResults",
@@ -78,10 +62,6 @@ __all__ = [
     "TMDBTVShow",
     "TimeOfDay",
     "TimeSlot",
-    "UpdateTasteRequest",
-    "UserTasteVector",
-    "YouTubeChannelSignal",
-    "YouTubeImportResult",
     "normalize_genre",
     "slugify_keyword",
 ]

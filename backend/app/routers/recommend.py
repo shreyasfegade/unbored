@@ -1,21 +1,24 @@
-"""Recommendation endpoints.
+"""Recommendation endpoint — stateless.
 
-The deterministic engine (app/engine) ranks the catalog and produces a strong
-shortlist. If the request carries a user LLM key (X-LLM-* headers), the curator
-re-picks + explains from that shortlist; otherwise the engine's own pick and a
-templated rationale are used. Either way the result is one confident pick + two
-alternates.
+The request carries the taste itself (`favourite_ids`) plus everything already
+seen (`excluded_ids`), so the server keeps no per-user state at all: no storage,
+no request log, no taste vectors. The deterministic engine ranks the in-memory
+catalog and produces a shortlist; if the request carries a user LLM key, the AI
+biases retrieval (query expansion) and re-picks/explains from the shortlist.
+Either way the result is one confident pick + up to two alternates.
+
+"Try again" is just another /recommend with the previous pick in excluded_ids —
+no server-side original_request_id needed.
 """
 
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Header, Request
 
 from app.engine.engine import RecommendationEngine
+from app.engine.taste_signals import taste_dims_from_items
 from app.exceptions import AppError
 from app.llm.base import LLMProvider
 from app.models.media import MediaItem
@@ -23,43 +26,17 @@ from app.models.mood import ConfidenceLevel
 from app.models.recommendation import (
     RecommendationRequest,
     RecommendationResponse,
-    RegenerateRequest,
     ScoreBreakdown,
     ScoredMediaItem,
 )
-from app.models.taste import RecommendationHistoryEntry, UserTasteVector
+from app.services import metrics
 from app.services.curator import curate
+from app.services.query_expansion import expand
 from app.services.rationale import engine_rationale
-from app.storage.file_store import file_store
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-_recommendation_log: dict[str, dict] = {}
-
-
-def _validate_uuid(vector_id: str) -> None:
-    try:
-        uuid.UUID(vector_id, version=4)
-    except (ValueError, AttributeError):
-        raise AppError(
-            status_code=404,
-            detail=f"Taste vector with ID '{vector_id}' not found.",
-            error_code="TASTE_VECTOR_NOT_FOUND",
-        )
-
-
-def _get_vector_or_404(vector_id: str) -> UserTasteVector:
-    _validate_uuid(vector_id)
-    vector = file_store.get_vector(vector_id)
-    if vector is None:
-        raise AppError(
-            status_code=404,
-            detail=f"Taste vector with ID '{vector_id}' not found.",
-            error_code="TASTE_VECTOR_NOT_FOUND",
-        )
-    return vector
 
 
 def _resolve_provider(request: Request, name: str | None, key: str | None) -> LLMProvider | None:
@@ -68,19 +45,20 @@ def _resolve_provider(request: Request, name: str | None, key: str | None) -> LL
     return request.app.state.provider_cache.get(name, key)
 
 
-def _pad_alternates(
+def _fill_alternates(
     primary: ScoredMediaItem, alternates: list[ScoredMediaItem], ranked: list[ScoredMediaItem]
 ) -> list[ScoredMediaItem]:
+    """Top up alternates from the ranked pool without ever duplicating a pick.
+    Returns 0–2 distinct items."""
     chosen_ids = {primary.media.id} | {a.media.id for a in alternates}
+    result = list(alternates)
     for s in ranked:
-        if len(alternates) >= 2:
+        if len(result) >= 2:
             break
         if s.media.id not in chosen_ids:
-            alternates.append(s)
+            result.append(s)
             chosen_ids.add(s.media.id)
-    while len(alternates) < 2:  # tiny pool — duplicate as a last resort
-        alternates.append(alternates[-1] if alternates else primary)
-    return alternates[:2]
+    return result[:2]
 
 
 def _popularity_fallback(candidates: list[MediaItem]) -> RecommendationResponse | None:
@@ -91,35 +69,46 @@ def _popularity_fallback(candidates: list[MediaItem]) -> RecommendationResponse 
     def wrap(m: MediaItem) -> ScoredMediaItem:
         return ScoredMediaItem(media=m, score=0.5, score_breakdown=ScoreBreakdown())
 
-    primary = wrap(ranked[0])
-    alternates = [wrap(m) for m in ranked[1:3]]
-    while len(alternates) < 2:
-        alternates.append(primary)
     return RecommendationResponse(
-        primary=primary,
-        alternates=alternates[:2],
+        primary=wrap(ranked[0]),
+        alternates=[wrap(m) for m in ranked[1:3]],
         rationale="A crowd favourite to get you started.",
         picked_by="engine",
+        ai_status="off",
         confidence=ConfidenceLevel.MODERATE,
     )
 
 
 async def _run_pipeline(
     request: Request,
-    taste_vector: UserTasteVector,
     body: RecommendationRequest,
-    excluded_ids: list[str],
     provider: LLMProvider | None,
 ) -> RecommendationResponse:
     pool = request.app.state.pool
     index = request.app.state.index
-    catalog_map: dict[str, MediaItem] = {c.id: c for c in pool.candidates}
+    catalog_map: dict[str, MediaItem] = request.app.state.catalog_map  # built once at startup
 
-    candidates = pool.get_candidates(exclude_ids=excluded_ids)
+    excluded_ids = set(body.excluded_ids) | set(body.favourite_ids)
+    candidates = pool.get_candidates(exclude_ids=list(excluded_ids))
 
-    liked_ids = list(taste_vector.favourites)
+    liked_ids = list(body.favourite_ids)
     liked_items = [catalog_map[i] for i in liked_ids if i in catalog_map]
     liked_genres = {g for item in liked_items for g in item.genres}
+    liked_titles = [m.title for m in liked_items]
+
+    ai_status: str = "off"
+    genre_boosts: dict[str, float] = {}
+    if provider is not None:
+        ai_status = "error"  # provider present; downgraded unless curate succeeds
+        # Upstream: let the AI shape what's considered before ranking.
+        genre_boosts = await expand(
+            provider,
+            liked_titles=liked_titles,
+            mood=body.mood.value,
+            time_available=body.time_available.value,
+            media_type=body.media_type,
+            era=body.era.value,
+        )
 
     engine = RecommendationEngine(
         index,
@@ -127,6 +116,10 @@ async def _run_pipeline(
         mood=body.mood.value,
         time_available=body.time_available,
         media_type=body.media_type,
+        era=body.era,
+        time_of_day=body.time_of_day,
+        taste=taste_dims_from_items(liked_items),
+        genre_boosts=genre_boosts,
     )
     result = engine.recommend(candidates, shortlist_size=8)
     if result is None:
@@ -145,7 +138,7 @@ async def _run_pipeline(
     if provider is not None:
         curated = await curate(
             provider,
-            liked_titles=[m.title for m in liked_items],
+            liked_titles=liked_titles,
             mood=body.mood.value,
             time_available=body.time_available.value,
             media_type=body.media_type,
@@ -155,37 +148,37 @@ async def _run_pipeline(
             sl = result.shortlist
             primary = sl[curated.primary_index]
             alternates = [sl[i] for i in curated.alternate_indices if i != curated.primary_index]
-            alternates = _pad_alternates(primary, alternates, result.ranked)
+            alternates = _fill_alternates(primary, alternates, result.ranked)
             rationale = curated.why or rationale
+            # Attach the per-item reason so a swap shows an honest line.
+            for idx, line in curated.why_by_index.items():
+                if 0 <= idx < len(sl):
+                    sl[idx].rationale = line
             picked_by = "ai"
             provider_name = provider.name
+            ai_status = "used"
 
-    alternates = _pad_alternates(primary, alternates, result.ranked)
+    alternates = _fill_alternates(primary, alternates, result.ranked)
+    if primary.rationale is None:
+        primary.rationale = rationale
 
-    response = RecommendationResponse(
+    # Observability: how often AI is used vs. silently downgraded vs. off.
+    metrics.incr("recommend_total")
+    metrics.incr(f"ai_{ai_status}")
+    metrics.incr(f"confidence_{confidence.value}")
+    if body.excluded_ids:
+        metrics.incr("regenerate_total")
+
+    return RecommendationResponse(
         primary=primary,
         alternates=alternates,
         rationale=rationale,
         picked_by=picked_by,  # type: ignore[arg-type]
         provider=provider_name,
+        ai_status=ai_status,  # type: ignore[arg-type]
+        media_type_applied=result.media_type_applied,
         confidence=confidence,
     )
-
-    taste_vector.recommendation_history.append(
-        RecommendationHistoryEntry(
-            media_id=primary.media.id,
-            timestamp=datetime.now(timezone.utc),
-            was_regenerated=False,
-        )
-    )
-    taste_vector.updated_at = datetime.now(timezone.utc)
-    file_store.save_vector(taste_vector)
-
-    _recommendation_log[response.request_id] = {
-        "primary_media_id": primary.media.id,
-        "alternate_media_ids": [a.media.id for a in alternates],
-    }
-    return response
 
 
 @router.post("/recommend", response_model=RecommendationResponse)
@@ -195,54 +188,5 @@ async def recommend(
     x_llm_provider: str | None = Header(default=None),
     x_llm_key: str | None = Header(default=None),
 ):
-    taste_vector = _get_vector_or_404(body.taste_vector_id)
-    excluded_ids = list(
-        set(body.excluded_ids) | set(taste_vector.watched_ids) | set(taste_vector.favourites)
-    )
     provider = _resolve_provider(request, x_llm_provider, x_llm_key)
-    return await _run_pipeline(request, taste_vector, body, excluded_ids, provider)
-
-
-@router.post("/recommend/regenerate", response_model=RecommendationResponse)
-async def regenerate(
-    request: Request,
-    body: RegenerateRequest,
-    x_llm_provider: str | None = Header(default=None),
-    x_llm_key: str | None = Header(default=None),
-):
-    taste_vector = _get_vector_or_404(body.taste_vector_id)
-
-    log_entry = _recommendation_log.get(body.original_request_id)
-    if log_entry is None:
-        raise AppError(
-            status_code=404,
-            detail=f"Previous request with ID '{body.original_request_id}' not found.",
-            error_code="PREVIOUS_REQUEST_NOT_FOUND",
-        )
-
-    primary_media_id = log_entry["primary_media_id"]
-    excluded_ids = list(
-        set(body.excluded_ids)
-        | set(taste_vector.watched_ids)
-        | set(taste_vector.favourites)
-        | {primary_media_id}
-    )
-
-    taste_vector.regeneration_count += 1
-    for entry in reversed(taste_vector.recommendation_history):
-        if entry.media_id == primary_media_id:
-            entry.was_regenerated = True
-            break
-    taste_vector.updated_at = datetime.now(timezone.utc)
-    file_store.save_vector(taste_vector)
-
-    req = RecommendationRequest(
-        taste_vector_id=body.taste_vector_id,
-        mood=body.mood,
-        time_available=body.time_available,
-        time_of_day=body.time_of_day,
-        media_type=body.media_type,
-        excluded_ids=body.excluded_ids,
-    )
-    provider = _resolve_provider(request, x_llm_provider, x_llm_key)
-    return await _run_pipeline(request, taste_vector, req, excluded_ids, provider)
+    return await _run_pipeline(request, body, provider)

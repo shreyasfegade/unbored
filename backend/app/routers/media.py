@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Path, Request
+from fastapi import APIRouter, Path, Request, Response
 
 from app.exceptions import AppError
 from app.models.media import MediaItem
@@ -10,6 +10,24 @@ from app.models.media import MediaItem
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/media/item/{composite_id}", response_model=MediaItem)
+async def get_catalog_item(request: Request, response: Response, composite_id: str):
+    """Look up one catalog item by its composite id (e.g. tmdb_550, al_21).
+
+    Powers shareable /pick/:id links: anyone can render a pick without any local
+    state. Served from the in-memory catalog, cacheable hard.
+    """
+    item = request.app.state.catalog_map.get(composite_id)
+    if item is None:
+        raise AppError(
+            status_code=404,
+            detail=f"No catalog item with id '{composite_id}'.",
+            error_code="MEDIA_NOT_FOUND",
+        )
+    response.headers["Cache-Control"] = "public, max-age=86400, immutable"
+    return item
 
 
 @router.get("/media/movie/{tmdb_id}", response_model=MediaItem)

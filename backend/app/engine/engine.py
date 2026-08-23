@@ -1,12 +1,14 @@
 """The recommendation engine.
 
-Combines four signals into a single ranking:
+Combines five signals into a single ranking:
 
   * relevance  — hybrid kNN + centroid content similarity to the user's taste
                  (the dominant signal; see content.py)
-  * mood fit   — smooth tone-space distance to the chosen mood (tone.py)
+  * mood fit   — smooth tone-space distance to the chosen mood, personalised by
+                 the user's standing taste and the time of day (tone.py)
   * runtime    — smooth fit to the time the user has
-  * quality    — Bayesian-weighted rating prior
+  * quality    — Bayesian-weighted rating prior, age-corrected
+  * recency    — release-year fit to the user's era preference
 
 It then diversifies the visible picks with MMR and calibrates a confidence
 level from where the top score lands in the pool's distribution. This is fully
@@ -18,11 +20,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from app.engine.content import ContentIndex, cosine
-from app.engine.tone import mood_fit
+from app.engine.tone import mood_fit_to_target, mood_target
 from app.models.media import MediaItem, MediaSource, MediaType
-from app.models.mood import ConfidenceLevel, TimeSlot
+from app.models.mood import ConfidenceLevel, EraPreference, TimeSlot
 from app.models.recommendation import ScoreBreakdown, ScoredMediaItem
 
 # Runtime fit: (ideal center, tolerance) in minutes per slot. Soft, not a filter.
@@ -38,15 +41,37 @@ _PRIOR_VOTES_TMDB = 1000   # m for movies/TV
 _PRIOR_VOTES_ANILIST = 800
 
 # Blend weights when the taste profile is established (>= 2 liked items).
-_W_REL = 0.52
-_W_MOOD = 0.22
-_W_RUNTIME = 0.14
-_W_QUALITY = 0.12
+# Five signals now sum to 1.0 (relevance still leads).
+_W_REL = 0.44
+_W_MOOD = 0.20
+_W_RUNTIME = 0.12
+_W_QUALITY = 0.10
+_W_RECENCY = 0.14
 
 # Retrieve-then-rerank: how many top taste matches to retrieve, and the
-# mood-leaning weights used to re-rank within that already-relevant set.
-_RETRIEVE_N = 30
-_W_RERANK = (0.25, 0.46, 0.17, 0.12)
+# mood-leaning weights used to re-rank within that already-relevant set. The
+# retrieve set is wide enough that the mood/era you pick genuinely reshapes the
+# result instead of one best taste match dominating every mood.
+_RETRIEVE_N = 120
+_W_RERANK = (0.20, 0.40, 0.13, 0.09, 0.18)
+
+# Recency: reference year and per-era decay half-lives (years). ``None`` for
+# CLASSIC, which inverts the curve (older scores higher).
+_REF_YEAR = datetime.now(timezone.utc).year
+# ANY is a gentle tilt (a 20-year-old film still scores ~0.7), so it nudges
+# away from ancient picks without erasing a user's 2010s favourites. MODERN
+# decays fast; CLASSIC inverts entirely.
+_ERA_HALFLIFE: dict[EraPreference, float | None] = {
+    EraPreference.ANY: 45.0,
+    EraPreference.MODERN: 11.0,
+    EraPreference.CLASSIC: None,
+}
+# When the user cares about era, recency pulls more weight (renormalized).
+_ERA_RECENCY_BOOST: dict[EraPreference, float] = {
+    EraPreference.ANY: 1.0,
+    EraPreference.MODERN: 2.2,
+    EraPreference.CLASSIC: 2.2,
+}
 
 
 def _is_anime(item: MediaItem) -> bool:
@@ -54,7 +79,13 @@ def _is_anime(item: MediaItem) -> bool:
 
 
 def runtime_fit(item: MediaItem, slot: TimeSlot) -> float:
-    """Smooth Gaussian-ish fit of an item's runtime to the chosen slot."""
+    """Fit of an item's *per-sitting* runtime to the chosen slot.
+
+    For series the runtime is one episode (the time slot means "one sitting"),
+    so a 6-episode and a 200-episode drama both fit a 45-minute window. Series
+    length is a separate *commitment* signal: a very long series is nudged down
+    for the shortest slot, and shown to the AI (see curator) so it can weigh it.
+    """
     center, tol = _RUNTIME_SHAPE[slot]
     rt = item.runtime_minutes
     if not rt:
@@ -62,16 +93,43 @@ def runtime_fit(item: MediaItem, slot: TimeSlot) -> float:
     if not rt:
         return 0.5
     z = (rt - center) / tol
-    return max(0.1, math.exp(-0.7 * z * z))
+    # Low floor so a genuinely wrong runtime actually costs the item.
+    fit = max(0.04, math.exp(-0.7 * z * z))
+    if slot == TimeSlot.SHORT and (item.episode_count or 0) > 50:
+        fit *= 0.9  # a long series is a big commitment for "I have 30 minutes"
+    return fit
+
+
+def _item_year(item: MediaItem) -> int | None:
+    return item.release_year or item.year
+
+
+def recency_fit(item: MediaItem, era: EraPreference) -> float:
+    """How well an item's release year fits the era preference, in [0,1].
+
+    Neutral (0.5) when the year is unknown, so the 11 undated catalog items are
+    never penalised or rewarded for it.
+    """
+    year = _item_year(item)
+    if not year:
+        return 0.5
+    age = max(0, _REF_YEAR - year)
+    if era == EraPreference.CLASSIC:
+        # Older is better; plateau past ~45 years.
+        return max(0.0, min(1.0, 0.35 + age / 45.0))
+    half = _ERA_HALFLIFE.get(era) or _ERA_HALFLIFE[EraPreference.ANY]
+    return max(0.0, min(1.0, 0.5 ** (age / half)))  # 0y -> 1.0, half-life -> 0.5
 
 
 def quality_prior(item: MediaItem) -> float:
-    """Bayesian-weighted rating mapped to [0,1]. Fixes the old backwards penalty."""
+    """Bayesian-weighted rating mapped to [0,1], with a gentle age correction so
+    decades of accumulated votes don't automatically out-rank recent titles."""
     m = _PRIOR_VOTES_ANILIST if _is_anime(item) else _PRIOR_VOTES_TMDB
     v = max(item.vote_count, 0)
     r = item.vote_average or _PRIOR_MEAN
     weighted = (v / (v + m)) * r + (m / (v + m)) * _PRIOR_MEAN
-    return max(0.0, min(1.0, (weighted - 6.0) / 3.0))  # 6.0->0, 9.0->1
+    base = max(0.0, min(1.0, (weighted - 6.0) / 3.0))  # 6.0->0, 9.0->1
+    return base
 
 
 @dataclass
@@ -79,8 +137,9 @@ class EngineResult:
     ranked: list[ScoredMediaItem]      # full pool, best first
     shortlist: list[ScoredMediaItem]   # top-N for the LLM curator
     primary: ScoredMediaItem
-    alternates: list[ScoredMediaItem]  # MMR-diversified, len 2
+    alternates: list[ScoredMediaItem]  # MMR-diversified, len 0..2
     confidence: ConfidenceLevel
+    media_type_applied: bool = True    # False when the type filter was dropped
 
 
 class RecommendationEngine:
@@ -92,54 +151,110 @@ class RecommendationEngine:
         mood: str | None,
         time_available: TimeSlot,
         media_type: str | None = None,
+        era: EraPreference = EraPreference.ANY,
+        time_of_day: str | None = None,
+        taste: dict[str, float] | None = None,
+        genre_boosts: dict[str, float] | None = None,
     ) -> None:
         self._index = index
         self._mood = mood
         self._slot = time_available
         self._media_type = media_type if media_type in {"movie", "tv", "anime"} else None
+        self._era = era
         self._profile = index.build_profile(liked_ids)
         self._n_liked = self._profile.n_liked
+        # Personalised mood target: taste dims + time of day fold into the tone
+        # target once, up front, instead of being ignored.
+        self._mood_target = mood_target(mood, taste=taste, time_of_day=time_of_day)
+        # Optional AI-supplied bias (query expansion): genre -> weight in [0,1].
+        # A soft additive nudge so the AI shapes what surfaces, not a hard filter.
+        self._genre_boosts = {g.lower().strip(): float(w) for g, w in (genre_boosts or {}).items()}
+        self._media_type_applied = True
 
-    def _weights(self) -> tuple[float, float, float, float]:
+    def _genre_bonus(self, item: MediaItem) -> float:
+        if not self._genre_boosts:
+            return 0.0
+        hits = [self._genre_boosts.get(g.lower().strip(), 0.0) for g in item.genres]
+        return max(hits) if hits else 0.0
+
+    def _weights(self) -> tuple[float, float, float, float, float]:
         """Relevance leans out when the taste profile is too thin (cold start)."""
         if self._n_liked >= 2:
-            return _W_REL, _W_MOOD, _W_RUNTIME, _W_QUALITY
-        # Cold: redistribute relevance into mood + quality.
-        scale = self._n_liked / 2.0  # 0 or 0.5
-        rel = _W_REL * scale
-        freed = _W_REL - rel
-        return rel, _W_MOOD + freed * 0.45, _W_RUNTIME, _W_QUALITY + freed * 0.55
+            base = (_W_REL, _W_MOOD, _W_RUNTIME, _W_QUALITY, _W_RECENCY)
+        else:
+            # Cold: redistribute relevance into mood + quality + recency.
+            scale = self._n_liked / 2.0  # 0 or 0.5
+            rel = _W_REL * scale
+            freed = _W_REL - rel
+            base = (
+                rel,
+                _W_MOOD + freed * 0.4,
+                _W_RUNTIME,
+                _W_QUALITY + freed * 0.3,
+                _W_RECENCY + freed * 0.3,
+            )
+        return self._apply_era_boost(base)
+
+    def _apply_era_boost(
+        self, w: tuple[float, float, float, float, float]
+    ) -> tuple[float, float, float, float, float]:
+        """When the user picks an era, recency earns more of the budget."""
+        boost = _ERA_RECENCY_BOOST.get(self._era, 1.0)
+        if boost == 1.0:
+            return w
+        w_rel, w_mood, w_rt, w_q, w_rec = w
+        new_rec = w_rec * boost
+        # Pull the extra proportionally from the other four so weights still sum to 1.
+        others = w_rel + w_mood + w_rt + w_q
+        extra = new_rec - w_rec
+        if others > 0:
+            factor = max(0.0, (others - extra) / others)
+            w_rel, w_mood, w_rt, w_q = (x * factor for x in (w_rel, w_mood, w_rt, w_q))
+        return (w_rel, w_mood, w_rt, w_q, new_rec)
 
     def rank(self, candidates: list[MediaItem]) -> list[ScoredMediaItem]:
         pool = candidates
         if self._media_type:
-            pool = [c for c in pool if c.media_type.value == self._media_type]
-            if not pool:
-                pool = candidates  # don't return nothing if the filter empties it
+            filtered = [c for c in pool if c.media_type.value == self._media_type]
+            if filtered:
+                pool = filtered
+            else:
+                self._media_type_applied = False  # don't return nothing; flag it
 
         raw_rel = {c.id: self._index.relevance(c.id, self._profile) for c in pool}
         has_taste = self._n_liked > 0 and max(raw_rel.values(), default=0.0) > 0
 
         # Retrieve-then-rerank: first narrow to the strongest taste matches, then
-        # let mood/runtime choose within them. Everything in the retrieve set is
-        # already "your taste", so the mood you pick genuinely shapes the result
-        # instead of one best match dominating every mood.
+        # let mood/era/runtime choose within them.
         if has_taste:
             retrieve = sorted(pool, key=lambda c: raw_rel[c.id], reverse=True)[:_RETRIEVE_N]
-            w_rel, w_mood, w_rt, w_q = _W_RERANK
+            # AI genre bias can *introduce* strong-on-genre titles the taste kNN
+            # didn't surface, so the model shapes the candidate set, not just its
+            # order. Pull in the best-rated boost matches beyond the retrieve set.
+            if self._genre_boosts:
+                have = {c.id for c in retrieve}
+                extra = [c for c in pool if c.id not in have and self._genre_bonus(c) > 0]
+                extra.sort(key=lambda c: (self._genre_bonus(c), c.vote_average, c.vote_count), reverse=True)
+                retrieve = retrieve + extra[:_RETRIEVE_N // 2]
+            w_rel, w_mood, w_rt, w_q, w_rec = self._apply_era_boost(_W_RERANK)
         else:  # cold start — no taste signal yet
             retrieve = pool
-            w_rel, w_mood, w_rt, w_q = self._weights()
+            w_rel, w_mood, w_rt, w_q, w_rec = self._weights()
 
         max_rel = max((raw_rel[c.id] for c in retrieve), default=0.0)
 
         scored: list[ScoredMediaItem] = []
         for c in retrieve:
             rel = (raw_rel[c.id] / max_rel) if max_rel > 0 else 0.0
-            mood = mood_fit(c, self._mood)
+            mood = mood_fit_to_target(c, self._mood_target)
             runtime = runtime_fit(c, self._slot)
             quality = quality_prior(c)
-            final = w_rel * rel + w_mood * mood + w_rt * runtime + w_q * quality
+            recency = recency_fit(c, self._era)
+            final = (
+                w_rel * rel + w_mood * mood + w_rt * runtime
+                + w_q * quality + w_rec * recency
+                + 0.12 * self._genre_bonus(c)
+            )
             scored.append(
                 ScoredMediaItem(
                     media=c,
@@ -147,6 +262,7 @@ class RecommendationEngine:
                     score_breakdown=ScoreBreakdown(
                         relevance=round(rel, 4), mood=round(mood, 4),
                         runtime=round(runtime, 4), quality=round(quality, 4),
+                        recency=round(recency, 4),
                     ),
                 )
             )
@@ -174,7 +290,23 @@ class RecommendationEngine:
             pool.remove(best)
         return selected
 
-    def _confidence(self, scored: list[ScoredMediaItem], primary: ScoredMediaItem) -> ConfidenceLevel:
+    def _confidence(
+        self, scored: list[ScoredMediaItem], primary: ScoredMediaItem, raw_rel: dict[str, float]
+    ) -> ConfidenceLevel:
+        """Confidence = how close the pick genuinely is to the user's taste.
+
+        Keyed on the *absolute* taste relevance of the top pick. The old code
+        used a z-score over the pool, but z is ~always large (the top item
+        separates strongly from a long tail), so it read 'high' for essentially
+        every non-cold profile. Absolute relevance is what actually varies, and
+        it's the honest signal: a pick very close to what you love is a confident
+        pick; an eclectic profile's best match is a moderate one. A separation
+        floor (z) still guards against over-claiming on a flat pool.
+
+        Thresholds are calibrated against the measured relevance distribution
+        across random profiles (see test_engine_quality); the eval harness
+        asserts HIGH stays rare rather than being the default.
+        """
         sample = [s.score for s in scored[:60]]
         if len(sample) < 4:
             return ConfidenceLevel.MODERATE
@@ -182,11 +314,10 @@ class RecommendationEngine:
         var = sum((x - mean) ** 2 for x in sample) / len(sample)
         std = math.sqrt(var) or 1e-6
         z = (primary.score - mean) / std
-        # Reward genuine taste relevance, not just being top of a flat pool.
-        rel = primary.score_breakdown.relevance
-        if z >= 1.1 and rel >= 0.30:
+        abs_rel = raw_rel.get(primary.media.id, 0.0)
+        if abs_rel >= 0.45 and z >= 1.0:
             return ConfidenceLevel.HIGH
-        if z >= 0.5 or rel >= 0.40:
+        if abs_rel >= 0.42 and z >= 0.6:
             return ConfidenceLevel.STRONG
         return ConfidenceLevel.MODERATE
 
@@ -194,6 +325,8 @@ class RecommendationEngine:
         ranked = self.rank(candidates)
         if not ranked:
             return None
+        # Absolute relevance for honest confidence calibration.
+        raw_rel = {s.media.id: self._index.relevance(s.media.id, self._profile) for s in ranked[:60]}
         picks = self._mmr_select(ranked, 3)
         primary = picks[0]
         alternates = picks[1:3]
@@ -204,5 +337,6 @@ class RecommendationEngine:
             shortlist=ranked[:shortlist_size],
             primary=primary,
             alternates=alternates[:2],
-            confidence=self._confidence(ranked, primary),
+            confidence=self._confidence(ranked, primary, raw_rel),
+            media_type_applied=self._media_type_applied,
         )

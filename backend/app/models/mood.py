@@ -1,8 +1,6 @@
 from __future__ import annotations
 from enum import StrEnum
-from typing import Literal, Optional
-
-from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class MoodType(StrEnum):
@@ -19,6 +17,14 @@ class TimeSlot(StrEnum):
     SHORT = "short"
     MEDIUM = "medium"
     LONG = "long"
+
+
+class EraPreference(StrEnum):
+    """How much the user cares about recency. A soft ranking bias, never a hard
+    filter — classics stay reachable when explicitly asked for."""
+    MODERN = "modern"    # lean hard toward recent titles
+    ANY = "any"          # neutral (default)
+    CLASSIC = "classic"  # lean toward older, established titles
 
 
 TIME_SLOT_RANGES: dict[TimeSlot, tuple[int, int]] = {
@@ -42,40 +48,3 @@ CONFIDENCE_DISPLAY: dict[ConfidenceLevel, str] = {
     ConfidenceLevel.STRONG: "Unusually strong match tonight.",
     ConfidenceLevel.MODERATE: "Best fit right now.",
 }
-
-
-class MoodModifier(BaseModel):
-    """Schema for one mood entry in mood_translation.json."""
-
-    boost_genres: list[str] = Field(
-        ...,
-        description="TMDB genre names whose weight is multiplied by BOOST_MULTIPLIER (1.3)",
-    )
-    penalize_genres: list[str] = Field(
-        ...,
-        description="TMDB genre names whose weight is multiplied by PENALIZE_MULTIPLIER (0.7)",
-    )
-    boost_keywords: list[str] = Field(
-        ...,
-        description="TMDB keyword strings whose weight is multiplied by BOOST_MULTIPLIER (1.3)",
-    )
-    penalize_keywords: list[str] = Field(
-        ...,
-        description="TMDB keyword strings whose weight is multiplied by PENALIZE_MULTIPLIER (0.7)",
-    )
-    emotional_intensity_modifier: float = Field(
-        ...,
-        ge=-0.3,
-        le=0.3,
-        description="Additive shift to the user's emotionalIntensity preference.",
-    )
-    pacing_modifier: Optional[Literal["fast", "slow"]] = Field(
-        default=None,
-        description="If set, temporarily overrides the taste vector's pacingPreference.",
-    )
-    darkness_modifier: float = Field(
-        ...,
-        ge=-0.3,
-        le=0.3,
-        description="Additive shift to the user's darknessPreference.",
-    )

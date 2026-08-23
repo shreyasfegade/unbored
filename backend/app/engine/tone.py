@@ -69,13 +69,60 @@ def tone_vector(item: MediaItem) -> list[float]:
     return [_clamp(v) for v in vec]
 
 
-def mood_fit(item: MediaItem, mood: str | None) -> float:
-    """Return how well an item's tone matches the mood, in [0,1]. 0.5 if no mood."""
+# Tone axes, in order: 0 energy, 1 darkness, 2 warmth, 3 intensity, 4 humor.
+_AXIS_DARKNESS = 1
+_AXIS_INTENSITY = 3
+_AXIS_HUMOR = 4
+_AXIS_ENERGY = 0
+
+
+def mood_target(
+    mood: str | None,
+    *,
+    taste: dict[str, float] | None = None,
+    time_of_day: str | None = None,
+) -> list[float] | None:
+    """The mood's target point, personalised by the user's standing taste and
+    the time of day. Returns ``None`` when there's no mood to match.
+
+    ``taste`` carries the dimensions the engine used to ignore entirely
+    (darkness_preference, humor_affinity, emotional_intensity) — each nudges the
+    matching axis toward the user, so two people in the same mood don't get the
+    same tone target.
+    """
     if not mood:
-        return 0.5
-    target = _mood_targets().get(mood)
+        return None
+    base = _mood_targets().get(mood)
+    if base is None:
+        return None
+    target = list(base)
+
+    if taste:
+        def nudge(axis: int, key: str) -> None:
+            pref = taste.get(key)
+            if pref is not None:
+                target[axis] = _clamp(0.75 * target[axis] + 0.25 * pref)
+
+        nudge(_AXIS_DARKNESS, "darkness_preference")
+        nudge(_AXIS_HUMOR, "humor_affinity")
+        nudge(_AXIS_INTENSITY, "emotional_intensity")
+
+    # Late at night, pull the energy target down a touch — calmer picks fit.
+    if time_of_day == "late_night":
+        target[_AXIS_ENERGY] = _clamp(target[_AXIS_ENERGY] - 0.12)
+
+    return [_clamp(v) for v in target]
+
+
+def mood_fit_to_target(item: MediaItem, target: list[float] | None) -> float:
+    """How well an item's tone matches a (possibly personalised) target, in [0,1]."""
     if target is None:
         return 0.5
     vec = tone_vector(item)
     dist = math.sqrt(sum((vec[i] - target[i]) ** 2 for i in range(N_AXES)))
     return _clamp(1.0 - dist / _MAX_DIST)
+
+
+def mood_fit(item: MediaItem, mood: str | None) -> float:
+    """Return how well an item's tone matches the mood, in [0,1]. 0.5 if no mood."""
+    return mood_fit_to_target(item, mood_target(mood))

@@ -44,6 +44,21 @@ def load_catalog() -> list[MediaItem]:
 
 
 @lru_cache(maxsize=1)
+def catalog_metadata() -> dict:
+    """Catalog provenance: generated_at, count, attribution. Empty on failure."""
+    path = _CATALOG if _CATALOG.exists() else (_DATA / "offline_catalog.json")
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {
+        "generated_at": raw.get("generated_at"),
+        "count": raw.get("count", len(raw.get("items", []))),
+        "attribution": raw.get("attribution"),
+    }
+
+
+@lru_cache(maxsize=1)
 def load_embeddings() -> dict[str, list[float]]:
     """Load precomputed semantic embeddings (id -> normalized vector). Empty if
     the file is absent — the engine then runs BM25-only."""

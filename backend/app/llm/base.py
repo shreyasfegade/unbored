@@ -4,8 +4,8 @@ A provider's only job is to turn a (system, user) prompt pair into a single
 string of generated text, or ``None`` if generation failed for any reason
 (timeout, rate limit, bad response). All the product logic — prompt building,
 caching, validation, fallbacks — lives one layer up in
-:class:`app.services.why_now.WhyNowService`, so swapping providers never
-touches that logic.
+:mod:`app.services.curator` and :mod:`app.services.query_expansion`, so swapping
+providers never touches that logic.
 """
 
 from __future__ import annotations

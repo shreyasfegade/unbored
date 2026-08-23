@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import json
 import subprocess
+import os
 import sys
 import time
 import types
@@ -186,9 +187,16 @@ async def main() -> int:
         print("ERROR: no TMDB key in backend/.env — cannot build catalog.")
         return 1
 
-    print("Routing TMDB + AniList through curl+DoH (ISP DNS bypass)...")
-    _patch_tmdb_with_curl(tmdb)
-    _patch_anilist_with_curl(anilist)
+    # The curl + DNS-over-HTTPS routing is a workaround for one specific ISP that
+    # DNS-poisons TMDB/AniList. It's opt-in (UNBORED_BUILD_DOH=1 or --local-doh)
+    # so CI and normal networks use plain httpx and this script is portable.
+    use_doh = os.environ.get("UNBORED_BUILD_DOH") == "1" or "--local-doh" in sys.argv
+    if use_doh:
+        print("Routing TMDB + AniList through curl+DoH (ISP DNS bypass)...")
+        _patch_tmdb_with_curl(tmdb)
+        _patch_anilist_with_curl(anilist)
+    else:
+        print("Using direct httpx (set UNBORED_BUILD_DOH=1 to route via curl+DoH)...")
 
     print("Loading TMDB genre maps...")
     await tmdb._load_genre_maps()

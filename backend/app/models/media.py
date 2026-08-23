@@ -110,42 +110,6 @@ class SearchResponse(BaseModel):
     total_results: int = Field(default=0, ge=0)
     query: str
 
-class YouTubeChannelSignal(BaseModel):
-    channel_name: str
-    watch_count: int = Field(ge=1)
-    inferred_genres: list[str] = Field(default_factory=list)
-
-class YouTubeImportResult(BaseModel):
-    total_videos_parsed: int = Field(ge=0)
-    videos_with_signals: int = Field(ge=0)
-    top_channels: list[YouTubeChannelSignal] = Field(
-        default_factory=list,
-        description="Top 20 channels by watch count",
-    )
-    genres_extracted: dict[str, float] = Field(default_factory=dict)
-    keywords_extracted: dict[str, float] = Field(default_factory=dict)
-    animation_affinity_delta: float = Field(
-        default=0.0, ge=-1.0, le=1.0,
-        description="Change to animation_affinity. Positive = increase.",
-    )
-    success: bool = True
-    error: str | None = None
-
-
-class YouTubeVideoEntry(BaseModel):
-    title: str
-    channel_name: str
-    watch_date: str | None = None
-
-
-class YouTubeTasteSignals(BaseModel):
-    genres_extracted: dict[str, float] = Field(default_factory=dict)
-    keywords_extracted: dict[str, float] = Field(default_factory=dict)
-    animation_affinity_delta: float = Field(default=0.0, ge=-1.0, le=1.0)
-    top_channels: list[YouTubeChannelSignal] = Field(default_factory=list)
-    total_videos_parsed: int = 0
-    videos_with_signals: int = 0
-
 class TMDBMovie(BaseModel):
     id: int
     title: str = ""

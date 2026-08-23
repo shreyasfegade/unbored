@@ -12,6 +12,9 @@ from functools import cached_property
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Single source of truth for the app version (was hardcoded in three places).
+APP_VERSION = "3.0.0"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

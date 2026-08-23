@@ -30,6 +30,8 @@ class ProviderCache:
         self._ttl = ttl_seconds
         self._max = max_size
         self._store: dict[str, tuple[LLMProvider, float]] = {}
+        # Keep strong refs to in-flight close tasks so they aren't GC'd mid-run.
+        self._closing: set = set()
 
     def get(self, name: str, api_key: str) -> LLMProvider | None:
         """Return a provider for this (provider, key), building+caching if needed."""
@@ -65,12 +67,13 @@ class ProviderCache:
             lru = min(self._store, key=lambda k: self._store[k][1])
             self._close(self._store.pop(lru)[0])
 
-    @staticmethod
-    def _close(provider: LLMProvider) -> None:
+    def _close(self, provider: LLMProvider) -> None:
         try:
-            asyncio.create_task(provider.close())
+            task = asyncio.create_task(provider.close())
         except RuntimeError:
-            pass  # no running loop (shutdown)
+            return  # no running loop (shutdown)
+        self._closing.add(task)
+        task.add_done_callback(self._closing.discard)
 
     async def close_all(self) -> None:
         for provider, _ in self._store.values():

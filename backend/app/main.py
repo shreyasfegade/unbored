@@ -7,10 +7,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.config import settings
+from app.config import APP_VERSION, settings
 from app.exceptions import AppError
-from app.middleware import RequestLoggingMiddleware
-from app.routers import health, taste, recommend, search, media, llm
+from app.middleware import RateLimitMiddleware, RequestLoggingMiddleware
+from app.routers import health, recommend, search, media, llm
 from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 from app.services.candidate_pool import CandidatePool
@@ -46,6 +46,8 @@ async def lifespan(app: FastAPI):
     app.state.anilist = anilist
     app.state.pool = pool
     app.state.index = index
+    # Built once here, not per request: the catalog never changes at runtime.
+    app.state.catalog_map = {c.id: c for c in pool.candidates}
     app.state.provider_cache = ProviderCache(settings)
 
     yield
@@ -59,11 +61,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Unbored API",
     description="Decision paralysis killer — recommendation engine",
-    version="1.0.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -74,7 +77,6 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/api", tags=["health"])
-app.include_router(taste.router, prefix="/api", tags=["taste"])
 app.include_router(recommend.router, prefix="/api", tags=["recommend"])
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(media.router, prefix="/api", tags=["media"])

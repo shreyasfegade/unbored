@@ -195,6 +195,12 @@ class TMDBService:
     async def _request(
         self, method: str, path: str, params: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        # Fail fast with no network round-trip / retries when there's no key
+        # (the deployed demo config). Previously this made a real request, got a
+        # 401 after retries, and could 500 a user's request.
+        if not self._api_key:
+            raise TMDBConfigError("No TMDB API key configured")
+
         if params is None:
             params = {}
         params.setdefault("language", "en-US")
