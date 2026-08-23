@@ -14,6 +14,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PickPage = lazy(() => import('./pages/PickPage'));
 const SwipePage = lazy(() => import('./pages/SwipePage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
+const TogetherPage = lazy(() => import('./pages/TogetherPage'));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -86,6 +87,22 @@ function AnimatedRoutes() {
               style={{ width: '100%', height: '100%' }}
             >
               <SettingsPage />
+            </motion.div>
+          }
+        />
+        {/* Group mode: the invite carries the host's taste, so a guest needs no
+            account and the server keeps no session. */}
+        <Route
+          path="/together/:code?"
+          element={
+            <motion.div
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <TogetherPage />
             </motion.div>
           }
         />

@@ -157,6 +157,8 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
             <span className={styles.dot} aria-hidden="true">·</span>
           </>
         )}
+        <Link to="/together" className={styles.link}>Watch together</Link>
+        <span className={styles.dot} aria-hidden="true">·</span>
         <button className={styles.link} onClick={onStartOver} disabled={isRegenerating}>
           Start over
         </button>
