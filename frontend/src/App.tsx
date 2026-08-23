@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { MotionConfig, motion } from "framer-motion";
+import { MotionConfig } from "framer-motion";
 import { useTasteStore } from './stores/tasteStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
@@ -29,16 +29,11 @@ const TasteProfilePage = lazy(() => import('./pages/TasteProfilePage'));
  * animation here: the router swaps pages immediately and motion is decoration.
  */
 function Page({ children }: { children: ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
-      style={{ width: '100%', height: '100%' }}
-    >
-      {children}
-    </motion.div>
-  );
+  // No mount animation on the wrapper either. Fading in from opacity 0 means
+  // the whole page is invisible until an animation frame runs, and frames are
+  // paused in a background tab — a page was caught frozen at opacity 0.33 that
+  // way. Individual elements may animate; the container holding them must not.
+  return <div style={{ width: '100%', height: '100%' }}>{children}</div>;
 }
 
 function AppRoutes() {
