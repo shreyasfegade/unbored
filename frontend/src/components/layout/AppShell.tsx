@@ -5,6 +5,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import Background from './Background';
 import Header from './Header';
 import { Toast } from '../ui/Toast';
+import BottomNav from './BottomNav';
 import WakeGate from '../system/WakeGate';
 import styles from './AppShell.module.css';
 
@@ -54,6 +55,7 @@ export default function AppShell({ children }: AppShellProps) {
       <main id="main-content" className={styles.main} ref={mainRef} tabIndex={-1}>
         {children}
       </main>
+      <BottomNav />
       <p aria-live="polite" className={styles.routeAnnouncer}>{announce}</p>
       {/* Probes the API and only takes over when it's actually cold; it also
           replaces the old fire-and-forget warmup ping. */}

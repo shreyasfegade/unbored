@@ -52,11 +52,7 @@ export default function Header() {
             <span className={styles.aiSpark} aria-hidden="true">✦</span> AI
           </Link>
         )}
-        <Link to="/library" className={styles.settingsLink} aria-label="Your library">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
-          </svg>
-        </Link>
+        {/* The library lives in the bottom nav now, labelled. */}
         <Link to="/settings" className={styles.settingsLink} aria-label="Settings">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3" />

@@ -106,7 +106,8 @@ describe("route changes", () => {
 
     expect(await screen.findByText(/How are you feeling/i, {}, { timeout: 8000 })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("link", { name: /your library/i }));
+    // Via the bottom nav, which is now how every mode is reached.
+    await user.click(screen.getByRole("link", { name: /^library$/i }));
 
     // Match the page heading, not the header link that shares its label.
     await screen.findByRole("heading", { name: /your library/i }, { timeout: 8000 });
