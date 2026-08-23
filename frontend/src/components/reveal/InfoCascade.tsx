@@ -168,6 +168,7 @@ export function InfoCascade({
           onStartOver={onStartOver}
           watchUrl={watchUrl}
           shareId={primary.media.id}
+          media={primary.media}
         />
       </motion.div>
     </motion.div>

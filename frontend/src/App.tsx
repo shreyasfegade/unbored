@@ -13,6 +13,7 @@ const EnrichPage = lazy(() => import('./pages/EnrichPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PickPage = lazy(() => import('./pages/PickPage'));
 const SwipePage = lazy(() => import('./pages/SwipePage'));
+const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -85,6 +86,20 @@ function AnimatedRoutes() {
               style={{ width: '100%', height: '100%' }}
             >
               <SettingsPage />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/library"
+          element={
+            <motion.div
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <LibraryPage />
             </motion.div>
           }
         />

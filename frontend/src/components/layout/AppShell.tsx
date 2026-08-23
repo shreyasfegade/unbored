@@ -17,6 +17,8 @@ const ROUTE_NAME: Record<string, string> = {
   "/onboarding": "Onboarding",
   "/enrich": "Tune your taste",
   "/settings": "Settings",
+  "/library": "Your library",
+  "/swipe": "Swipe",
 };
 
 export default function AppShell({ children }: AppShellProps) {

@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { useUIStore } from "../stores/uiStore";
 import { useTasteStore } from "../stores/tasteStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
+import { suppressedIds } from "../stores/libraryStore";
 import { useTimeContext } from "./useTimeContext";
 import { getRecommendation } from "../api/recommend";
 import { describeApiError, isCanceled } from "../api/client";
@@ -31,6 +32,13 @@ export function useRecommendation() {
     };
   }, [timeOfDay]);
 
+  /** Session exclusions plus anything the user has watched or rejected. The API
+   *  caps excluded_ids at 200, so keep the most recent when it overflows. */
+  const buildExcluded = useCallback((sessionExcluded: string[]) => {
+    const merged = Array.from(new Set([...sessionExcluded, ...suppressedIds()]));
+    return merged.length > 200 ? merged.slice(-200) : merged;
+  }, []);
+
   const recommend = useCallback(async () => {
     const taste = useTasteStore.getState();
     const ui = useUIStore.getState();
@@ -52,7 +60,7 @@ export function useRecommendation() {
 
     try {
       const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: favouriteIds, excluded_ids: rec.excludedIds, ...base },
+        { favourite_ids: favouriteIds, excluded_ids: buildExcluded(rec.excludedIds), ...base },
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -62,7 +70,7 @@ export function useRecommendation() {
       useRecommendationStore.getState().setError(describeApiError(error));
       ui.setRevealPhase("idle");
     }
-  }, [buildBody]);
+  }, [buildBody, buildExcluded]);
 
   const regenerate = useCallback(async () => {
     const taste = useTasteStore.getState();
@@ -91,7 +99,7 @@ export function useRecommendation() {
 
     try {
       const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: favouriteIds, excluded_ids: nextExcluded, ...base },
+        { favourite_ids: favouriteIds, excluded_ids: buildExcluded(nextExcluded), ...base },
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -102,7 +110,7 @@ export function useRecommendation() {
       useRecommendationStore.getState().setError(describeApiError(error));
       ui.setRevealPhase("idle");
     }
-  }, [buildBody]);
+  }, [buildBody, buildExcluded]);
 
   return { recommend, regenerate };
 }

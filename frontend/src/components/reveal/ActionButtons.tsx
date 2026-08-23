@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRecommendationStore } from "../../stores/recommendationStore";
 import { useToastStore } from "../../stores/toastStore";
+import { useLibraryStore } from "../../stores/libraryStore";
+import type { MediaItem } from "../../types/media";
 import styles from "./ActionButtons.module.css";
 
 interface ActionButtonsProps {
@@ -9,13 +11,45 @@ interface ActionButtonsProps {
   onStartOver: () => void;
   watchUrl: string | null;
   shareId: string | null;
+  media: MediaItem;
 }
 
-export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId }: ActionButtonsProps) {
+export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, media }: ActionButtonsProps) {
   const prefersReduced = useReducedMotion();
   const recStatus = useRecommendationStore((s) => s.status);
   const isRegenerating = recStatus === "regenerating";
   const addToast = useToastStore((s) => s.addToast);
+
+  const watchlist = useLibraryStore((s) => s.watchlist);
+  const addToWatchlist = useLibraryStore((s) => s.addToWatchlist);
+  const removeFromWatchlist = useLibraryStore((s) => s.removeFromWatchlist);
+  const markSeen = useLibraryStore((s) => s.markSeen);
+  const markNotInterested = useLibraryStore((s) => s.markNotInterested);
+  const saved = watchlist.some((w) => w.id === media.id);
+
+  const handleSave = () => {
+    if (saved) {
+      removeFromWatchlist(media.id);
+      addToast("Removed from your watchlist.");
+    } else {
+      addToWatchlist(media);
+      addToast("Saved to your watchlist.");
+    }
+  };
+
+  // Both verdicts permanently exclude the title, so each is followed by a fresh
+  // pick — leaving a rejected title on screen would be a dead end.
+  const handleSeen = () => {
+    markSeen(media.id);
+    addToast("Noted — we won't suggest it again.");
+    onRegenerate();
+  };
+
+  const handleNotInterested = () => {
+    markNotInterested(media.id);
+    addToast("Got it — that one's off the list.");
+    onRegenerate();
+  };
 
   const handleShare = async () => {
     if (!shareId) return;
@@ -75,10 +109,32 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId }: 
       </motion.button>
 
       <motion.div
+        className={styles.verdicts}
         variants={row}
         initial={prefersReduced ? false : "initial"}
         animate="animate"
         custom={2}
+      >
+        <button
+          className={`${styles.verdict} ${saved ? styles.verdictOn : ""}`}
+          onClick={handleSave}
+          aria-pressed={saved}
+        >
+          {saved ? "★ Saved" : "☆ Watchlist"}
+        </button>
+        <button className={styles.verdict} onClick={handleSeen} disabled={isRegenerating}>
+          ✓ Seen it
+        </button>
+        <button className={styles.verdict} onClick={handleNotInterested} disabled={isRegenerating}>
+          ✕ Not for me
+        </button>
+      </motion.div>
+
+      <motion.div
+        variants={row}
+        initial={prefersReduced ? false : "initial"}
+        animate="animate"
+        custom={3}
         style={{ width: "100%", display: "flex", justifyContent: "center" }}
       >
         <Link to="/enrich" className={styles.tune}>
@@ -91,7 +147,7 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId }: 
         variants={row}
         initial={prefersReduced ? false : "initial"}
         animate="animate"
-        custom={3}
+        custom={4}
       >
         {shareId && (
           <>
