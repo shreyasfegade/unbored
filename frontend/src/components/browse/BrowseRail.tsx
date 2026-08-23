@@ -134,8 +134,11 @@ export default function BrowseRail({
   const nudge = (dir: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
+    // Instant, not smooth: smooth scrolling silently does nothing in some
+    // engines/contexts, and an arrow that doesn't move is the bug we're fixing.
     // Just under a full screen, so a partly-visible tile stays as an anchor.
-    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+    el.scrollLeft += dir * el.clientWidth * 0.85;
+    updateArrows();
     if (dir === 1) loadMore();
   };
 
