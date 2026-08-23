@@ -161,6 +161,9 @@ export default function EnrichPage() {
           placeholder="Search for a title, or browse below…"
           loading={searchLoading}
         />
+        <button className={styles.swipeLink} onClick={() => navigate("/swipe")}>
+          ♥ Or swipe through titles instead
+        </button>
       </motion.div>
 
       <div className={styles.scrollArea}>

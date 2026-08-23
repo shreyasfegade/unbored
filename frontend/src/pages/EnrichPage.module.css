@@ -112,6 +112,26 @@
   width: 100%;
 }
 
+.swipeLink {
+  background: none;
+  border: none;
+  color: var(--color-accent-bright, var(--color-text-secondary));
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.swipeLink:hover {
+  text-decoration: underline;
+}
+
+.swipeLink:focus-visible {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .scrollArea {
   flex: 1;
   overflow-y: auto;

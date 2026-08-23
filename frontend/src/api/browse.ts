@@ -15,6 +15,17 @@ export interface BrowseShelfPage {
   next_offset: number | null;
 }
 
+export const getBrowseDeck = (
+  opts: { limit?: number; exclude?: string[]; mediaType?: string } = {},
+) =>
+  api.get<{ items: MediaItem[] }>('/api/browse/deck', {
+    params: {
+      limit: opts.limit ?? 30,
+      ...(opts.exclude?.length ? { exclude: opts.exclude.join(',') } : {}),
+      ...(opts.mediaType ? { media_type: opts.mediaType } : {}),
+    },
+  });
+
 export const getBrowseShelves = (mediaType?: string) =>
   api.get<{ shelves: BrowseShelf[] }>('/api/browse/shelves', {
     params: mediaType ? { media_type: mediaType } : undefined,
