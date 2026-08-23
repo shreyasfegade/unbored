@@ -49,6 +49,18 @@ class MediaItem(BaseModel):
     media_type: MediaType
     status: str = ""
     popularity: float = Field(default=0.0, ge=0.0)
+    popularity_norm: float = Field(
+        default=0.0, ge=0.0, le=1.0,
+        description=(
+            "Popularity as a 0-1 percentile within its own source. TMDB and "
+            "AniList use wildly different scales, so only this is comparable "
+            "across sources."
+        ),
+    )
+    franchise: str | None = Field(
+        default=None,
+        description="Canonical series name, so one show can't fill a row.",
+    )
     cast: list[str] = Field(default_factory=list, max_length=5)
     director: str | None = None
     studio: str | None = None

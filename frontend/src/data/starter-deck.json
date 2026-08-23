@@ -1,5 +1,38 @@
 [
   {
+    "id": "tmdb_969681",
+    "title": "Spider-Man: Brand New Day",
+    "poster_path": "https://image.tmdb.org/t/p/w500/tV712n7bMaRuaKyltFl65HPNRiP.jpg",
+    "genres": [
+      "sci-fi",
+      "action"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_108978",
+    "title": "Reacher",
+    "poster_path": "https://image.tmdb.org/t/p/w500/f1VCQIG2iCyOookdgOzwtUpwWC0.jpg",
+    "genres": [
+      "action",
+      "adventure"
+    ],
+    "release_year": 2022,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1368337",
+    "title": "The Odyssey",
+    "poster_path": "https://image.tmdb.org/t/p/w500/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
+    "genres": [
+      "adventure",
+      "action"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
     "id": "al_16498",
     "title": "Attack on Titan",
     "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-buvcRTBx4NSm.jpg",
@@ -9,6 +42,39 @@
     ],
     "release_year": 2013,
     "media_type": "anime"
+  },
+  {
+    "id": "tmdb_1288445",
+    "title": "Mutiny",
+    "poster_path": "https://image.tmdb.org/t/p/w500/aAnTt6KpmbbHbd6xH3FQFlppZjc.jpg",
+    "genres": [
+      "action",
+      "thriller"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_5920",
+    "title": "The Mentalist",
+    "poster_path": "https://image.tmdb.org/t/p/w500/acYXu4KaDj1NIkMgObnhe4C4a0T.jpg",
+    "genres": [
+      "crime",
+      "drama"
+    ],
+    "release_year": 2008,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1084244",
+    "title": "Toy Story 5",
+    "poster_path": "https://image.tmdb.org/t/p/w500/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
+    "genres": [
+      "animation",
+      "family"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
   },
   {
     "id": "al_113415",
@@ -22,6 +88,39 @@
     "media_type": "anime"
   },
   {
+    "id": "tmdb_634649",
+    "title": "Spider-Man: No Way Home",
+    "poster_path": "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+    "genres": [
+      "action",
+      "adventure"
+    ],
+    "release_year": 2021,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_125988",
+    "title": "Silo",
+    "poster_path": "https://image.tmdb.org/t/p/w500/gMYZZvnkVNTqSVnVCphWbPXwWwb.jpg",
+    "genres": [
+      "sci-fi",
+      "fantasy"
+    ],
+    "release_year": 2023,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1375646",
+    "title": "Colony",
+    "poster_path": "https://image.tmdb.org/t/p/w500/tN799oUR0f1gUKDYdMNrDaY7I51.jpg",
+    "genres": [
+      "action",
+      "horror"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
     "id": "al_1535",
     "title": "Death Note",
     "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1535-kUgkcrfOrkUM.jpg",
@@ -33,70 +132,37 @@
     "media_type": "anime"
   },
   {
-    "id": "al_21459",
-    "title": "My Hero Academia",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21459-nYh85uj2Fuwr.jpg",
+    "id": "tmdb_1339713",
+    "title": "Obsession",
+    "poster_path": "https://image.tmdb.org/t/p/w500/bRwnj8WEKBCvmfeUNOukJPwB43K.jpg",
     "genres": [
-      "action",
-      "adventure"
+      "horror",
+      "thriller"
     ],
-    "release_year": 2016,
-    "media_type": "anime"
+    "release_year": 2026,
+    "media_type": "movie"
   },
   {
-    "id": "al_11061",
-    "title": "Hunter x Hunter (2011)",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11061-y5gsT1hoHuHw.png",
+    "id": "tmdb_113962",
+    "title": "Lioness",
+    "poster_path": "https://image.tmdb.org/t/p/w500/rzpHPSEgPTpRs8EHbygwsOw7jC0.jpg",
     "genres": [
-      "action",
-      "adventure"
+      "drama",
+      "war"
     ],
-    "release_year": 2011,
-    "media_type": "anime"
+    "release_year": 2023,
+    "media_type": "tv"
   },
   {
-    "id": "al_21",
-    "title": "ONE PIECE",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21-ELSYx3yMPcKM.jpg",
+    "id": "tmdb_1315772",
+    "title": "Minions & Monsters",
+    "poster_path": "https://image.tmdb.org/t/p/w500/4LwvU9SZc8QQzW1X1FAPhNbXnEU.jpg",
     "genres": [
-      "action",
-      "adventure"
+      "adventure",
+      "animation"
     ],
-    "release_year": 1999,
-    "media_type": "anime"
-  },
-  {
-    "id": "al_20605",
-    "title": "Tokyo Ghoul",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b20605-k665mVkSug8D.jpg",
-    "genres": [
-      "action",
-      "drama"
-    ],
-    "release_year": 2014,
-    "media_type": "anime"
-  },
-  {
-    "id": "al_20958",
-    "title": "Attack on Titan Season 2",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20958-HuFJyr54Mmir.jpg",
-    "genres": [
-      "action",
-      "drama"
-    ],
-    "release_year": 2017,
-    "media_type": "anime"
-  },
-  {
-    "id": "al_5114",
-    "title": "Fullmetal Alchemist: Brotherhood",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx5114-nSWCgQlmOMtj.jpg",
-    "genres": [
-      "action",
-      "adventure"
-    ],
-    "release_year": 2009,
-    "media_type": "anime"
+    "release_year": 2026,
+    "media_type": "movie"
   },
   {
     "id": "al_21519",
@@ -110,6 +176,39 @@
     "media_type": "anime"
   },
   {
+    "id": "tmdb_1284041",
+    "title": "The Last House",
+    "poster_path": "https://image.tmdb.org/t/p/w500/6JU7E8Vv2M11egkctWVOScxWR75.jpg",
+    "genres": [
+      "horror",
+      "sci-fi"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_95350",
+    "title": "Lanterns",
+    "poster_path": "https://image.tmdb.org/t/p/w500/gpC7h43xPMEV3goYMQShfJbTtLq.jpg",
+    "genres": [
+      "drama",
+      "mystery"
+    ],
+    "release_year": 2026,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1275779",
+    "title": "Disclosure Day",
+    "poster_path": "https://image.tmdb.org/t/p/w500/AnJ8IQJI23hNpYXVNaythu061Ru.jpg",
+    "genres": [
+      "sci-fi",
+      "thriller"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
     "id": "al_20954",
     "title": "A Silent Voice",
     "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20954-sYRfE5jQRtSB.jpg",
@@ -119,6 +218,39 @@
     ],
     "release_year": 2016,
     "media_type": "anime"
+  },
+  {
+    "id": "tmdb_1101383",
+    "title": "The End of Oak Street",
+    "poster_path": "https://image.tmdb.org/t/p/w500/fYXqpgPmHMphSF2W30GbTeJVIa5.jpg",
+    "genres": [
+      "sci-fi",
+      "mystery"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_2734",
+    "title": "Law & Order: Special Victims Unit",
+    "poster_path": "https://image.tmdb.org/t/p/w500/iofokHZoUB4Qhik4PflvJl8TT6a.jpg",
+    "genres": [
+      "crime",
+      "drama"
+    ],
+    "release_year": 1999,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1083381",
+    "title": "Backrooms",
+    "poster_path": "https://image.tmdb.org/t/p/w500/rhGx6E3qRNMgj3i5su2oukNHwIQ.jpg",
+    "genres": [
+      "horror",
+      "mystery"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
   },
   {
     "id": "al_9253",
@@ -132,6 +264,37 @@
     "media_type": "anime"
   },
   {
+    "id": "tmdb_1212763",
+    "title": "Evil Dead Burn",
+    "poster_path": "https://image.tmdb.org/t/p/w500/uRxrNXQWkHoENm3nwVOZDYSCx2F.jpg",
+    "genres": [
+      "horror"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_94722",
+    "title": "Tagesschau",
+    "poster_path": "https://image.tmdb.org/t/p/w500/7dFZJ2ZJJdcmkp05B9NWlqTJ5tq.jpg",
+    "genres": [
+      "news"
+    ],
+    "release_year": 1952,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_687163",
+    "title": "Project Hail Mary",
+    "poster_path": "https://image.tmdb.org/t/p/w500/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+    "genres": [
+      "sci-fi",
+      "adventure"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
     "id": "al_20464",
     "title": "HAIKYU!!",
     "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20464-ooZUyBe4ptp9.png",
@@ -143,56 +306,12 @@
     "media_type": "anime"
   },
   {
-    "id": "al_101291",
-    "title": "Rascal Does Not Dream of Bunny Girl Senpai",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101291-wfEdgPqtfU0l.jpg",
+    "id": "tmdb_1081003",
+    "title": "Supergirl",
+    "poster_path": "https://image.tmdb.org/t/p/w500/1QCWdqzTfh2x9UylVpspIU6QTuM.jpg",
     "genres": [
-      "comedy",
-      "drama"
-    ],
-    "release_year": 2018,
-    "media_type": "anime"
-  },
-  {
-    "id": "al_101921",
-    "title": "Kaguya-sama: Love is War",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101921-ufrjLzhSz7L1.jpg",
-    "genres": [
-      "comedy",
-      "thriller"
-    ],
-    "release_year": 2019,
-    "media_type": "anime"
-  },
-  {
-    "id": "al_21827",
-    "title": "Violet Evergarden",
-    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21827-ubzq619ZA2E9.png",
-    "genres": [
-      "drama",
-      "fantasy"
-    ],
-    "release_year": 2018,
-    "media_type": "anime"
-  },
-  {
-    "id": "tmdb_124364",
-    "title": "FROM",
-    "poster_path": "https://image.tmdb.org/t/p/w500/pRtJagIxpfODzzb0T0NAvZSzErC.jpg",
-    "genres": [
-      "mystery",
-      "drama"
-    ],
-    "release_year": 2022,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_1339713",
-    "title": "Obsession",
-    "poster_path": "https://image.tmdb.org/t/p/w500/bRwnj8WEKBCvmfeUNOukJPwB43K.jpg",
-    "genres": [
-      "horror",
-      "thriller"
+      "action",
+      "adventure"
     ],
     "release_year": 2026,
     "media_type": "movie"
@@ -209,26 +328,25 @@
     "media_type": "tv"
   },
   {
-    "id": "tmdb_936075",
-    "title": "Michael",
-    "poster_path": "https://image.tmdb.org/t/p/w500/zm0KAbOjlt9eR5y7vDiL2dEOwMl.jpg",
+    "id": "tmdb_1273221",
+    "title": "Scary Movie",
+    "poster_path": "https://image.tmdb.org/t/p/w500/znHT8peERZRWG1ME3r0Db0EV8k8.jpg",
     "genres": [
-      "music",
-      "drama"
+      "comedy"
     ],
     "release_year": 2026,
     "media_type": "movie"
   },
   {
-    "id": "tmdb_1084244",
-    "title": "Toy Story 5",
-    "poster_path": "https://image.tmdb.org/t/p/w500/a6H2U7pjibMia41TwyFVd1PVQw3.jpg",
+    "id": "al_101291",
+    "title": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101291-wfEdgPqtfU0l.jpg",
     "genres": [
-      "animation",
-      "family"
+      "comedy",
+      "drama"
     ],
-    "release_year": 2026,
-    "media_type": "movie"
+    "release_year": 2018,
+    "media_type": "anime"
   },
   {
     "id": "tmdb_1523145",
@@ -236,104 +354,6 @@
     "poster_path": "https://image.tmdb.org/t/p/w500/7wIBfBl2gejt6xHxNSK0reVIm7E.jpg",
     "genres": [
       "romance"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_273240",
-    "title": "Off Campus",
-    "poster_path": "https://image.tmdb.org/t/p/w500/cbODFqkcmRgrYH8NkG4Q4Hcg8Z1.jpg",
-    "genres": [
-      "drama"
-    ],
-    "release_year": 2026,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_2734",
-    "title": "Law & Order: Special Victims Unit",
-    "poster_path": "https://image.tmdb.org/t/p/w500/iofokHZoUB4Qhik4PflvJl8TT6a.jpg",
-    "genres": [
-      "crime",
-      "drama"
-    ],
-    "release_year": 1999,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_76479",
-    "title": "The Boys",
-    "poster_path": "https://image.tmdb.org/t/p/w500/in1R2dDc421JxsoRWaIIAqVI2KE.jpg",
-    "genres": [
-      "sci-fi",
-      "fantasy"
-    ],
-    "release_year": 2019,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_79744",
-    "title": "The Rookie",
-    "poster_path": "https://image.tmdb.org/t/p/w500/70kTz0OmjjZe7zHvIDrq2iKW7PJ.jpg",
-    "genres": [
-      "crime",
-      "drama"
-    ],
-    "release_year": 2018,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_549",
-    "title": "Law & Order",
-    "poster_path": "https://image.tmdb.org/t/p/w500/haJ9eHytVO3H3JooMJG1DiWwDNm.jpg",
-    "genres": [
-      "crime",
-      "drama"
-    ],
-    "release_year": 1990,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_276880",
-    "title": "Please Put Them On, Takamine-san",
-    "poster_path": "https://image.tmdb.org/t/p/w500/aN4X9QSECSfh5p8S3HtTiWRKJla.jpg",
-    "genres": [
-      "animation",
-      "comedy"
-    ],
-    "release_year": 2025,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_1399",
-    "title": "Game of Thrones",
-    "poster_path": "https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
-    "genres": [
-      "sci-fi",
-      "fantasy"
-    ],
-    "release_year": 2011,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_11012",
-    "title": "Damage",
-    "poster_path": "https://image.tmdb.org/t/p/w500/alf3JOPP7EYP0iO24gwe5YfRnqo.jpg",
-    "genres": [
-      "drama",
-      "romance"
-    ],
-    "release_year": 1992,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1477317",
-    "title": "Your Fault: London",
-    "poster_path": "https://image.tmdb.org/t/p/w500/nLxu237EJAisFCYKK48hN9Plobx.jpg",
-    "genres": [
-      "romance",
-      "drama"
     ],
     "release_year": 2026,
     "media_type": "movie"
@@ -349,190 +369,114 @@
     "media_type": "tv"
   },
   {
-    "id": "tmdb_278178",
-    "title": "I Will Find You",
-    "poster_path": "https://image.tmdb.org/t/p/w500/pb9oYHHNzauiCQZT03MpDAg46GI.jpg",
+    "id": "tmdb_454639",
+    "title": "Masters of the Universe",
+    "poster_path": "https://image.tmdb.org/t/p/w500/oRuyGUHdoaQxWP3SDfafGkStxTC.jpg",
     "genres": [
-      "drama",
-      "mystery"
+      "action",
+      "fantasy"
     ],
     "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "al_101921",
+    "title": "Kaguya-sama: Love is War",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101921-ufrjLzhSz7L1.jpg",
+    "genres": [
+      "comedy",
+      "thriller"
+    ],
+    "release_year": 2019,
+    "media_type": "anime"
+  },
+  {
+    "id": "tmdb_1307118",
+    "title": "Soulm8te",
+    "poster_path": "https://image.tmdb.org/t/p/w500/bNErActDctl6cdUGw9pnjSCmyhQ.jpg",
+    "genres": [
+      "horror",
+      "sci-fi"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_79744",
+    "title": "The Rookie",
+    "poster_path": "https://image.tmdb.org/t/p/w500/70kTz0OmjjZe7zHvIDrq2iKW7PJ.jpg",
+    "genres": [
+      "crime",
+      "drama"
+    ],
+    "release_year": 2018,
     "media_type": "tv"
   },
   {
-    "id": "tmdb_5920",
-    "title": "The Mentalist",
-    "poster_path": "https://image.tmdb.org/t/p/w500/acYXu4KaDj1NIkMgObnhe4C4a0T.jpg",
+    "id": "tmdb_980431",
+    "title": "Avatar Aang: The Last Airbender",
+    "poster_path": "https://image.tmdb.org/t/p/w500/3sgnSfNT27Bx5O5ukr7B26mhEQq.jpg",
     "genres": [
-      "crime",
+      "animation",
+      "action"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "al_4224",
+    "title": "Toradora!",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx4224-PXVMBLNwy2aF.jpg",
+    "genres": [
+      "comedy",
       "drama"
     ],
     "release_year": 2008,
-    "media_type": "tv"
+    "media_type": "anime"
   },
   {
-    "id": "tmdb_4614",
-    "title": "NCIS",
-    "poster_path": "https://image.tmdb.org/t/p/w500/mBcu8d6x6zB1el3MPNl7cZQEQ31.jpg",
+    "id": "tmdb_299536",
+    "title": "Avengers: Infinity War",
+    "poster_path": "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
     "genres": [
-      "crime",
-      "drama"
+      "adventure",
+      "action"
     ],
-    "release_year": 2003,
-    "media_type": "tv"
+    "release_year": 2018,
+    "media_type": "movie"
   },
   {
     "id": "tmdb_456",
     "title": "The Simpsons",
     "poster_path": "https://image.tmdb.org/t/p/w500/uWpG7GqfKGQqX4YMAo3nv5OrglV.jpg",
     "genres": [
-      "family",
-      "animation"
+      "animation",
+      "comedy"
     ],
     "release_year": 1989,
     "media_type": "tv"
   },
   {
-    "id": "tmdb_1275779",
-    "title": "Disclosure Day",
-    "poster_path": "https://image.tmdb.org/t/p/w500/3o5YPjDGDTcTDL5ftDA9NwN9dLd.jpg",
+    "id": "tmdb_278",
+    "title": "The Shawshank Redemption",
+    "poster_path": "https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
     "genres": [
-      "sci-fi",
-      "thriller"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_4057",
-    "title": "Criminal Minds",
-    "poster_path": "https://image.tmdb.org/t/p/w500/hWSb4UnIjlTvnvrP98NbFSO60HA.jpg",
-    "genres": [
-      "crime",
-      "drama"
-    ],
-    "release_year": 2005,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_95897",
-    "title": "Overflow",
-    "poster_path": "https://image.tmdb.org/t/p/w500/8RtwL5gxUvh9YViqjhNlVRvJpum.jpg",
-    "genres": [
-      "animation"
-    ],
-    "release_year": 2020,
-    "media_type": "tv"
-  },
-  {
-    "id": "tmdb_614945",
-    "title": "Voicemails for Isabelle",
-    "poster_path": "https://image.tmdb.org/t/p/w500/nmGIRyuMH72WHJengMo8LQjnZQn.jpg",
-    "genres": [
-      "romance",
-      "comedy"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1007757",
-    "title": "Swapped",
-    "poster_path": "https://image.tmdb.org/t/p/w500/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
-    "genres": [
-      "adventure",
-      "animation"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1304313",
-    "title": "Lee Cronin's The Mummy",
-    "poster_path": "https://image.tmdb.org/t/p/w500/1q308iixueCU4pFtSYugNOevtNx.jpg",
-    "genres": [
-      "horror",
-      "mystery"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_976912",
-    "title": "Graphic Desires",
-    "poster_path": "https://image.tmdb.org/t/p/w500/3BjLdTWRiHc1ISIZMFvToOmghOM.jpg",
-    "genres": [
-      "thriller",
+      "drama",
       "crime"
     ],
-    "release_year": 2023,
+    "release_year": 1994,
     "media_type": "movie"
   },
   {
-    "id": "tmdb_687163",
-    "title": "Project Hail Mary",
-    "poster_path": "https://image.tmdb.org/t/p/w500/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+    "id": "al_124080",
+    "title": "Horimiya",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx124080-3i22mRVPBS0T.jpg",
     "genres": [
-      "sci-fi",
-      "adventure"
+      "comedy",
+      "romance"
     ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_862",
-    "title": "Toy Story",
-    "poster_path": "https://image.tmdb.org/t/p/w500/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg",
-    "genres": [
-      "family",
-      "comedy"
-    ],
-    "release_year": 1995,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1083381",
-    "title": "Backrooms",
-    "poster_path": "https://image.tmdb.org/t/p/w500/rhGx6E3qRNMgj3i5su2oukNHwIQ.jpg",
-    "genres": [
-      "horror",
-      "mystery"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_301528",
-    "title": "Toy Story 4",
-    "poster_path": "https://image.tmdb.org/t/p/w500/w9kR8qbmQ01HwnvK4alvnQ2ca0L.jpg",
-    "genres": [
-      "family",
-      "comedy"
-    ],
-    "release_year": 2019,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1327819",
-    "title": "Hoppers",
-    "poster_path": "https://image.tmdb.org/t/p/w500/xjtWQ2CL1mpmMNwuU5HeS4Iuwuu.jpg",
-    "genres": [
-      "adventure",
-      "animation"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1311031",
-    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
-    "poster_path": "https://image.tmdb.org/t/p/w500/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
-    "genres": [
-      "animation",
-      "action"
-    ],
-    "release_year": 2025,
-    "media_type": "movie"
+    "release_year": 2021,
+    "media_type": "anime"
   },
   {
     "id": "tmdb_83533",
@@ -546,111 +490,168 @@
     "media_type": "movie"
   },
   {
-    "id": "tmdb_1430077",
-    "title": "Hokum",
-    "poster_path": "https://image.tmdb.org/t/p/w500/jKPWwsbAM6HKURPYQ1eG8DmKMKn.jpg",
-    "genres": [
-      "horror"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1318413",
-    "title": "Pressure",
-    "poster_path": "https://image.tmdb.org/t/p/w500/gFjEggtrejCN79r6SXRjM269OtG.jpg",
-    "genres": [
-      "thriller",
-      "history"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1084242",
-    "title": "Zootopia 2",
-    "poster_path": "https://image.tmdb.org/t/p/w500/oJ7g2CifqpStmoYQyaLQgEU32qO.jpg",
-    "genres": [
-      "animation",
-      "adventure"
-    ],
-    "release_year": 2025,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1297842",
-    "title": "GOAT",
-    "poster_path": "https://image.tmdb.org/t/p/w500/wfuqMlaExcoYiUEvKfVpUTt1v4u.jpg",
-    "genres": [
-      "animation",
-      "comedy"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_1358005",
-    "title": "Office Romance",
-    "poster_path": "https://image.tmdb.org/t/p/w500/1HRUTqEVDmJC4L6tp6zd85MI6uH.jpg",
-    "genres": [
-      "romance",
-      "comedy"
-    ],
-    "release_year": 2026,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_157336",
-    "title": "Interstellar",
-    "poster_path": "https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg",
-    "genres": [
-      "adventure",
-      "drama"
-    ],
-    "release_year": 2014,
-    "media_type": "movie"
-  },
-  {
-    "id": "tmdb_863",
-    "title": "Toy Story 2",
-    "poster_path": "https://image.tmdb.org/t/p/w500/4rbcp3ng8n1MKHjpeqW0L7Fnpzz.jpg",
+    "id": "tmdb_1434",
+    "title": "Family Guy",
+    "poster_path": "https://image.tmdb.org/t/p/w500/3PFsEuAiyLkWsP4GG6dIV37Q6gu.jpg",
     "genres": [
       "animation",
       "comedy"
     ],
     "release_year": 1999,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1311031",
+    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+    "poster_path": "https://image.tmdb.org/t/p/w500/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
+    "genres": [
+      "animation",
+      "action"
+    ],
+    "release_year": 2025,
     "media_type": "movie"
   },
   {
-    "id": "tmdb_840464",
-    "title": "Greenland 2: Migration",
-    "poster_path": "https://image.tmdb.org/t/p/w500/z2tqCJLsw6uEJ8nJV8BsQXGa3dr.jpg",
+    "id": "al_199",
+    "title": "Spirited Away",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199-sWefXJvXkDOb.jpg",
     "genres": [
       "adventure",
+      "drama"
+    ],
+    "release_year": 2001,
+    "media_type": "anime"
+  },
+  {
+    "id": "tmdb_1481343",
+    "title": "The Devil's Mouth",
+    "poster_path": "https://image.tmdb.org/t/p/w500/lH8k9uCWYn2b2gsYleqYBDPbWa8.jpg",
+    "genres": [
+      "horror",
       "thriller"
     ],
     "release_year": 2026,
     "media_type": "movie"
   },
   {
-    "id": "tmdb_4247",
-    "title": "Scary Movie",
-    "poster_path": "https://image.tmdb.org/t/p/w500/fVQFPRuw3yWXojYDJvA5EoFjUOY.jpg",
+    "id": "tmdb_4614",
+    "title": "NCIS",
+    "poster_path": "https://image.tmdb.org/t/p/w500/mBcu8d6x6zB1el3MPNl7cZQEQ31.jpg",
     "genres": [
-      "comedy"
+      "crime",
+      "drama"
     ],
-    "release_year": 2000,
+    "release_year": 2003,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_1564614",
+    "title": "Leviticus",
+    "poster_path": "https://image.tmdb.org/t/p/w500/gnAsZvBygplNpp8PtjoTEYv3VPB.jpg",
+    "genres": [
+      "horror",
+      "romance"
+    ],
+    "release_year": 2026,
     "media_type": "movie"
   },
   {
-    "id": "tmdb_10193",
-    "title": "Toy Story 3",
-    "poster_path": "https://image.tmdb.org/t/p/w500/AbbXspMOwdvwWZgVN0nabZq03Ec.jpg",
+    "id": "al_154587",
+    "title": "Frieren: Beyond Journey’s End",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587-qQTzQnEJJ3oB.jpg",
+    "genres": [
+      "adventure",
+      "drama"
+    ],
+    "release_year": 2023,
+    "media_type": "anime"
+  },
+  {
+    "id": "tmdb_1314481",
+    "title": "The Devil Wears Prada 2",
+    "poster_path": "https://image.tmdb.org/t/p/w500/xTI42pmsP5EDnvsNJPEDubwWBQO.jpg",
+    "genres": [
+      "comedy",
+      "drama"
+    ],
+    "release_year": 2026,
+    "media_type": "movie"
+  },
+  {
+    "id": "tmdb_1622",
+    "title": "Supernatural",
+    "poster_path": "https://image.tmdb.org/t/p/w500/8iixmfGx5EIFPdpNvB2JvI3VIqX.jpg",
+    "genres": [
+      "drama",
+      "mystery"
+    ],
+    "release_year": 2005,
+    "media_type": "tv"
+  },
+  {
+    "id": "tmdb_24428",
+    "title": "The Avengers",
+    "poster_path": "https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
+    "genres": [
+      "sci-fi",
+      "action"
+    ],
+    "release_year": 2012,
+    "media_type": "movie"
+  },
+  {
+    "id": "al_108465",
+    "title": "Mushoku Tensei: Jobless Reincarnation",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx108465-1ANspF1EWyFx.jpg",
+    "genres": [
+      "adventure",
+      "drama"
+    ],
+    "release_year": 2021,
+    "media_type": "anime"
+  },
+  {
+    "id": "tmdb_60625",
+    "title": "Rick and Morty",
+    "poster_path": "https://image.tmdb.org/t/p/w500/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg",
     "genres": [
       "animation",
-      "family"
+      "comedy"
     ],
-    "release_year": 2010,
-    "media_type": "movie"
+    "release_year": 2013,
+    "media_type": "tv"
+  },
+  {
+    "id": "al_132405",
+    "title": "My Dress-Up Darling",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx132405-qP7FQYGmNI3d.jpg",
+    "genres": [
+      "comedy",
+      "ecchi"
+    ],
+    "release_year": 2022,
+    "media_type": "anime"
+  },
+  {
+    "id": "tmdb_4057",
+    "title": "Criminal Minds",
+    "poster_path": "https://image.tmdb.org/t/p/w500/hWSb4UnIjlTvnvrP98NbFSO60HA.jpg",
+    "genres": [
+      "crime",
+      "drama"
+    ],
+    "release_year": 2005,
+    "media_type": "tv"
+  },
+  {
+    "id": "al_97986",
+    "title": "Made in Abyss",
+    "poster_path": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx97986-TQ7dCgbS3y5s.jpg",
+    "genres": [
+      "adventure",
+      "drama"
+    ],
+    "release_year": 2017,
+    "media_type": "anime"
   }
 ]

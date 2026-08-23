@@ -39,8 +39,29 @@ def load_catalog() -> list[MediaItem]:
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("Skipping invalid catalog entry: %s", exc)
 
+    _ensure_popularity_norm(items)
     logger.info("Loaded %d catalog items from %s", len(items), path.name)
     return items
+
+
+def _ensure_popularity_norm(items: list[MediaItem]) -> None:
+    """Backfill `popularity_norm` for catalogs built before it existed.
+
+    TMDB popularity peaks around 500 and AniList's runs past 1,000,000, so the
+    raw numbers can't be ranked together — do it as a percentile within each
+    source. Computed here as well as at build time so an older catalog still
+    ranks correctly.
+    """
+    if not items or any(m.popularity_norm for m in items):
+        return
+    by_source: dict[str, list[MediaItem]] = {}
+    for item in items:
+        by_source.setdefault(item.source.value, []).append(item)
+    for group in by_source.values():
+        group.sort(key=lambda m: m.popularity or 0.0)
+        last = len(group) - 1 or 1
+        for rank, item in enumerate(group):
+            item.popularity_norm = round(rank / last, 6)
 
 
 @lru_cache(maxsize=1)

@@ -16,11 +16,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import subprocess
 import os
 import sys
 import time
 import types
+import unicodedata
 import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
@@ -95,10 +97,10 @@ OUT_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "catalog.js
 
 # How much to pull. TMDB pages are 20 items each. Weighted toward movies/TV so
 # a typical viewer's "surprise me" isn't dominated by anime.
-POPULAR_MOVIE_PAGES = 25
-TOP_RATED_MOVIE_PAGES = 18
-POPULAR_TV_PAGES = 16
-ANILIST_PAGES = 3  # 50 per page, trending + top-rated
+POPULAR_MOVIE_PAGES = 70
+TOP_RATED_MOVIE_PAGES = 50
+POPULAR_TV_PAGES = 55
+ANILIST_PAGES = 4  # 50 per page, trending + top-rated
 
 # Quality floors so the catalog stays strong.
 MIN_VOTE_MOVIE_TV = 6.3
@@ -166,6 +168,104 @@ async def _collect_anime(anilist: AniListService) -> list[MediaItem]:
     return list(items.values())
 
 
+# ── Franchise grouping ────────────────────────────────────────────────
+# Season markers that mean "same show, later run" rather than a new title.
+_SEASON_RE = re.compile(
+    r"\b("
+    r"final\s+season|the\s+final\s+season|season\s+[0-9ivx]+|s[0-9]{1,2}\b"
+    r"|part\s+[0-9ivx]+|cour\s+[0-9]+|[0-9]+(st|nd|rd|th)\s+season"
+    r"|(second|third|fourth|fifth|sixth|final)\s+season"
+    r"|specials?|ova|ona|movie\s+[0-9]+"
+    r")\b.*$",
+    re.IGNORECASE,
+)
+_TRAILING_NUM_RE = re.compile(r"[\s:\-]*\b([0-9]{1,2}|[ivx]{1,4})\b\s*$", re.IGNORECASE)
+
+
+def franchise_key(item: MediaItem) -> str:
+    """A stable name for the series a title belongs to.
+
+    Used two ways: to drop duplicate seasons of the same show at build time, and
+    to stop one franchise filling a browse row. Deliberately conservative — over
+    -merging would hide genuinely different films.
+    """
+    title = unicodedata.normalize("NFKD", item.title or "").lower()
+    title = "".join(c for c in title if not unicodedata.combining(c))
+    title = re.sub(r"[\(\[].*?[\)\]]", " ", title)  # drop (2011), [TV] etc.
+    title = _SEASON_RE.sub(" ", title)
+
+    # Split off a subtitle so "Spider-Man: No Way Home" groups with the other
+    # Spider-Man films — but only when the head is substantial, so "Re:ZERO"
+    # isn't reduced to "re".
+    for sep in (":", " - ", " – "):
+        head, found, _ = title.partition(sep)
+        # 5 is enough to keep "Re:ZERO" intact while still folding "Bleach: ...".
+        if found and (len(head.strip()) >= 5 or len(head.split()) >= 2):
+            title = head
+            break
+
+    title = _TRAILING_NUM_RE.sub("", title)
+    title = re.sub(r"[^a-z0-9]+", " ", title).strip()
+    return title or (item.title or "").lower().strip()
+
+
+def _collapse_seasons(items: list[MediaItem]) -> list[MediaItem]:
+    """Keep one entry per TV/anime franchise — the best-known season.
+
+    Movies are left alone: numbered sequels and subtitled entries are genuinely
+    different films, and collapsing them would shrink the catalog for no gain.
+    Browse still de-duplicates films by franchise per row.
+    """
+    best: dict[tuple[str, str], MediaItem] = {}
+    passthrough: list[MediaItem] = []
+    for item in items:
+        if item.media_type == MediaType.MOVIE:
+            passthrough.append(item)
+            continue
+        key = (item.media_type.value, item.franchise or item.title.lower())
+        current = best.get(key)
+        rank = (item.vote_count, item.vote_average)
+        if current is None or rank > (current.vote_count, current.vote_average):
+            best[key] = item
+    return passthrough + list(best.values())
+
+
+def _apply_popularity_norm(items: list[MediaItem]) -> None:
+    """Rank popularity 0–1 *within each source*.
+
+    TMDB popularity tops out around 500 while AniList's runs past 1,000,000, so
+    ranking the raw numbers together puts anime above everything, everywhere.
+    A within-source percentile makes them comparable.
+    """
+    by_source: dict[str, list[MediaItem]] = {}
+    for item in items:
+        by_source.setdefault(item.source.value, []).append(item)
+    for group in by_source.values():
+        group.sort(key=lambda m: m.popularity or 0.0)
+        last = len(group) - 1 or 1
+        for rank, item in enumerate(group):
+            item.popularity_norm = round(rank / last, 6)
+
+
+def _previous_anime() -> list[MediaItem]:
+    """Anime from the catalog currently on disk, for use when AniList is down."""
+    if not OUT_PATH.exists():
+        return []
+    try:
+        raw = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    out: list[MediaItem] = []
+    for entry in raw.get("items", []):
+        if entry.get("media_type") != MediaType.ANIME.value:
+            continue
+        try:
+            out.append(MediaItem.model_validate(entry))
+        except Exception:  # pragma: no cover - defensive
+            continue
+    return out
+
+
 def _quality_ok(item: MediaItem) -> bool:
     is_anime = item.media_type == MediaType.ANIME or item.source == MediaSource.ANILIST
     floor = MIN_VOTE_ANIME if is_anime else MIN_VOTE_MOVIE_TV
@@ -213,6 +313,17 @@ async def main() -> int:
     anime = await _collect_anime(anilist)
     print(f"  anime={len(anime)}")
 
+    # AniList goes down for days at a time (it has been outright disabled
+    # before). Losing every anime because of an upstream outage would be a far
+    # worse catalog than a slightly stale one, so keep what we already had.
+    if not anime:
+        carried = _previous_anime()
+        if carried:
+            print(f"  ! AniList unavailable — carrying {len(carried)} anime from the existing catalog")
+            anime = carried
+        else:
+            print("  ! AniList unavailable and no previous anime to fall back on")
+
     all_items = movies + shows + anime
     seen: set[str] = set()
     catalog: list[MediaItem] = []
@@ -220,9 +331,15 @@ async def main() -> int:
         if item.id in seen or not _quality_ok(item):
             continue
         seen.add(item.id)
+        item.franchise = franchise_key(item)
         catalog.append(item)
 
-    catalog.sort(key=lambda m: (m.popularity or 0.0), reverse=True)
+    before = len(catalog)
+    catalog = _collapse_seasons(catalog)
+    print(f"  collapsed {before - len(catalog)} duplicate seasons -> {len(catalog)} titles")
+
+    _apply_popularity_norm(catalog)
+    catalog.sort(key=lambda m: m.popularity_norm, reverse=True)
 
     payload = {
         "version": 1,
