@@ -6,6 +6,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { searchMulti } from '../../api/search';
 import { SearchBar } from '../ui/SearchBar';
 import PosterGrid from '../poster/PosterGrid';
+import BrowseCatalog from '../browse/BrowseCatalog';
 import SelectionCounter from './SelectionCounter';
 import DoneButton from './DoneButton';
 import styles from './FavouritePicker.module.css';
@@ -14,14 +15,14 @@ interface FavouritePickerProps {
   onComplete: (picks: MediaItem[]) => void;
 }
 
+// Browse-first: users can add many, but this many is plenty for a sharp profile.
+const MAX_PICKS = 20;
+
 export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
   const prefersReduced = useReducedMotion();
   const {
     selectedFavourites,
-    curatedShortlist,
     isLoading,
-    error,
-    fetchCuratedShortlist,
     createFromFavourites,
     addFavourite,
     removeFavourite,
@@ -31,10 +32,6 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
   const [results, setResults] = useState<MediaItem[]>([]);
   const [searching, setSearching] = useState(false);
   const debounced = useDebounce(query, 300);
-
-  useEffect(() => {
-    fetchCuratedShortlist();
-  }, [fetchCuratedShortlist]);
 
   useEffect(() => {
     const q = debounced.trim();
@@ -75,7 +72,6 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
 
   const selectedIds = selectedFavourites.map((f) => f.id);
   const searchActive = query.trim().length > 0;
-  const gridItems = searchActive ? results : curatedShortlist;
 
   return (
     <div className={styles.container}>
@@ -93,40 +89,34 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.35 }}
       >
-        Pick 5 across movies, TV, and anime — search for anything, or choose from below.
+        Pick at least 5 across movies, TV, and anime — browse below, or search for anything.
       </motion.p>
 
       <div className={styles.searchRow}>
         <SearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Search any movie, show, or anime…"
+          placeholder="Search a title, or browse below…"
           loading={searching}
         />
       </div>
 
       <SelectionCounter current={selectedFavourites.length} target={5} />
 
-      {error && !searchActive ? (
-        <motion.div className={styles.error} role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <p>{error}</p>
-          <button className={styles.retryButton} onClick={fetchCuratedShortlist}>Try again</button>
-        </motion.div>
-      ) : (
-        <div className={styles.scrollArea}>
-          {searchActive && results.length === 0 && !searching ? (
-            <p className={styles.empty}>No matches for “{query.trim()}”. Try another title.</p>
-          ) : (
-            <PosterGrid
-              items={gridItems}
-              selectedIds={selectedIds}
-              onToggle={handleToggle}
-              maxSelections={5}
-              loading={!searchActive && isLoading && !error}
-            />
-          )}
-        </div>
-      )}
+      <div className={styles.scrollArea}>
+        {!searchActive ? (
+          <BrowseCatalog selectedIds={selectedIds} onToggle={handleToggle} maxSelections={MAX_PICKS} />
+        ) : results.length === 0 && !searching ? (
+          <p className={styles.empty}>No matches for “{query.trim()}”. Try another title.</p>
+        ) : (
+          <PosterGrid
+            items={results}
+            selectedIds={selectedIds}
+            onToggle={handleToggle}
+            maxSelections={MAX_PICKS}
+          />
+        )}
+      </div>
 
       <DoneButton
         visible={selectedFavourites.length >= 5}

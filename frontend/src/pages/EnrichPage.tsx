@@ -4,13 +4,13 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useDebounce } from "../hooks/useDebounce";
 import { searchMulti } from "../api/search";
-import { fetchCuratedShortlist } from "../api/taste";
 import { getCatalogItem } from "../api/media";
 import type { MediaItem } from "../types/media";
 import { EnrichTabs } from "../components/onboarding/EnrichTabs";
 import type { EnrichTab } from "../components/onboarding/EnrichTabs";
 import { SearchBar } from "../components/ui/SearchBar";
 import PosterGrid from "../components/poster/PosterGrid";
+import BrowseCatalog from "../components/browse/BrowseCatalog";
 import styles from "./EnrichPage.module.css";
 
 const TAB_TYPE: Record<EnrichTab, string> = { movies: "movie", tv: "tv", anime: "anime" };
@@ -32,30 +32,10 @@ export default function EnrichPage() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300);
   const [results, setResults] = useState<MediaItem[]>([]);
-  const [suggestions, setSuggestions] = useState<MediaItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [suggestionsError, setSuggestionsError] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [favItems, setFavItems] = useState<MediaItem[]>([]);
-
-  // For the retry button (an event handler, so a synchronous reset is fine).
-  const loadSuggestions = useCallback(() => {
-    setSuggestionsError(false);
-    fetchCuratedShortlist()
-      .then((res) => setSuggestions(res.data.items || []))
-      .catch(() => setSuggestionsError(true));
-  }, []);
-
-  // Curated suggestions so the page is never an empty void. Inline (no leading
-  // synchronous setState) to keep the effect clean.
-  useEffect(() => {
-    let cancelled = false;
-    fetchCuratedShortlist()
-      .then((res) => { if (!cancelled) setSuggestions(res.data.items || []); })
-      .catch(() => { if (!cancelled) setSuggestionsError(true); });
-    return () => { cancelled = true; };
-  }, []);
 
   // Fetch the user's current favourites so they can review and remove them.
   useEffect(() => {
@@ -116,9 +96,6 @@ export default function EnrichPage() {
   const enrichmentCount = enrichmentItems.length;
   const selectedIds = enrichmentItems.map((ei: MediaItem) => ei.id);
   const searching = query.trim().length > 0;
-  const gridItems = searching
-    ? results
-    : suggestions.filter((s) => s.media_type === TAB_TYPE[activeTab]);
 
   return (
     <div className={styles.page}>
@@ -177,28 +154,22 @@ export default function EnrichPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, duration: 0.35 }}
       >
-        <EnrichTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        {searching && <EnrichTabs activeTab={activeTab} onTabChange={handleTabChange} />}
         <SearchBar
           value={query}
           onChange={setQuery}
-          placeholder={`Search ${activeTab === "anime" ? "anime" : activeTab === "tv" ? "TV shows" : "movies"}…`}
+          placeholder="Search for a title, or browse below…"
           loading={searchLoading}
         />
       </motion.div>
 
       <div className={styles.scrollArea}>
-        {!searching && gridItems.length > 0 && (
-          <p className={styles.sectionLabel}>Popular picks</p>
-        )}
-        {!searching && suggestionsError && gridItems.length === 0 ? (
-          <div className={styles.empty}>
-            <p>Couldn't load suggestions.</p>
-            <button className={styles.retryButton} onClick={loadSuggestions}>Try again</button>
-          </div>
-        ) : searching && results.length === 0 && !searchLoading && !searchError ? (
+        {!searching ? (
+          <BrowseCatalog selectedIds={selectedIds} onToggle={handleToggle} maxSelections={99} />
+        ) : results.length === 0 && !searchLoading && !searchError ? (
           <p className={styles.empty}>No matches for “{query.trim()}”.</p>
         ) : (
-          <PosterGrid items={gridItems} selectedIds={selectedIds} onToggle={handleToggle} maxSelections={99} loading={searchLoading} />
+          <PosterGrid items={results} selectedIds={selectedIds} onToggle={handleToggle} maxSelections={99} loading={searchLoading} />
         )}
         <AnimatePresence>
           {searchError && (

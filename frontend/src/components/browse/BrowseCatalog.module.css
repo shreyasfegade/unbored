@@ -1,0 +1,66 @@
+.catalog {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.chip {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 6px 16px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.chip:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-solid);
+}
+
+.chip.active {
+  background: var(--color-accent-solid);
+  border-color: var(--color-accent-solid);
+  color: #fff;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 2px;
+}
+
+.rails {
+  display: flex;
+  flex-direction: column;
+}
+
+.error {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--space-6) var(--space-3);
+}
+
+.retry {
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-full);
+  padding: 8px 20px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}

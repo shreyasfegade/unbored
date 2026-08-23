@@ -1,0 +1,62 @@
+.rail {
+  width: 100%;
+  margin-bottom: var(--space-5);
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-3);
+  letter-spacing: 0.01em;
+}
+
+.track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x proximity;
+  padding: 4px var(--space-3) var(--space-2);
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+
+.track::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+.tile {
+  flex: 0 0 auto;
+  width: 116px;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .tile {
+    width: 140px;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+}
+
+.skeleton {
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-bg-hover) 50%, var(--color-bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: railShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes railShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.sentinel {
+  flex: 0 0 1px;
+  width: 1px;
+  align-self: stretch;
+}

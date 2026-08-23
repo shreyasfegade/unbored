@@ -46,7 +46,7 @@ export const useTasteStore = create<TasteState>()(
         })),
       addFavourite: (item) =>
         set((state) => {
-          if (state.selectedFavourites.length >= 5) return state;
+          if (state.selectedFavourites.length >= 20) return state;
           if (state.selectedFavourites.some((f) => f.id === item.id)) return state;
           return { selectedFavourites: [...state.selectedFavourites, item] };
         }),
