@@ -113,14 +113,13 @@ export default function HomePage() {
 
   return (
     <div className={styles.page}>
-      <AnimatePresence mode="wait">
+      <>
         {preRecommendShown && (
           <motion.div
             className={styles.preRecommend}
             key="pre-recommend"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } }}
           >
             <motion.h1
               className={styles.wordmark}
@@ -218,14 +217,13 @@ export default function HomePage() {
             key="post-recommend"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
           >
             <ErrorBoundary label="reveal" onReset={handleStartOver}>
               <RevealOracle onRegenerate={handleRegenerate} onStartOver={handleStartOver} />
             </ErrorBoundary>
           </motion.div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

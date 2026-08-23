@@ -74,7 +74,9 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      {/* No AnimatePresence here: gating the pick behind the scanning phase's
+          exit animation means a stalled animation hides the result entirely. */}
+      <>
         {isScanning && <ScanningPhase key="scanning" waitStage={waitStage} />}
 
         {showRevealed && primary && (
@@ -82,7 +84,6 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
             key={primary.media.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.15 } }}
             className={styles.revealed}
           >
             <PosterReveal item={primary.media} />
@@ -104,7 +105,7 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

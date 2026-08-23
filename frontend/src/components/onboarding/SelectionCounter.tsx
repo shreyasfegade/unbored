@@ -12,7 +12,7 @@ export default function SelectionCounter({ current, target }: SelectionCounterPr
   return (
     <div className={styles.counter}>
       <p className={`${styles.text} ${isComplete ? styles.textComplete : ''}`}>
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.span
             key={current}
             className={styles.number}

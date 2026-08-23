@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { useBackendStatus } from "../../hooks/useBackendStatus";
 import { useTasteStore } from "../../stores/tasteStore";
 import SwipeDeck, { type SwipeVerdict } from "../swipe/SwipeDeck";
@@ -8,13 +8,26 @@ import starterDeck from "../../data/starter-deck.json";
 import styles from "./WakeGate.module.css";
 
 // The bundled deck is a trimmed shape; widen it to what SwipeDeck expects.
-const DECK = (starterDeck as Array<Partial<MediaItem>>).map((d) => ({
-  overview: "",
-  genres: [],
-  keywords: [],
-  cast: [],
-  ...d,
-})) as MediaItem[];
+// Shuffled once at module load rather than during render, so the component
+// stays pure and everyone doesn't see the same first card every time.
+const DECK = shuffle(
+  (starterDeck as Array<Partial<MediaItem>>).map((d) => ({
+    overview: "",
+    genres: [],
+    keywords: [],
+    cast: [],
+    ...d,
+  })) as MediaItem[],
+);
+
+function shuffle<T>(list: T[]): T[] {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 const BEATS = [
   "Unlocking the booth…",
@@ -37,29 +50,26 @@ export default function WakeGate() {
   const [liked, setLiked] = useState<string[]>([]);
   const [dismissed, setDismissed] = useState(false);
 
-  const shuffled = useMemo(() => {
-    const d = [...DECK];
-    for (let i = d.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [d[i], d[j]] = [d[j], d[i]];
-    }
-    return d;
-  }, []);
+  // Mirrors `liked` so the banking effect can read it without depending on it
+  // (and therefore without having to clear state from inside an effect).
+  const likedRef = useRef<string[]>([]);
+  const banked = useRef(false);
 
   // Bank the warm-up swipes as soon as there's a server to use them.
   useEffect(() => {
-    if (status === "ready" && liked.length) {
-      addFavouriteIds(liked);
-      setLiked([]);
-    }
-  }, [status, liked, addFavouriteIds]);
+    if (status !== "ready" || banked.current) return;
+    banked.current = true;
+    if (likedRef.current.length) addFavouriteIds(likedRef.current);
+  }, [status, addFavouriteIds]);
 
   const visible = !dismissed && (status === "asleep" || status === "waking" || status === "error");
   const secondsLeft = Math.max(0, Math.ceil((50_000 - elapsedMs) / 1000));
   const beat = BEATS[Math.min(BEATS.length - 1, Math.floor(elapsedMs / 10_000))];
 
   const handleDecide = (item: MediaItem, verdict: SwipeVerdict) => {
-    if (verdict === "like") setLiked((prev) => [...prev, item.id]);
+    if (verdict !== "like") return;
+    likedRef.current = [...likedRef.current, item.id];
+    setLiked(likedRef.current);
   };
 
   const handleStart = () => {
@@ -67,8 +77,11 @@ export default function WakeGate() {
     start();
   };
 
+  // Deliberately not wrapped in AnimatePresence: this is a full-screen overlay,
+  // so an exit animation that stalls would leave an invisible sheet swallowing
+  // every click. It unmounts the instant the server is ready.
   return (
-    <AnimatePresence>
+    <>
       {visible && (
         <motion.div
           className={styles.gate}
@@ -77,9 +90,6 @@ export default function WakeGate() {
           aria-label="Starting up"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          // While it fades out the node is still mounted; a full-screen overlay
-          // would go on swallowing clicks, so it stops accepting them up front.
-          exit={{ opacity: 0, pointerEvents: "none" }}
         >
           <div className={styles.inner}>
             <span className={styles.kicker}>Now showing</span>
@@ -132,7 +142,7 @@ export default function WakeGate() {
 
                 <div className={styles.deckWrap}>
                   <SwipeDeck
-                    items={shuffled}
+                    items={DECK}
                     onDecide={handleDecide}
                     emptyMessage="Great taste. Hang tight — nearly there."
                   />
@@ -142,6 +152,6 @@ export default function WakeGate() {
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

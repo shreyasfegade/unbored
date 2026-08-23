@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTasteStore } from '../stores/tasteStore';
 import FavouritePicker from '../components/onboarding/FavouritePicker';
 import ConnectAI from '../components/llm/ConnectAI';
@@ -8,10 +8,11 @@ import styles from './OnboardingPage.module.css';
 
 type Step = 'welcome' | 'favourites' | 'connect';
 
+// Enter-only. An exit animation that stalls would trap the user on a step, so
+// steps swap immediately and the motion is purely decorative.
 const stepVariants = {
   initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-  exit: { opacity: 0, y: -12, transition: { duration: 0.22 } },
 };
 
 export default function OnboardingPage() {
@@ -37,9 +38,9 @@ export default function OnboardingPage() {
 
   return (
     <div className={styles.page}>
-      <AnimatePresence mode="wait">
+      <>
         {step === 'welcome' && (
-          <motion.div key="welcome" className={styles.welcome} variants={stepVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div key="welcome" className={styles.welcome} variants={stepVariants} initial="initial" animate="animate">
             <span className={styles.kicker}>Decision paralysis, solved</span>
             <h1 className={styles.wordmark}>UNBORED</h1>
             <p className={styles.pitch}>
@@ -64,13 +65,13 @@ export default function OnboardingPage() {
         )}
 
         {step === 'favourites' && (
-          <motion.div key="favourites" className={styles.full} variants={stepVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div key="favourites" className={styles.full} variants={stepVariants} initial="initial" animate="animate">
             <FavouritePicker onComplete={() => setStep('connect')} />
           </motion.div>
         )}
 
         {step === 'connect' && (
-          <motion.div key="connect" className={styles.connect} variants={stepVariants} initial="initial" animate="animate" exit="exit">
+          <motion.div key="connect" className={styles.connect} variants={stepVariants} initial="initial" animate="animate">
             <span className={styles.kicker}>This is the part that matters</span>
             <h2 className={styles.connectHeading}>Connect your AI</h2>
             <p className={styles.connectPitch}>
@@ -92,7 +93,7 @@ export default function OnboardingPage() {
             <ConnectAI variant="onboarding" onConnected={finish} onSkip={finish} />
           </motion.div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }
