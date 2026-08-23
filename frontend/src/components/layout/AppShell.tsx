@@ -2,10 +2,10 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import api from '../../api/client';
 import Background from './Background';
 import Header from './Header';
 import { Toast } from '../ui/Toast';
+import WakeGate from '../system/WakeGate';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -25,13 +25,6 @@ export default function AppShell({ children }: AppShellProps) {
   const mainRef = useRef<HTMLElement>(null);
   const [announce, setAnnounce] = useState("");
   const firstRender = useRef(true);
-
-  // Wake the free-tier backend as soon as the app loads, so it's warm by the
-  // time the user finishes choosing (onboarding takes longer than the cold
-  // start). Fire-and-forget; failures are irrelevant here.
-  useEffect(() => {
-    api.get('/api/health').catch(() => {});
-  }, []);
 
   // On route change, move focus to <main> (so keyboard users don't restart from
   // the top of the document) and announce the new page for screen readers.
@@ -58,6 +51,9 @@ export default function AppShell({ children }: AppShellProps) {
         {children}
       </main>
       <p aria-live="polite" className={styles.routeAnnouncer}>{announce}</p>
+      {/* Probes the API and only takes over when it's actually cold; it also
+          replaces the old fire-and-forget warmup ping. */}
+      <WakeGate />
       <Toast />
     </motion.div>
   );
