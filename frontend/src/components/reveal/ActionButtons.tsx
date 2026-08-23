@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRecommendationStore } from "../../stores/recommendationStore";
@@ -19,6 +20,7 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
   const recStatus = useRecommendationStore((s) => s.status);
   const isRegenerating = recStatus === "regenerating";
   const addToast = useToastStore((s) => s.addToast);
+  const [showMore, setShowMore] = useState(false);
 
   const watchlist = useLibraryStore((s) => s.watchlist);
   const addToWatchlist = useLibraryStore((s) => s.addToWatchlist);
@@ -130,20 +132,42 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
         </button>
       </motion.div>
 
+      {/* Everything past the verdicts is occasional, and ten equally-weighted
+          buttons made none of them readable. Tucked behind one disclosure. */}
       <motion.div
+        className={styles.minor}
         variants={row}
         initial={prefersReduced ? false : "initial"}
         animate="animate"
         custom={3}
-        style={{ width: "100%", display: "flex", justifyContent: "center" }}
       >
-        <Link to="/enrich" className={styles.tune}>
-          <span aria-hidden="true">✎</span> Tune your taste for sharper picks
-        </Link>
-        <Link to="/taste" className={styles.tasteLink}>
-          see your taste
-        </Link>
+        <button
+          className={styles.link}
+          onClick={() => setShowMore((v) => !v)}
+          aria-expanded={showMore}
+        >
+          {showMore ? "Fewer options" : "More options"}
+        </button>
       </motion.div>
+
+      {showMore && (
+        <motion.div
+          className={styles.more}
+          initial={prefersReduced ? false : { opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Link to="/enrich" className={styles.tune}>
+            <span aria-hidden="true">✎</span> Tune your taste for sharper picks
+          </Link>
+          <div className={styles.moreRow}>
+            {shareId && (
+              <button className={styles.link} onClick={handleShare}>Share pick</button>
+            )}
+            <Link to="/together" className={styles.link}>Watch together</Link>
+            <Link to="/taste" className={styles.link}>See your taste</Link>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         className={styles.minor}
@@ -152,16 +176,6 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
         animate="animate"
         custom={4}
       >
-        {shareId && (
-          <>
-            <button className={styles.link} onClick={handleShare}>
-              Share pick
-            </button>
-            <span className={styles.dot} aria-hidden="true">·</span>
-          </>
-        )}
-        <Link to="/together" className={styles.link}>Watch together</Link>
-        <span className={styles.dot} aria-hidden="true">·</span>
         <button className={styles.link} onClick={onStartOver} disabled={isRegenerating}>
           Start over
         </button>

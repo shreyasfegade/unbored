@@ -109,22 +109,30 @@ export default function TogetherPage() {
       {!isGuest ? (
         <>
           <p className={styles.subtitle}>
-            Send this link to whoever you&rsquo;re watching with. They add what they love,
-            and we find the one thing you&rsquo;ll both enjoy.
+            Can&rsquo;t agree on something? Send a link to whoever you&rsquo;re watching with.
+            They add what they love, we blend it with your taste, and you get one pick
+            that suits you both.
           </p>
-          {myIds.length === 0 ? (
-            <div className={styles.empty}>
-              <p>You&rsquo;ll need some taste of your own first.</p>
-              <Link to="/enrich" className={styles.cta}>Pick a few favourites</Link>
-            </div>
-          ) : (
-            <>
-              <p className={styles.meta}>Your taste: {myIds.length} titles</p>
-              <button className={styles.primary} onClick={handleInvite}>
-                Copy invite link
-              </button>
-              <p className={styles.hint}>Anyone with the link can add their taste — no account needed.</p>
-            </>
+
+          <ol className={styles.steps}>
+            <li><span>1</span> Send them your link</li>
+            <li><span>2</span> They add a few favourites</li>
+            <li><span>3</span> You both get one pick</li>
+          </ol>
+
+          <p className={styles.meta}>
+            {myIds.length > 0
+              ? `Your taste: ${myIds.length} titles`
+              : "You haven't added any favourites yet — the pick will lean on theirs."}
+          </p>
+          <button className={styles.primary} onClick={handleInvite}>
+            Copy invite link
+          </button>
+          <p className={styles.hint}>No account needed, for either of you.</p>
+          {myIds.length === 0 && (
+            <Link to="/browse" className={styles.secondaryLink}>
+              Add your favourites first →
+            </Link>
           )}
         </>
       ) : theirIds.length === 0 ? (
@@ -135,8 +143,9 @@ export default function TogetherPage() {
       ) : (
         <>
           <p className={styles.subtitle}>
-            Someone wants to watch with you. Here&rsquo;s a taste of what they love —
-            we&rsquo;ll blend it with yours.
+            Someone wants to watch with you. Below is what they love — add anything
+            you love too, pick a mood, and we&rsquo;ll find one thing that suits you
+            both. Nothing is saved and neither of you needs an account.
           </p>
 
           {theirTitles.length > 0 && (
@@ -157,8 +166,8 @@ export default function TogetherPage() {
 
           {myIds.length === 0 && (
             <p className={styles.warn}>
-              You haven&rsquo;t added anything yet — <Link to="/enrich">pick a few favourites</Link> so
-              the result isn&rsquo;t just their taste.
+              You haven&rsquo;t added anything yet, so this would just be their taste.
+              <Link to="/browse"> Add a few favourites</Link> to make it a real compromise.
             </p>
           )}
 
