@@ -1,14 +1,18 @@
 /* Unbored service worker — conservative offline shell.
  *
  * - Navigations: network-first, fall back to the cached app shell when offline.
- * - Static assets (Vite hashed files, fonts, posters): stale-while-revalidate.
- * - Immutable catalog data (curated shortlist, catalog items): cache-first.
+ * - Same-origin static assets (Vite hashed files): stale-while-revalidate.
+ * - Immutable catalog data (browse, curated shortlist, catalog items): cache-first.
  * - /api/recommend and everything else: always network (never cached).
+ * - Cross-origin requests (posters, fonts) are NOT intercepted: a fetch() from
+ *   the worker is checked against CSP's connect-src, which doesn't list the image
+ *   CDNs, so routing them through here got them refused. Letting the browser load
+ *   them directly keeps them under img-src/font-src, where they're allowed.
  *
  * This can only ever *add* an offline fallback; it never intercepts the dynamic
  * recommendation call, so a stale cache can't serve a wrong pick.
  */
-const CACHE = "unbored-v1";
+const CACHE = "unbored-v2";
 const SHELL = "/index.html";
 
 self.addEventListener("install", (event) => {
@@ -64,19 +68,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Cross-origin (posters, fonts): don't touch it — let the browser load it
+  // directly so it's governed by img-src/font-src, not the worker's connect-src.
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Immutable catalog data.
-  if (url.pathname.startsWith("/api/search/") || url.pathname.startsWith("/api/media/")) {
+  if (
+    url.pathname.startsWith("/api/browse/") ||
+    url.pathname.startsWith("/api/search/") ||
+    url.pathname.startsWith("/api/media/")
+  ) {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Same-origin static assets + cross-origin posters/fonts.
-  if (
-    url.origin === self.location.origin ||
-    url.hostname.endsWith("tmdb.org") ||
-    url.hostname.endsWith("anilist.co") ||
-    url.hostname.endsWith("gstatic.com")
-  ) {
-    event.respondWith(staleWhileRevalidate(request));
-  }
+  // Same-origin static assets.
+  event.respondWith(staleWhileRevalidate(request));
 });
