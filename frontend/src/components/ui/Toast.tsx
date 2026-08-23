@@ -19,8 +19,10 @@ export function Toast() {
             transition={{ type: "spring", stiffness: 400, damping: 28, mass: 0.8 }}
             onClick={() => removeToast(toast.id)}
             role="status"
+            title="Dismiss"
           >
-            {toast.message}
+            <span>{toast.message}</span>
+            <span className={styles.close} aria-hidden="true">×</span>
           </motion.div>
         ))}
       </AnimatePresence>

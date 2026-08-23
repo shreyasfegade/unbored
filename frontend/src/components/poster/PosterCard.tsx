@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { MediaItem } from '../../types/media';
 import PosterArt from './PosterArt';
+import { sizedPoster } from '../../utils/poster';
 import styles from './PosterCard.module.css';
 
 interface PosterCardProps {
@@ -12,7 +13,10 @@ interface PosterCardProps {
   index?: number;
 }
 
-export default function PosterCard({ item, isSelected, onToggle, disabled, index = 0 }: PosterCardProps) {
+// Memoised: selecting one favourite changes `selectedIds`, and without this
+// every card in the grid (36 on the enrich page) re-renders. With a stable
+// onToggle, only the toggled card re-renders.
+function PosterCard({ item, isSelected, onToggle, disabled, index = 0 }: PosterCardProps) {
   const [failed, setFailed] = useState(false);
   const showArt = !item.poster_path || failed;
 
@@ -48,7 +52,7 @@ export default function PosterCard({ item, isSelected, onToggle, disabled, index
       ) : (
         <>
           <img
-            src={item.poster_path ?? ''}
+            src={sizedPoster(item.poster_path, 'card')}
             alt=""
             loading="lazy"
             width={200}
@@ -61,3 +65,5 @@ export default function PosterCard({ item, isSelected, onToggle, disabled, index
     </motion.button>
   );
 }
+
+export default memo(PosterCard);

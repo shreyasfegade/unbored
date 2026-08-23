@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { MediaItem } from "../../types/media";
 import PosterArt from "../poster/PosterArt";
+import { sizedPoster } from "../../utils/poster";
 import styles from "./PosterReveal.module.css";
 
 interface PosterRevealProps {
@@ -31,10 +32,13 @@ export function PosterReveal({ item }: PosterRevealProps) {
           <PosterArt item={item} />
         ) : (
           <img
-            src={item.poster_path ?? ""}
+            src={sizedPoster(item.poster_path, "hero")}
             alt={item.title}
             className={styles.img}
-            loading="lazy"
+            // The hero is the whole point of the reveal — load it eagerly and
+            // with high priority, not lazily.
+            loading="eager"
+            fetchPriority="high"
             width={300}
             height={450}
             onError={() => setFailed(true)}

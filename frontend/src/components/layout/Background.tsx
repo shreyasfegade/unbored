@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import styles from "./Background.module.css";
 
@@ -8,6 +9,16 @@ import styles from "./Background.module.css";
  */
 export default function Background() {
   const prefersReduced = useReducedMotion();
+  // The blooms use blur(90px) on promoted layers — continuous GPU cost. Pause
+  // the animation while the tab is hidden so we're not burning battery unseen.
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const onVis = () => setHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  const still = prefersReduced || hidden;
 
   const blooms = [
     { className: styles.bloomGold, x: [0, 40, -20, 0], y: [0, -30, 20, 0], duration: 26 },
@@ -22,9 +33,9 @@ export default function Background() {
         <motion.div
           key={i}
           className={`${styles.bloom} ${b.className}`}
-          animate={prefersReduced ? {} : { x: b.x, y: b.y }}
+          animate={still ? {} : { x: b.x, y: b.y }}
           transition={
-            prefersReduced
+            still
               ? { duration: 0 }
               : { duration: b.duration, repeat: Infinity, ease: "easeInOut" }
           }

@@ -32,20 +32,30 @@ export function MoodSelector({ selectedMood, onMoodSelect, isReturning = false }
     [onMoodSelect]
   );
 
+  const noneSelected = selectedMood === null;
+
   return (
-    <div className={styles.grid} role="radiogroup" aria-label="Select your mood">
-      {MOOD_CONFIGS.map((mood: MoodConfig, index: number) => (
-        <MoodTile
-          key={mood.id}
-          ref={(el) => { refs.current[index] = el; }}
-          mood={mood}
-          isSelected={selectedMood === mood.id}
-          onSelect={onMoodSelect}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          index={index}
-          skipEntrance={isReturning}
-        />
-      ))}
+    <div className={styles.section}>
+      <p className={styles.prompt} id="mood-label">
+        <span className={styles.step}>1</span> How are you feeling?
+      </p>
+      <div className={styles.grid} role="radiogroup" aria-labelledby="mood-label">
+        {MOOD_CONFIGS.map((mood: MoodConfig, index: number) => (
+          <MoodTile
+            key={mood.id}
+            ref={(el) => { refs.current[index] = el; }}
+            mood={mood}
+            isSelected={selectedMood === mood.id}
+            onSelect={onMoodSelect}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            index={index}
+            skipEntrance={isReturning}
+            // Keep a tab stop into the group even before anything is picked,
+            // otherwise keyboard users can never reach it (every tile was -1).
+            tabbable={selectedMood === mood.id || (noneSelected && index === 0)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

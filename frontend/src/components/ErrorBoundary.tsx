@@ -1,9 +1,11 @@
-import { Component, type ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import styles from "./ErrorBoundary.module.css";
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  label?: string;
+  onReset?: () => void;
 }
 
 interface State {
@@ -18,6 +20,16 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Without this, a render crash left no trace at all in production.
+    console.error(`[ErrorBoundary${this.props.label ? `:${this.props.label}` : ""}]`, error, info.componentStack);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+    this.props.onReset?.();
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
@@ -25,14 +37,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className={styles.container}>
           <p className={styles.message}>Something went wrong.</p>
-          <button
-            className={styles.reloadBtn}
-            onClick={() => {
-              this.setState({ hasError: false, error: null });
-              window.location.reload();
-            }}
-          >
-            Reload
+          <button className={styles.reloadBtn} onClick={this.handleReset}>
+            Try again
           </button>
         </div>
       );

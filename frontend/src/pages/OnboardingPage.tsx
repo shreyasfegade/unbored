@@ -17,6 +17,7 @@ const stepVariants = {
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const hasCompleted = useTasteStore((s) => s.hasCompletedOnboarding);
+  const completeOnboarding = useTasteStore((s) => s.completeOnboarding);
   const [step, setStep] = useState<Step>('welcome');
 
   // Returning (already-onboarded) users go straight home; the connect step is
@@ -26,6 +27,13 @@ export default function OnboardingPage() {
   }, [hasCompleted, step, navigate]);
 
   const finish = () => navigate('/', { replace: true });
+
+  // Try-before-you-commit: skip favourites entirely and let the cold-start
+  // engine hand over a strong popular pick, then invite tuning later.
+  const skipToDemo = () => {
+    completeOnboarding();
+    navigate('/', { replace: true });
+  };
 
   return (
     <div className={styles.page}>
@@ -41,14 +49,17 @@ export default function OnboardingPage() {
             <p className={styles.sub}>Takes about 30 seconds. No account, no scrolling.</p>
 
             <ol className={styles.steps}>
-              <li><span>1</span> Pick a few favourites</li>
-              <li><span>2</span> Connect your AI <em>(optional)</em></li>
-              <li><span>3</span> Get your pick</li>
+              <li><span>1</span> Pick a few things you love</li>
+              <li><span>2</span> Connect your AI <em>(Gemini or DeepSeek)</em></li>
+              <li><span>3</span> Get one pick, chosen for you</li>
             </ol>
 
             <motion.button className={styles.cta} onClick={() => setStep('favourites')} whileTap={{ scale: 0.97 }}>
               Get started
             </motion.button>
+            <button className={styles.skipDemo} onClick={skipToDemo}>
+              or just show me something →
+            </button>
           </motion.div>
         )}
 
@@ -60,16 +71,24 @@ export default function OnboardingPage() {
 
         {step === 'connect' && (
           <motion.div key="connect" className={styles.connect} variants={stepVariants} initial="initial" animate="animate" exit="exit">
-            <span className={styles.kicker}>Last step — optional</span>
+            <span className={styles.kicker}>This is the part that matters</span>
             <h2 className={styles.connectHeading}>Connect your AI</h2>
             <p className={styles.connectPitch}>
-              This is where Unbored gets <strong>genuinely good</strong>. Bring your own Gemini or
-              DeepSeek key and the AI chooses and explains your pick, grounded in what you love.
+              Unbored is really about <strong>AI picking for you</strong>. Bring your own Gemini or
+              DeepSeek key and it chooses and explains your pick, grounded in the titles you love.
             </p>
-            <p className={styles.connectSub}>
-              Without a key you'll still get smart picks from our built-in engine — but a key is
-              where the magic is.
-            </p>
+
+            <div className={styles.compare}>
+              <div className={`${styles.compareCol} ${styles.compareAi}`}>
+                <span className={styles.compareTag}>✦ With your key</span>
+                <p>AI reads your taste and hand-picks one title, with a reason in your words.</p>
+              </div>
+              <div className={styles.compareCol}>
+                <span className={styles.compareTag}>Without</span>
+                <p>A solid built-in engine pick — good, but not chosen <em>for you</em>.</p>
+              </div>
+            </div>
+
             <ConnectAI variant="onboarding" onConnected={finish} onSkip={finish} />
           </motion.div>
         )}

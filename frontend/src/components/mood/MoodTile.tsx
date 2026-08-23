@@ -11,10 +11,11 @@ interface MoodTileProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   index: number;
   skipEntrance?: boolean;
+  tabbable?: boolean;
 }
 
 export const MoodTile = forwardRef<HTMLButtonElement, MoodTileProps>(
-  function MoodTile({ mood, isSelected, onSelect, onKeyDown, index, skipEntrance = false }, ref) {
+  function MoodTile({ mood, isSelected, onSelect, onKeyDown, index, skipEntrance = false, tabbable = false }, ref) {
     const prefersReduced = useReducedMotion();
 
     return (
@@ -35,7 +36,7 @@ export const MoodTile = forwardRef<HTMLButtonElement, MoodTileProps>(
         }}
         role="radio"
         aria-checked={isSelected}
-        tabIndex={isSelected ? 0 : -1}
+        tabIndex={tabbable ? 0 : -1}
         aria-label={`${mood.label} — ${mood.description}`}
         title={mood.description}
         initial={prefersReduced || skipEntrance ? false : { opacity: 0, y: 20, scale: 0.92 }}
@@ -49,7 +50,7 @@ export const MoodTile = forwardRef<HTMLButtonElement, MoodTileProps>(
         whileHover={prefersReduced ? {} : { scale: 1.05 }}
         whileTap={prefersReduced ? {} : { scale: 0.95 }}
       >
-        <span className={styles.icon}>{mood.icon}</span>
+        <span className={styles.icon} aria-hidden="true">{mood.icon}</span>
         <span className={styles.label}>{mood.label}</span>
         {isSelected && (
           <motion.span

@@ -51,6 +51,29 @@
   cursor: not-allowed;
 }
 
+/* Tune your taste — promoted to a clear secondary action, not a tiny link. */
+.tune {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-6);
+  border: 1px solid var(--color-accent-solid);
+  border-radius: var(--radius-full);
+  background: var(--color-accent-glow);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tune:hover {
+  background: var(--color-accent-solid);
+  color: #fff;
+}
+
 /* Tertiary: small inline links. */
 .minor {
   display: inline-flex;

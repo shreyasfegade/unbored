@@ -1,147 +1,108 @@
-import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useRef } from "react";
 import { useUIStore } from "../stores/uiStore";
 import { useTasteStore } from "../stores/tasteStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
 import { useTimeContext } from "./useTimeContext";
-import { getRecommendation, regenerateRecommendation } from "../api/recommend";
-import { createTasteVector } from "../api/taste";
+import { getRecommendation } from "../api/recommend";
+import { describeApiError, isCanceled } from "../api/client";
 import type { RecommendationResponse } from "../types/recommendation";
 
-type ApiError = Error & { status?: number; errorCode?: string };
-
-/** The server's taste store is ephemeral (free-tier hosting wipes it on restart),
- *  so a saved vectorId can vanish. We persist the favourite IDs and transparently
- *  re-create the vector when the server no longer knows it. */
-function isMissingVector(e: unknown): boolean {
-  const err = e as ApiError;
-  return err?.status === 404 || /not found/i.test(err?.message || "");
-}
-
+/**
+ * Stateless recommendation. The request carries the taste itself
+ * (`favourite_ids`) and everything already seen (`excluded_ids`), so there's no
+ * server-side taste vector to recover, no 404 self-heal, and no request log —
+ * "try again" is just another call with the current pick excluded.
+ */
 export function useRecommendation() {
   const timeOfDay = useTimeContext();
-  const navigate = useNavigate();
-  const uiStore = useUIStore();
-  const tasteStore = useTasteStore();
-  const recStore = useRecommendationStore();
+  // Read fresh store state via getState() inside callbacks — no whole-store
+  // subscriptions, so this hook never re-renders the home screen.
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Re-create the taste vector from persisted favourites; returns new id or null.
-  const recoverVector = useCallback(async (): Promise<string | null> => {
-    const favIds = useTasteStore.getState().favouriteIds;
-    if (!favIds || favIds.length < 5) return null;
-    try {
-      const res = await createTasteVector(favIds.slice(0, 5));
-      useTasteStore.getState().setVectorId(res.data.id);
-      return res.data.id;
-    } catch {
-      return null;
-    }
-  }, []);
+  const buildBody = useCallback(() => {
+    const { selectedMood, selectedTimeSlot, selectedMediaType, selectedEra } = useUIStore.getState();
+    if (!selectedMood || !selectedTimeSlot) return null;
+    return {
+      mood: selectedMood,
+      time_available: selectedTimeSlot,
+      time_of_day: timeOfDay,
+      media_type: selectedMediaType,
+      era: selectedEra,
+    };
+  }, [timeOfDay]);
 
   const recommend = useCallback(async () => {
-    let vectorId = tasteStore.vectorId;
-    if (!vectorId) {
-      // Stale/old state with no vector — re-create or restart onboarding.
-      vectorId = await recoverVector();
-      if (!vectorId) {
-        tasteStore.resetProfile();
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-    }
+    const taste = useTasteStore.getState();
+    const ui = useUIStore.getState();
+    const rec = useRecommendationStore.getState();
 
-    const { selectedMood, selectedTimeSlot, selectedMediaType } = uiStore;
-    if (!selectedMood || !selectedTimeSlot) return;
+    // Empty favourites is fine — the server returns a strong cold-start pick, so
+    // a "surprise me" visitor can try the product before naming anything.
+    const favouriteIds = taste.favouriteIds ?? [];
 
-    recStore.setLoading();
-    uiStore.setRevealPhase("scanning");
+    const base = buildBody();
+    if (!base) return;
 
-    const body = {
-      mood: selectedMood,
-      time_available: selectedTimeSlot,
-      time_of_day: timeOfDay,
-      media_type: selectedMediaType,
-      excluded_ids: recStore.excludedIds,
-    };
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    rec.setLoading();
+    ui.setRevealPhase("scanning");
 
     try {
-      let res: { data: RecommendationResponse };
-      try {
-        res = await getRecommendation({ taste_vector_id: vectorId, ...body });
-      } catch (e) {
-        if (isMissingVector(e)) {
-          const newId = await recoverVector();
-          if (!newId) throw e;
-          res = await getRecommendation({ taste_vector_id: newId, ...body });
-        } else {
-          throw e;
-        }
-      }
-      recStore.setResult(res.data);
+      const res: { data: RecommendationResponse } = await getRecommendation(
+        { favourite_ids: favouriteIds, excluded_ids: rec.excludedIds, ...base },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      useRecommendationStore.getState().setResult(res.data);
     } catch (error) {
-      if (isMissingVector(error)) {
-        // Couldn't recover (no stored favourites) — start onboarding fresh.
-        tasteStore.resetProfile();
-        recStore.reset();
-        uiStore.setRevealPhase("idle");
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-      recStore.setError(error instanceof Error ? error.message : "Something went wrong");
-      uiStore.setRevealPhase("idle");
+      if (isCanceled(error)) return;
+      useRecommendationStore.getState().setError(describeApiError(error));
+      ui.setRevealPhase("idle");
     }
-  }, [timeOfDay, uiStore, tasteStore, recStore, navigate, recoverVector]);
+  }, [buildBody]);
 
   const regenerate = useCallback(async () => {
-    const vectorId = tasteStore.vectorId;
-    if (!vectorId) return;
+    const taste = useTasteStore.getState();
+    const ui = useUIStore.getState();
+    const rec = useRecommendationStore.getState();
 
-    const { selectedMood, selectedTimeSlot, selectedMediaType } = uiStore;
-    if (!selectedMood || !selectedTimeSlot) return;
+    const favouriteIds = taste.favouriteIds;
+    if (!favouriteIds || favouriteIds.length === 0) return;
 
-    const { excludedIds, requestId, primary } = recStore;
-    if (primary) recStore.addExcludedId(primary.media.id);
+    const base = buildBody();
+    if (!base) return;
 
-    recStore.setRegenerating();
-    uiStore.setRevealPhase("scanning");
+    const { excludedIds, primary } = rec;
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    rec.setRegenerating();
+    ui.setRevealPhase("scanning");
+
+    // Exclude the current pick in THIS request; only commit it to the persistent
+    // exclusion list once the request succeeds, so a failed regenerate never
+    // permanently bans a pick the user never replaced.
     const nextExcluded = primary ? [...excludedIds, primary.media.id] : excludedIds;
-    const body = {
-      mood: selectedMood,
-      time_available: selectedTimeSlot,
-      time_of_day: timeOfDay,
-      media_type: selectedMediaType,
-    };
 
     try {
-      let res: { data: RecommendationResponse };
-      try {
-        // The original request log is also ephemeral; if it's gone, fall back
-        // to a fresh recommendation that excludes the current pick.
-        if (requestId) {
-          res = await regenerateRecommendation({
-            taste_vector_id: vectorId,
-            original_request_id: requestId,
-            excluded_ids: nextExcluded,
-            ...body,
-          });
-        } else {
-          res = await getRecommendation({ taste_vector_id: vectorId, excluded_ids: nextExcluded, ...body });
-        }
-      } catch (e) {
-        const newId = isMissingVector(e) ? await recoverVector() : vectorId;
-        res = await getRecommendation({
-          taste_vector_id: newId || vectorId,
-          excluded_ids: nextExcluded,
-          ...body,
-        });
-      }
-      recStore.setResult(res.data);
+      const res: { data: RecommendationResponse } = await getRecommendation(
+        { favourite_ids: favouriteIds, excluded_ids: nextExcluded, ...base },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      if (primary) useRecommendationStore.getState().addExcludedId(primary.media.id);
+      useRecommendationStore.getState().setResult(res.data);
     } catch (error) {
-      recStore.setError(error instanceof Error ? error.message : "Something went wrong");
-      uiStore.setRevealPhase("idle");
+      if (isCanceled(error)) return;
+      useRecommendationStore.getState().setError(describeApiError(error));
+      ui.setRevealPhase("idle");
     }
-  }, [timeOfDay, uiStore, tasteStore, recStore, recoverVector]);
+  }, [buildBody]);
 
   return { recommend, regenerate };
 }

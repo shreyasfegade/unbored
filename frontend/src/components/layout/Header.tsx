@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
+import { useEffect, useState } from 'react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useLlmStore } from '../../stores/llmStore';
 import styles from './Header.module.css';
@@ -10,11 +11,12 @@ const ANIMATED_KEY = "unbored-wordmark-animated";
 export default function Header() {
   const prefersReduced = useReducedMotion();
   const aiConnected = useLlmStore((s) => s.validated);
-  const hasAnimated = sessionStorage.getItem(ANIMATED_KEY) !== null;
-
-  if (!hasAnimated) {
+  // Read once (pure) in an initialiser; persist in an effect — never write to
+  // storage during render.
+  const [hasAnimated] = useState(() => sessionStorage.getItem(ANIMATED_KEY) !== null);
+  useEffect(() => {
     sessionStorage.setItem(ANIMATED_KEY, "1");
-  }
+  }, []);
 
   return (
     <header className={styles.header}>
@@ -51,10 +53,10 @@ export default function Header() {
           </Link>
         )}
         <Link to="/settings" className={styles.settingsLink} aria-label="Settings">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M15.9 12.4l.9.7c.2.2.3.5.2.8l-.3.9c-.1.3-.4.5-.7.5l-1.2-.1c-.3 0-.6.2-.8.4l-.6 1c-.1.3-.4.4-.7.4H11.3c-.3 0-.6-.2-.7-.5l-.5-1c-.2-.3-.5-.4-.8-.4l-1.2.1c-.3 0-.6-.2-.7-.5l-.3-.9c-.1-.3 0-.6.2-.8l.9-.7c.2-.2.4-.5.4-.8l-.1-1.2c0-.3-.2-.6-.5-.7l-.9-.3c-.3-.1-.5-.4-.5-.7l.1-1.2c0-.3.2-.6.4-.8l1-.6c.3-.1.4-.4.4-.7l-.4-1.1c-.1-.3 0-.6.2-.8l.7-.9c.2-.2.5-.3.8-.2l1.2.3c.3.1.6 0 .8-.2l.6-1c.1-.3.4-.5.7-.5h1.2c.3 0 .6.2.7.5l.5 1c.2.2.5.4.8.4l1.2-.1c.3 0 .6.2.7.5l.3.9c.1.3 0 .6-.2.8l-.9.7c-.2.2-.4.5-.4.8l.1 1.2c0 .3.2.6.5.7l.9.3c.3.1.5.4.5.7l-.1 1.2c0 .3-.2.6-.4.8l-1 .6c-.3.1-.4.4-.4.7l.4 1.1c.1.3 0 .6-.2.8l-.7.9c-.2.2-.5.3-.8.2l-1.2-.3c-.3-.1-.6 0-.8.2l-.6 1c-.1.3-.4.5-.7.5h.1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
         </Link>
       </div>
     </header>

@@ -1,17 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useTasteStore } from '../stores/tasteStore';
 import type { MediaItem } from '../types/media';
-import { createTasteVector as apiCreateVector, fetchCuratedShortlist as apiFetchShortlist } from '../api/taste';
+import { fetchCuratedShortlist as apiFetchShortlist } from '../api/taste';
 
 export function useTasteVector() {
-  const vector = useTasteStore((s) => s.vector);
-  const vectorId = useTasteStore((s) => s.vectorId);
   const selectedFavourites = useTasteStore((s) => s.selectedFavourites);
   const curatedShortlist = useTasteStore((s) => s.curatedShortlist);
-  
+
   const setCuratedShortlist = useTasteStore((s) => s.setCuratedShortlist);
-  const setVectorId = useTasteStore((s) => s.setVectorId);
-  const setVector = useTasteStore((s) => s.setVector);
   const setFavouriteIds = useTasteStore((s) => s.setFavouriteIds);
   const completeOnboarding = useTasteStore((s) => s.completeOnboarding);
   const addFavourite = useTasteStore((s) => s.addFavourite);
@@ -29,35 +25,27 @@ export function useTasteVector() {
       setCuratedShortlist(items);
       return items;
     } catch {
-      setError("Couldn't load the shortlist. Please check your connection.");
+      // Usually a cold backend waking up, not a real connection problem — say so.
+      setError("Still waking up the server… give it a moment and tap retry.");
       return [];
     } finally {
       setIsLoading(false);
     }
   }, [setCuratedShortlist]);
 
-  const createFromFavourites = useCallback(async (favourites: MediaItem[]) => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  // Onboarding is now purely local: store the chosen ids and mark complete.
+  // No server round-trip, so no cold-start wall and nothing to lose on refresh.
+  const createFromFavourites = useCallback(
+    async (favourites: MediaItem[]) => {
       const ids = favourites.map((f) => f.id);
-      const res = await apiCreateVector(ids);
-      setVectorId(res.data.id);
-      setVector(res.data);
       setFavouriteIds(ids);
       completeOnboarding();
-      return res.data;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create taste profile');
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setVectorId, setVector, setFavouriteIds, completeOnboarding]);
+      return ids;
+    },
+    [setFavouriteIds, completeOnboarding]
+  );
 
   return {
-    vector,
-    vectorId,
     selectedFavourites,
     curatedShortlist,
     isLoading,

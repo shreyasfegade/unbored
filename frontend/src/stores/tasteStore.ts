@@ -1,28 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { UserTasteVector } from '../types/taste';
 import type { MediaItem } from '../types/media';
 
+// Taste now lives entirely in the browser: `favouriteIds` is the single source
+// of truth, sent with every recommend request. There is no server-side taste
+// vector and no vectorId to keep in sync.
 interface TasteState {
-  vectorId: string | null;
-  vector: UserTasteVector | null;
   hasCompletedOnboarding: boolean;
   favouriteIds: string[];
   selectedFavourites: MediaItem[];
   enrichmentItems: MediaItem[];
   curatedShortlist: MediaItem[];
-  isLoadingShortlist: boolean;
 
-  setVectorId: (id: string) => void;
-  setVector: (v: UserTasteVector) => void;
   setFavouriteIds: (ids: string[]) => void;
+  addFavouriteIds: (ids: string[]) => void;
+  removeFavouriteId: (id: string) => void;
   addFavourite: (item: MediaItem) => void;
   removeFavourite: (id: string) => void;
   clearFavourites: () => void;
   addEnrichmentItem: (item: MediaItem) => void;
   removeEnrichmentItem: (id: string) => void;
+  clearEnrichmentItems: () => void;
   setCuratedShortlist: (items: MediaItem[]) => void;
-  setLoadingShortlist: (v: boolean) => void;
   completeOnboarding: () => void;
   resetProfile: () => void;
 }
@@ -30,18 +29,21 @@ interface TasteState {
 export const useTasteStore = create<TasteState>()(
   persist(
     (set) => ({
-      vectorId: null,
-      vector: null,
       hasCompletedOnboarding: false,
       favouriteIds: [],
       selectedFavourites: [],
       enrichmentItems: [],
       curatedShortlist: [],
-      isLoadingShortlist: false,
 
-      setVectorId: (id) => set({ vectorId: id }),
-      setVector: (v) => set({ vector: v }),
       setFavouriteIds: (ids) => set({ favouriteIds: ids }),
+      addFavouriteIds: (ids) =>
+        set((state) => ({
+          favouriteIds: Array.from(new Set([...state.favouriteIds, ...ids])),
+        })),
+      removeFavouriteId: (id) =>
+        set((state) => ({
+          favouriteIds: state.favouriteIds.filter((f) => f !== id),
+        })),
       addFavourite: (item) =>
         set((state) => {
           if (state.selectedFavourites.length >= 5) return state;
@@ -61,13 +63,11 @@ export const useTasteStore = create<TasteState>()(
         set((state) => ({
           enrichmentItems: state.enrichmentItems.filter((i) => i.id !== id),
         })),
+      clearEnrichmentItems: () => set({ enrichmentItems: [] }),
       setCuratedShortlist: (items) => set({ curatedShortlist: items }),
-      setLoadingShortlist: (v) => set({ isLoadingShortlist: v }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
       resetProfile: () =>
         set({
-          vectorId: null,
-          vector: null,
           hasCompletedOnboarding: false,
           favouriteIds: [],
           selectedFavourites: [],
@@ -77,7 +77,6 @@ export const useTasteStore = create<TasteState>()(
     {
       name: 'unbored-taste',
       partialize: (state) => ({
-        vectorId: state.vectorId,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         favouriteIds: state.favouriteIds,
       }),

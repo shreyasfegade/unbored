@@ -1,24 +1,8 @@
 import api from './client';
-import type { UserTasteVector, UpdateTasteRequest } from '../types/taste';
-import type { MediaItem, YouTubeImportResult } from '../types/media';
+import type { MediaItem } from '../types/media';
 
-export const createTasteVector = (favouriteIds: string[]) =>
-  api.post<UserTasteVector>('/api/taste', { favourite_ids: favouriteIds });
-
-export const getTasteVector = (id: string) =>
-  api.get<UserTasteVector>(`/api/taste/${id}`);
-
-export const updateTasteVector = (id: string, data: UpdateTasteRequest) =>
-  api.put<UserTasteVector>(`/api/taste/${id}`, data);
-
-export const uploadYouTube = (id: string, file: File) => {
-  const form = new FormData();
-  form.append('file', file);
-  return api.post<YouTubeImportResult>(`/api/taste/${id}/youtube`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 60000,
-  });
-};
-
+// The taste vector is no longer a server resource — taste lives in the browser
+// and is sent per recommend request. The only taste-adjacent server call left is
+// the curated starter grid, which is a pure function of the frozen catalog.
 export const fetchCuratedShortlist = () =>
   api.get<{ items: MediaItem[] }>('/api/search/curated-shortlist');

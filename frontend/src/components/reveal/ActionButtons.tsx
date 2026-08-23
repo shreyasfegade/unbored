@@ -1,18 +1,36 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRecommendationStore } from "../../stores/recommendationStore";
+import { useToastStore } from "../../stores/toastStore";
 import styles from "./ActionButtons.module.css";
 
 interface ActionButtonsProps {
   onRegenerate: () => void;
   onStartOver: () => void;
   watchUrl: string | null;
+  shareId: string | null;
 }
 
-export function ActionButtons({ onRegenerate, onStartOver, watchUrl }: ActionButtonsProps) {
+export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId }: ActionButtonsProps) {
   const prefersReduced = useReducedMotion();
   const recStatus = useRecommendationStore((s) => s.status);
   const isRegenerating = recStatus === "regenerating";
+  const addToast = useToastStore((s) => s.addToast);
+
+  const handleShare = async () => {
+    if (!shareId) return;
+    const url = `${window.location.origin}/pick/${shareId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ url, title: "My Unbored pick" });
+      } else {
+        await navigator.clipboard.writeText(url);
+        addToast("Link copied — share your pick.");
+      }
+    } catch {
+      /* user cancelled the share sheet — nothing to do */
+    }
+  };
 
   const row = {
     initial: { opacity: 0, y: 16 },
@@ -57,17 +75,35 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl }: ActionBut
       </motion.button>
 
       <motion.div
-        className={styles.minor}
         variants={row}
         initial={prefersReduced ? false : "initial"}
         animate="animate"
         custom={2}
+        style={{ width: "100%", display: "flex", justifyContent: "center" }}
       >
+        <Link to="/enrich" className={styles.tune}>
+          <span aria-hidden="true">✎</span> Tune your taste for sharper picks
+        </Link>
+      </motion.div>
+
+      <motion.div
+        className={styles.minor}
+        variants={row}
+        initial={prefersReduced ? false : "initial"}
+        animate="animate"
+        custom={3}
+      >
+        {shareId && (
+          <>
+            <button className={styles.link} onClick={handleShare}>
+              Share pick
+            </button>
+            <span className={styles.dot} aria-hidden="true">·</span>
+          </>
+        )}
         <button className={styles.link} onClick={onStartOver} disabled={isRegenerating}>
           Start over
         </button>
-        <span className={styles.dot} aria-hidden="true">·</span>
-        <Link to="/enrich" className={styles.link}>Tune your taste</Link>
       </motion.div>
     </div>
   );

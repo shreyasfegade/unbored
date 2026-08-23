@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+/* Fonts are loaded via a <link> in index.html (with preconnect), not a CSS
+   @import here — an @import serialises HTML → CSS → font-CSS → fonts and blocks
+   the first paint of the display-font wordmark. */
 
 :root {
   /* ═══ COLORS ═══ */
@@ -132,6 +134,7 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
@@ -201,6 +204,7 @@ ul, ol {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }

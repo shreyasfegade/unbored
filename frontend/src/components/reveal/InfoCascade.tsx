@@ -8,12 +8,16 @@ import { AlternatePicks } from "./AlternatePicks";
 import { ActionButtons } from "./ActionButtons";
 import styles from "./InfoCascade.module.css";
 
+type AIStatus = "off" | "used" | "timeout" | "error";
+
 interface InfoCascadeProps {
   primary: ScoredMediaItem;
-  confidence: ConfidenceLevel;
+  confidence: ConfidenceLevel | null;
   rationale: string | null;
   pickedBy: "ai" | "engine" | null;
   provider: string | null;
+  aiStatus: AIStatus;
+  mediaTypeApplied: boolean;
   alternates: ScoredMediaItem[];
   onAlternateSelect: (index: number) => void;
   onRegenerate: () => void;
@@ -26,6 +30,8 @@ export function InfoCascade({
   rationale,
   pickedBy,
   provider,
+  aiStatus,
+  mediaTypeApplied,
   alternates,
   onAlternateSelect,
   onRegenerate,
@@ -86,15 +92,26 @@ export function InfoCascade({
         </motion.div>
       )}
 
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, scale: 0.9 },
-          visible: { opacity: 1, scale: 1 },
-        }}
-        transition={{ duration: 0.4 }}
-      >
-        <ConfidenceBadge level={confidence} />
-      </motion.div>
+      {confidence && (
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, scale: 0.9 },
+            visible: { opacity: 1, scale: 1 },
+          }}
+          transition={{ duration: 0.4 }}
+        >
+          <ConfidenceBadge level={confidence} />
+        </motion.div>
+      )}
+
+      {!mediaTypeApplied && (
+        <motion.p
+          className={styles.notice}
+          variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        >
+          Nothing matched that type right now — here's the closest pick instead.
+        </motion.p>
+      )}
 
       {rationale && (
         <motion.div
@@ -116,7 +133,18 @@ export function InfoCascade({
         </motion.div>
       )}
 
-      {pickedBy === "engine" && <UpgradePrompt />}
+      {/* Only pitch "connect AI" when no key is connected. If a connected key
+          merely failed (timeout/error), say that honestly instead of implying
+          the user should connect the AI they already connected. */}
+      {pickedBy === "engine" && aiStatus === "off" && <UpgradePrompt />}
+      {pickedBy === "engine" && (aiStatus === "error" || aiStatus === "timeout") && (
+        <motion.p
+          className={styles.notice}
+          variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        >
+          Your AI was slow to respond, so the engine picked this time. Try again for an AI-chosen pick.
+        </motion.p>
+      )}
 
       <motion.div
         variants={{
@@ -139,6 +167,7 @@ export function InfoCascade({
           onRegenerate={onRegenerate}
           onStartOver={onStartOver}
           watchUrl={watchUrl}
+          shareId={primary.media.id}
         />
       </motion.div>
     </motion.div>

@@ -13,13 +13,15 @@ interface RevealOracleProps {
 }
 
 export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
-  const { phase, takingLonger } = useRevealAnimation();
+  const { phase, waitStage } = useRevealAnimation();
   const primary = useRecommendationStore((s) => s.primary);
   const alternates = useRecommendationStore((s) => s.alternates);
   const rationale = useRecommendationStore((s) => s.rationale);
   const pickedBy = useRecommendationStore((s) => s.pickedBy);
   const provider = useRecommendationStore((s) => s.provider);
   const confidence = useRecommendationStore((s) => s.confidence);
+  const aiStatus = useRecommendationStore((s) => s.aiStatus);
+  const mediaTypeApplied = useRecommendationStore((s) => s.mediaTypeApplied);
   const swapAlternate = useRecommendationStore((s) => s.swapAlternate);
   const addToast = useToastStore((s) => s.addToast);
 
@@ -32,8 +34,32 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
   const showRevealed = phase === "revealing" || phase === "info_cascade" || phase === "complete";
   const showInfo = phase === "info_cascade" || phase === "complete";
 
+  // Degenerate state: we're past scanning but there's no pick to show. Rather
+  // than render a blank screen, offer a way out.
+  if (showRevealed && !primary) {
+    return (
+      <div className={styles.container}>
+        <p style={{ textAlign: "center", color: "var(--color-text-secondary)" }}>
+          Couldn't load that pick.
+        </p>
+        <div style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
+          <button className={styles.retry} onClick={onStartOver}>Start over</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.container} aria-live="polite" aria-atomic="true">
+    <div className={styles.container}>
+      {/* A dedicated, tiny live region announces the outcome once, instead of
+          re-reading the whole card on every one of the ~11 staggered changes. */}
+      <p className={styles.srStatus} aria-live="polite">
+        {showInfo && primary
+          ? `Your pick: ${primary.media.title}${primary.media.release_year ? `, ${primary.media.release_year}` : ""}${confidence ? `, ${confidence} confidence` : ""}.`
+          : isScanning
+            ? "Finding your pick…"
+            : ""}
+      </p>
       <AnimatePresence>
         {showRevealed && primary?.media.backdrop_path && (
           <motion.div
@@ -49,7 +75,7 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {isScanning && <ScanningPhase key="scanning" takingLonger={takingLonger} />}
+        {isScanning && <ScanningPhase key="scanning" waitStage={waitStage} />}
 
         {showRevealed && primary && (
           <motion.div
@@ -61,13 +87,15 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
           >
             <PosterReveal item={primary.media} />
 
-            {showInfo && confidence && (
+            {showInfo && (
               <InfoCascade
                 primary={primary}
                 confidence={confidence}
                 rationale={rationale}
                 pickedBy={pickedBy}
                 provider={provider}
+                aiStatus={aiStatus}
+                mediaTypeApplied={mediaTypeApplied}
                 alternates={alternates}
                 onAlternateSelect={handleAlternateSwap}
                 onRegenerate={onRegenerate}

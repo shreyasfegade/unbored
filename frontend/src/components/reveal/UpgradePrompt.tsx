@@ -13,10 +13,10 @@ export function UpgradePrompt() {
     >
       <span className={styles.spark} aria-hidden="true">✦</span>
       <div className={styles.body}>
-        <p className={styles.title}>This was the built-in engine.</p>
+        <p className={styles.title}>Chosen by the built-in engine.</p>
         <p className={styles.sub}>
-          Connect your own Gemini or DeepSeek key and the AI chooses and explains your pick,
-          grounded in what you love — that's the real Unbored.
+          Connect your own Gemini or DeepSeek key for a pick that's hand-chosen and explained
+          in your own words.
         </p>
       </div>
       <Link to="/settings" className={styles.cta}>Connect AI →</Link>

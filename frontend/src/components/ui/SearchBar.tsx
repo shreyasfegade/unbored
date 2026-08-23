@@ -6,14 +6,19 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   placeholder: string;
   loading?: boolean;
+  autoFocus?: boolean;
 }
 
-export function SearchBar({ value, onChange, placeholder, loading }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder, loading, autoFocus = false }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    // Opt-in, and never on phones — auto-focusing there pops the keyboard over
+    // the poster grid the copy tells you to browse (and moves focus unbidden).
+    if (autoFocus && window.matchMedia("(min-width: 768px)").matches) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   return (
     <div className={styles.wrapper}>

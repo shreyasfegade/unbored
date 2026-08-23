@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion, useReducedMotion } from "framer-motion";
 import type { MediaItem } from '../../types/media';
 import { useTasteVector } from '../../hooks/useTasteVector';
@@ -38,12 +38,15 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
 
   useEffect(() => {
     const q = debounced.trim();
+    // The `searchActive` flag hides stale results when the query is empty, so we
+    // don't need to setState synchronously here (which triggered a lint error).
     if (q.length < 1) {
-      setResults([]);
       return;
     }
     let cancelled = false;
-    setSearching(true);
+    // Defer the loading flag off the synchronous effect body (avoids a
+    // cascading render); results are only ever set from the async callbacks.
+    queueMicrotask(() => { if (!cancelled) setSearching(true); });
     searchMulti(q)
       .then((res) => { if (!cancelled) setResults(res.data.results || []); })
       .catch(() => { if (!cancelled) setResults([]); })
@@ -51,13 +54,14 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
     return () => { cancelled = true; };
   }, [debounced]);
 
-  const handleToggle = (item: MediaItem) => {
+  // Stable so the memoised PosterCards don't all re-render on each toggle.
+  const handleToggle = useCallback((item: MediaItem) => {
     if (selectedFavourites.some((f) => f.id === item.id)) {
       removeFavourite(item.id);
     } else {
       addFavourite(item);
     }
-  };
+  }, [selectedFavourites, removeFavourite, addFavourite]);
 
   const handleDone = async () => {
     if (selectedFavourites.length < 5) return;

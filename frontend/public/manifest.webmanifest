@@ -1,0 +1,19 @@
+{
+  "name": "Unbored",
+  "short_name": "Unbored",
+  "description": "One tap. One perfect pick. Kill decision paralysis.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0b09",
+  "theme_color": "#0c0b09",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

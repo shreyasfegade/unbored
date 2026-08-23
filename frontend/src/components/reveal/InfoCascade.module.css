@@ -21,6 +21,15 @@
   margin-bottom: var(--space-4);
 }
 
+.notice {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  text-align: center;
+  max-width: 34ch;
+  margin: 0 auto var(--space-3);
+}
+
 .genrePills {
   display: flex;
   justify-content: center;

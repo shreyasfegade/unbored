@@ -25,20 +25,24 @@ export default function PosterGrid({ items, selectedIds, onToggle, maxSelections
     return <PosterGridSkeleton />;
   }
 
-  const reachedMax = selectedIds.length >= maxSelections;
+  const selected = new Set(selectedIds); // O(1) membership instead of O(n) includes
+  const reachedMax = selected.size >= maxSelections;
 
   return (
     <div className={styles.grid}>
-      {items.map((item, idx) => (
-        <PosterCard
-          key={item.id}
-          item={item}
-          isSelected={selectedIds.includes(item.id)}
-          onToggle={onToggle}
-          disabled={reachedMax && !selectedIds.includes(item.id)}
-          index={idx}
-        />
-      ))}
+      {items.map((item, idx) => {
+        const isSelected = selected.has(item.id);
+        return (
+          <PosterCard
+            key={item.id}
+            item={item}
+            isSelected={isSelected}
+            onToggle={onToggle}
+            disabled={reachedMax && !isSelected}
+            index={idx}
+          />
+        );
+      })}
     </div>
   );
 }

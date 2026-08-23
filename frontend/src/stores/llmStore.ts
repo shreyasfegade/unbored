@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type LlmProvider = 'gemini' | 'deepseek';
 
@@ -12,8 +12,11 @@ interface LlmState {
 }
 
 /**
- * The user's own LLM key, kept in this browser only. It's sent per request via
- * headers (see api/client.ts) and never stored on the server.
+ * The user's own LLM key, kept in this browser only. Persisted to
+ * sessionStorage (not localStorage) so a raw API key doesn't sit indefinitely
+ * on disk readable by any script — it lives for the tab session and is cleared
+ * when the tab closes. The key is attached only to /api/recommend and
+ * /api/llm/* requests (see api/client.ts) and never stored on the server.
  */
 export const useLlmStore = create<LlmState>()(
   persist(
@@ -24,6 +27,6 @@ export const useLlmStore = create<LlmState>()(
       setKey: (provider, apiKey) => set({ provider, apiKey, validated: true }),
       clear: () => set({ provider: null, apiKey: null, validated: false }),
     }),
-    { name: 'unbored-llm' }
+    { name: 'unbored-llm', storage: createJSONStorage(() => sessionStorage) }
   )
 );

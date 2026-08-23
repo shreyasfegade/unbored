@@ -1,12 +1,17 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { LazyMotion, domAnimation, AnimatePresence, motion } from "framer-motion";
+import { LazyMotion, domAnimation, MotionConfig, AnimatePresence, motion } from "framer-motion";
 import { useTasteStore } from './stores/tasteStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
+// Onboarding is the only route a first-time visitor can reach, so it loads
+// eagerly; the rest are code-split so the welcome screen isn't behind the whole
+// reveal subsystem, enrich, settings, and pick pages.
 import OnboardingPage from './pages/OnboardingPage';
-import HomePage from './pages/HomePage';
-import EnrichPage from './pages/EnrichPage';
-import SettingsPage from './pages/SettingsPage';
+const HomePage = lazy(() => import('./pages/HomePage'));
+const EnrichPage = lazy(() => import('./pages/EnrichPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const PickPage = lazy(() => import('./pages/PickPage'));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -19,6 +24,7 @@ function AnimatedRoutes() {
   const hasCompletedOnboarding = useTasteStore((s) => s.hasCompletedOnboarding);
 
   return (
+    <Suspense fallback={null}>
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route
@@ -81,22 +87,43 @@ function AnimatedRoutes() {
             </motion.div>
           }
         />
+        {/* Shareable pick — no onboarding gate, so a recipient can see it. */}
+        <Route
+          path="/pick/:mediaId"
+          element={
+            <motion.div
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <PickPage />
+            </motion.div>
+          }
+        />
       </Routes>
     </AnimatePresence>
+    </Suspense>
   );
 }
 
 function App() {
   return (
-    <ErrorBoundary>
-      <LazyMotion features={domAnimation}>
-        <BrowserRouter>
+    <LazyMotion features={domAnimation}>
+      {/* One switch makes every framer animation in the tree honour the user's
+          OS reduced-motion preference (JS-driven, so the CSS escape hatch can't). */}
+      <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        {/* Inside the router so a crash boundary can still navigate to safety. */}
+        <ErrorBoundary label="app">
           <AppShell>
             <AnimatedRoutes />
           </AppShell>
-        </BrowserRouter>
-      </LazyMotion>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </BrowserRouter>
+      </MotionConfig>
+    </LazyMotion>
   );
 }
 

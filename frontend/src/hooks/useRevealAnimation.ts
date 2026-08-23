@@ -10,39 +10,38 @@ export function useRevealAnimation() {
   const [phase, setPhase] = useState<RevealPhase>(initialRevealPhase);
   const setRevealPhase = useUIStore((s) => s.setRevealPhase);
   const scanStartRef = useRef<number | null>(null);
-  const [takingLonger, setTakingLonger] = useState(false);
-  const longTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 0 = normal, 1 = "still working" (~6s), 2 = "waking the server" (~15s).
+  const [waitStage, setWaitStage] = useState(0);
+  const longTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearLongTimers = () => {
+    longTimersRef.current.forEach(clearTimeout);
+    longTimersRef.current = [];
+  };
 
   useEffect(() => {
     if (status === "loading" || status === "regenerating") {
       Promise.resolve().then(() => {
         setPhase("scanning");
         setRevealPhase("scanning");
-        setTakingLonger(false);
+        setWaitStage(0);
       });
       scanStartRef.current = Date.now();
 
-      longTimerRef.current = setTimeout(() => {
-        setTakingLonger(true);
-      }, 5000);
+      longTimersRef.current = [
+        setTimeout(() => setWaitStage(1), 6000),
+        setTimeout(() => setWaitStage(2), 15000),
+      ];
     }
 
-    return () => {
-      if (longTimerRef.current) {
-        clearTimeout(longTimerRef.current);
-        longTimerRef.current = null;
-      }
-    };
+    return clearLongTimers;
   }, [status, setRevealPhase]);
 
   useEffect(() => {
     if (phase === "scanning" && status === "revealed") {
-      if (longTimerRef.current) {
-        clearTimeout(longTimerRef.current);
-        longTimerRef.current = null;
-      }
+      clearLongTimers();
       Promise.resolve().then(() => {
-        setTakingLonger(false);
+        setWaitStage(0);
       });
 
       const elapsed = Date.now() - (scanStartRef.current ?? Date.now());
@@ -83,13 +82,10 @@ export function useRevealAnimation() {
   const reset = useCallback(() => {
     setPhase("idle");
     scanStartRef.current = null;
-    setTakingLonger(false);
-    if (longTimerRef.current) {
-      clearTimeout(longTimerRef.current);
-      longTimerRef.current = null;
-    }
+    setWaitStage(0);
+    clearLongTimers();
     setRevealPhase("idle");
   }, [setRevealPhase]);
 
-  return { phase, reset, takingLonger };
+  return { phase, reset, waitStage };
 }

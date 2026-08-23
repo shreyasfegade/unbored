@@ -1,38 +1,34 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useUIStore } from "../stores/uiStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
 import { useTasteStore } from "../stores/tasteStore";
 import { useToastStore } from "../stores/toastStore";
 import { useRecommendation } from "../hooks/useRecommendation";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { MoodSelector } from "../components/mood";
 import { TimeSelector } from "../components/ui/TimeSelector";
 import { MediaTypeSelector } from "../components/ui/MediaTypeSelector";
+import { EraSelector } from "../components/ui/EraSelector";
 import { OracleButton } from "../components/ui/OracleButton";
 import { RevealOracle } from "../components/reveal";
 import { AIStatusBanner } from "../components/llm/AIStatusBanner";
 import styles from "./HomePage.module.css";
 
 const WORDMARK_ANIMATED_KEY = "unbored-home-wordmark-animated";
-
-function mapRecError(raw: string): string {
-  if (!raw) return "Something went wrong. Try again.";
-  const lower = raw.toLowerCase();
-  if (lower.includes("network") || lower.includes("reach") || lower.includes("connection"))
-    return "Can't reach the server. Check your connection.";
-  if (lower.includes("not found") || lower.includes("null"))
-    return "Can't reach the server. Check your connection.";
-  return "Something went wrong. Try again.";
-}
+const HOME_VISITED_KEY = "unbored-home-visited";
 
 export default function HomePage() {
   const selectedMood = useUIStore((s) => s.selectedMood);
   const selectedTimeSlot = useUIStore((s) => s.selectedTimeSlot);
   const selectedMediaType = useUIStore((s) => s.selectedMediaType);
+  const selectedEra = useUIStore((s) => s.selectedEra);
   const showMoodPrompt = useUIStore((s) => s.showMoodPrompt);
   const setMood = useUIStore((s) => s.setMood);
   const setTimeSlot = useUIStore((s) => s.setTimeSlot);
   const setMediaType = useUIStore((s) => s.setMediaType);
+  const setEra = useUIStore((s) => s.setEra);
   const setShowMoodPrompt = useUIStore((s) => s.setShowMoodPrompt);
   const resetSelections = useUIStore((s) => s.resetSelections);
 
@@ -41,8 +37,18 @@ export default function HomePage() {
   const recError = useRecommendationStore((s) => s.error);
 
   const hasCompletedOnboarding = useTasteStore((s) => s.hasCompletedOnboarding);
+  const favouriteCount = useTasteStore((s) => s.favouriteIds.length);
   const addToast = useToastStore((s) => s.addToast);
   const { recommend, regenerate } = useRecommendation();
+
+  // Read the once-per-session animation flags in state initialisers (pure) and
+  // write them in an effect — never mutate storage during render.
+  const [hasSeenWordmark] = useState(() => sessionStorage.getItem(WORDMARK_ANIMATED_KEY) !== null);
+  const [hasVisitedHome] = useState(() => sessionStorage.getItem(HOME_VISITED_KEY) !== null);
+  useEffect(() => {
+    sessionStorage.setItem(WORDMARK_ANIMATED_KEY, "1");
+    sessionStorage.setItem(HOME_VISITED_KEY, "1");
+  }, []);
 
   useEffect(() => {
     const count = sessionStorage.getItem("unbored-enrich-success");
@@ -51,6 +57,19 @@ export default function HomePage() {
       addToast(`Taste updated with ${count} item${count === "1" ? "" : "s"}.`);
     }
   }, [addToast]);
+
+  // Back button: while a pick is on screen, push one history entry so the
+  // browser/OS Back gesture returns to the selection screen instead of leaving
+  // the site entirely (the reveal is state, not a route).
+  useEffect(() => {
+    if (recStatus !== "revealed") return;
+    if (!window.history.state?.unboredReveal) {
+      window.history.pushState({ unboredReveal: true }, "");
+    }
+    const onPop = () => resetRec();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [recStatus, resetRec]);
 
   const canRecommend = selectedMood !== null && selectedTimeSlot !== null;
   const isLoading = recStatus === "loading" || recStatus === "regenerating";
@@ -61,15 +80,12 @@ export default function HomePage() {
     (recStatus === "revealed" || recStatus === "loading" || recStatus === "regenerating") &&
     hasCompletedOnboarding;
 
-  const hasSeenWordmark = sessionStorage.getItem(WORDMARK_ANIMATED_KEY) !== null;
-  if (!hasSeenWordmark) {
-    sessionStorage.setItem(WORDMARK_ANIMATED_KEY, "1");
-  }
-
-  const hasVisitedHome = sessionStorage.getItem("unbored-home-visited") !== null;
-  if (!hasVisitedHome) {
-    sessionStorage.setItem("unbored-home-visited", "1");
-  }
+  // What's blocking the button, so the disabled state is never a mystery.
+  const missingHint = !selectedMood
+    ? "Pick a mood to continue"
+    : !selectedTimeSlot
+      ? "Choose how much time you have"
+      : null;
 
   const handleOracleClick = useCallback(() => {
     if (!selectedMood) {
@@ -120,7 +136,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: hasSeenWordmark ? 0 : 0.15, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              One tap. One perfect pick.
+              Answer two quick questions and we'll hand you one perfect pick.
             </motion.p>
 
             <div className={styles.aiBanner}>
@@ -155,11 +171,26 @@ export default function HomePage() {
               <MediaTypeSelector selected={selectedMediaType} onSelect={setMediaType} />
             </div>
 
-            <OracleButton
-              disabled={!canRecommend}
-              loading={isLoading}
-              onClick={handleOracleClick}
-            />
+            <div className={styles.mediaSection}>
+              <EraSelector selected={selectedEra} onSelect={setEra} />
+            </div>
+
+            <div className={styles.oracleWrap}>
+              <OracleButton
+                disabled={!canRecommend}
+                loading={isLoading}
+                onClick={handleOracleClick}
+                label="Find my pick"
+              />
+              {!canRecommend && missingHint && (
+                <p className={styles.missingHint}>{missingHint}</p>
+              )}
+            </div>
+
+            <Link to="/enrich" className={styles.tasteLink}>
+              <span aria-hidden="true">✎</span> Tune your taste
+              {favouriteCount > 0 && <span className={styles.tasteCount}>{favouriteCount} saved</span>}
+            </Link>
 
             <AnimatePresence>
               {isError && (
@@ -171,7 +202,7 @@ export default function HomePage() {
                   exit={{ opacity: 0, y: -8, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <p className={styles.errorText}>{mapRecError(recError ?? "")}</p>
+                  <p className={styles.errorText}>{recError ?? "Something went wrong. Try again."}</p>
                   <button className={styles.retryBtn} onClick={handleRetry}>
                     Try again
                   </button>
@@ -189,7 +220,9 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <RevealOracle onRegenerate={handleRegenerate} onStartOver={handleStartOver} />
+            <ErrorBoundary label="reveal" onReset={handleStartOver}>
+              <RevealOracle onRegenerate={handleRegenerate} onStartOver={handleStartOver} />
+            </ErrorBoundary>
           </motion.div>
         )}
       </AnimatePresence>

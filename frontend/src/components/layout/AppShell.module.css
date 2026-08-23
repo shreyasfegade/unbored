@@ -1,5 +1,6 @@
 .shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -14,4 +15,21 @@
   padding: var(--space-4);
   position: relative;
   z-index: var(--z-base);
+}
+
+/* Focused programmatically on route change; don't draw a ring for that. */
+.main:focus {
+  outline: none;
+}
+
+.routeAnnouncer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

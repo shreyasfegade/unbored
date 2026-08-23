@@ -108,7 +108,7 @@ export default function ConnectAI({ onConnected, onSkip, variant = "onboarding" 
         <a href={active.url} target="_blank" rel="noopener noreferrer">
           Get a {active.label} key →
         </a>{" "}
-        It stays in your browser, never on our servers.
+        Kept in this browser and sent with each pick request over HTTPS — never stored on our servers.
       </p>
 
       {onSkip && (

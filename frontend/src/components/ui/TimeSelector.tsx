@@ -33,8 +33,14 @@ export function TimeSelector({ selectedSlot, onSelect }: TimeSelectorProps) {
     [onSelect]
   );
 
+  const noneSelected = selectedSlot === null;
+
   return (
-    <div className={styles.row} role="radiogroup" aria-label="How much time do you have?">
+    <div className={styles.section}>
+      <p className={styles.prompt} id="time-label">
+        <span className={styles.step}>2</span> How much time do you have?
+      </p>
+      <div className={styles.row} role="radiogroup" aria-labelledby="time-label">
       {TIME_OPTIONS.map((slot, index) => (
         <motion.button
           key={slot}
@@ -44,7 +50,7 @@ export function TimeSelector({ selectedSlot, onSelect }: TimeSelectorProps) {
           onKeyDown={(e) => handleKeyDown(e, index)}
           role="radio"
           aria-checked={selectedSlot === slot}
-          tabIndex={selectedSlot === slot ? 0 : -1}
+          tabIndex={selectedSlot === slot || (noneSelected && index === 0) ? 0 : -1}
           initial={prefersReduced ? false : { opacity: 0, y: 12, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{
@@ -60,6 +66,7 @@ export function TimeSelector({ selectedSlot, onSelect }: TimeSelectorProps) {
           {TIME_SLOT_DISPLAY_LABELS[slot]}
         </motion.button>
       ))}
+      </div>
     </div>
   );
 }

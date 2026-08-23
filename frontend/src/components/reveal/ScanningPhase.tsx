@@ -3,8 +3,13 @@ import { motion } from "framer-motion";
 import styles from "./ScanningPhase.module.css";
 
 interface ScanningPhaseProps {
-  takingLonger?: boolean;
+  waitStage?: number;
 }
+
+const WAIT_MESSAGES: Record<number, string> = {
+  1: "Still working…",
+  2: "The server was asleep and is waking up — this can take up to a minute.",
+};
 
 interface Particle {
   id: number;
@@ -13,7 +18,7 @@ interface Particle {
   delay: number;
 }
 
-export function ScanningPhase({ takingLonger = false }: ScanningPhaseProps) {
+export function ScanningPhase({ waitStage = 0 }: ScanningPhaseProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export function ScanningPhase({ takingLonger = false }: ScanningPhaseProps) {
 
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} aria-hidden="true">
       <div className={styles.pulseContainer}>
         {[0, 1, 2].map((i) => (
           <motion.div
@@ -76,8 +81,8 @@ export function ScanningPhase({ takingLonger = false }: ScanningPhaseProps) {
         ))}
       </div>
 
-      {takingLonger && (
-        <p className={styles.takingLonger}>Taking longer than usual...</p>
+      {waitStage > 0 && (
+        <p className={styles.takingLonger}>{WAIT_MESSAGES[waitStage]}</p>
       )}
     </div>
   );

@@ -29,23 +29,6 @@ export interface MediaItem {
   source_api: string;
 }
 
-export interface YouTubeChannelSignal {
-  channel_name: string;
-  watch_count: number;
-  inferred_genres: string[];
-}
-
-export interface YouTubeImportResult {
-  total_videos_parsed: number;
-  videos_with_signals: number;
-  top_channels: YouTubeChannelSignal[];
-  extracted_genres: Record<string, number>;
-  extracted_keywords: Record<string, number>;
-  animation_affinity_delta: number;
-  success: boolean;
-  error: string | null;
-}
-
 export interface SearchResults {
   query: string;
   results: MediaItem[];

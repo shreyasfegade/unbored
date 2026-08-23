@@ -1,8 +1,7 @@
 import api from './client';
-import type { RecommendationRequest, RecommendationResponse, RegenerateRequest } from '../types/recommendation';
+import type { RecommendationRequest, RecommendationResponse } from '../types/recommendation';
 
-export const getRecommendation = (req: RecommendationRequest) =>
-  api.post<RecommendationResponse>('/api/recommend', req);
-
-export const regenerateRecommendation = (req: RegenerateRequest) =>
-  api.post<RecommendationResponse>('/api/recommend/regenerate', req);
+// Stateless: the request carries favourite_ids + excluded_ids. "Try again" is
+// just another call with the previous pick added to excluded_ids.
+export const getRecommendation = (req: RecommendationRequest, signal?: AbortSignal) =>
+  api.post<RecommendationResponse>('/api/recommend', req, { signal });

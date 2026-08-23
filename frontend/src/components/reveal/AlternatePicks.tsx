@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { ScoredMediaItem } from "../../types/recommendation";
 import PosterArt from "../poster/PosterArt";
+import { sizedPoster } from "../../utils/poster";
 import styles from "./AlternatePicks.module.css";
 
 interface AlternatePicksProps {
@@ -18,7 +19,7 @@ function AltPoster({ alt }: { alt: ScoredMediaItem }) {
         <PosterArt item={alt.media} />
       ) : (
         <img
-          src={alt.media.poster_path ?? ""}
+          src={sizedPoster(alt.media.poster_path, "thumb")}
           alt={alt.media.title}
           className={styles.posterImg}
           loading="lazy"
@@ -64,7 +65,7 @@ export function AlternatePicks({ alternates, onSelect }: AlternatePicksProps) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 + i * 0.08, duration: 0.3 }}
           >
-            {Math.round(alt.score * 100)}% match
+            {alt.media.release_year ?? "Alternate"}
           </motion.p>
         </motion.button>
       ))}

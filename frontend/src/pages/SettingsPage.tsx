@@ -16,15 +16,17 @@ export default function SettingsPage() {
   const resetRec = useRecommendationStore((s) => s.reset);
   const resetUI = useUIStore((s) => s.resetSelections);
   const connected = useLlmStore((s) => s.validated);
+  const clearLlm = useLlmStore((s) => s.clear);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const executeReset = useCallback(() => {
     resetProfile();
     resetRec();
     resetUI();
-    localStorage.removeItem("unbored-taste");
+    // "Reset everything" now also forgets the connected API key.
+    clearLlm();
     navigate("/onboarding", { replace: true });
-  }, [resetProfile, resetRec, resetUI, navigate]);
+  }, [resetProfile, resetRec, resetUI, clearLlm, navigate]);
 
   const itemVariant = {
     hidden: { opacity: 0, y: 16 },
@@ -81,7 +83,7 @@ export default function SettingsPage() {
         <p className={styles.aiBlurb}>
           {connected
             ? "AI is choosing and explaining your picks."
-            : "Unbored is at its best with AI. Connect your own Gemini or DeepSeek key — it stays in this browser and is never stored on our servers."}
+            : "Unbored is at its best with AI. Connect your own Gemini or DeepSeek key — it's kept in this browser and sent with each request over HTTPS, never stored on our servers."}
         </p>
         <ConnectAI variant="settings" />
       </motion.div>
@@ -101,6 +103,13 @@ export default function SettingsPage() {
 
       <motion.p className={styles.version} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={3}>
         UNBORED v3.0.0
+      </motion.p>
+      <motion.p className={styles.attribution} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={4}>
+        Movie &amp; TV data from{" "}
+        <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">TMDB</a>;
+        anime from{" "}
+        <a href="https://anilist.co" target="_blank" rel="noopener noreferrer">AniList</a>.
+        This product uses the TMDB API but is not endorsed or certified by TMDB.
       </motion.p>
     </div>
   );

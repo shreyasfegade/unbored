@@ -4,7 +4,8 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useDebounce } from "../hooks/useDebounce";
 import { searchMulti } from "../api/search";
-import { updateTasteVector, fetchCuratedShortlist } from "../api/taste";
+import { fetchCuratedShortlist } from "../api/taste";
+import { getCatalogItem } from "../api/media";
 import type { MediaItem } from "../types/media";
 import { EnrichTabs } from "../components/onboarding/EnrichTabs";
 import type { EnrichTab } from "../components/onboarding/EnrichTabs";
@@ -17,8 +18,15 @@ const TAB_TYPE: Record<EnrichTab, string> = { movies: "movie", tv: "tv", anime: 
 export default function EnrichPage() {
   const navigate = useNavigate();
   const prefersReduced = useReducedMotion();
-  const store = useTasteStore();
-  const vectorId = store.vectorId;
+  // Per-field selectors, not the whole store — otherwise this page re-renders on
+  // every unrelated taste-store change.
+  const enrichmentItems = useTasteStore((s) => s.enrichmentItems);
+  const addEnrichmentItem = useTasteStore((s) => s.addEnrichmentItem);
+  const removeEnrichmentItem = useTasteStore((s) => s.removeEnrichmentItem);
+  const clearEnrichmentItems = useTasteStore((s) => s.clearEnrichmentItems);
+  const addFavouriteIds = useTasteStore((s) => s.addFavouriteIds);
+  const favouriteIds = useTasteStore((s) => s.favouriteIds);
+  const removeFavouriteId = useTasteStore((s) => s.removeFavouriteId);
 
   const [activeTab, setActiveTab] = useState<EnrichTab>("movies");
   const [query, setQuery] = useState("");
@@ -27,25 +35,50 @@ export default function EnrichPage() {
   const [suggestions, setSuggestions] = useState<MediaItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [favItems, setFavItems] = useState<MediaItem[]>([]);
 
-  // Curated suggestions so the page is never an empty void.
-  useEffect(() => {
+  // For the retry button (an event handler, so a synchronous reset is fine).
+  const loadSuggestions = useCallback(() => {
+    setSuggestionsError(false);
     fetchCuratedShortlist()
       .then((res) => setSuggestions(res.data.items || []))
-      .catch(() => setSuggestions([]));
+      .catch(() => setSuggestionsError(true));
   }, []);
+
+  // Curated suggestions so the page is never an empty void. Inline (no leading
+  // synchronous setState) to keep the effect clean.
+  useEffect(() => {
+    let cancelled = false;
+    fetchCuratedShortlist()
+      .then((res) => { if (!cancelled) setSuggestions(res.data.items || []); })
+      .catch(() => { if (!cancelled) setSuggestionsError(true); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch the user's current favourites so they can review and remove them.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      favouriteIds.map((id) => getCatalogItem(id).then((r) => r.data).catch(() => null)),
+    ).then((items) => {
+      if (!cancelled) setFavItems(items.filter((i): i is MediaItem => i !== null));
+    });
+    return () => { cancelled = true; };
+  }, [favouriteIds]);
 
   useEffect(() => {
     const q = debouncedQuery.trim();
+    // Don't setState synchronously here to clear results; the `searching` flag
+    // below already hides stale results when the query is empty.
     if (q.length < 1) {
-      setResults([]);
       return;
     }
     let cancelled = false;
-    setSearchLoading(true);
-    setSearchError(null);
+    // Defer the loading flag off the synchronous effect body; results/errors
+    // are only set from the async callbacks below.
+    queueMicrotask(() => { if (!cancelled) { setSearchLoading(true); setSearchError(null); } });
     searchMulti(q, TAB_TYPE[activeTab])
       .then((res) => { if (!cancelled) setResults(res.data.results || []); })
       .catch(() => { if (!cancelled) { setSearchError("Search unavailable. Try again."); setResults([]); } })
@@ -61,30 +94,27 @@ export default function EnrichPage() {
   }, []);
 
   const handleToggle = useCallback((item: MediaItem) => {
-    if (store.enrichmentItems.some((ei: MediaItem) => ei.id === item.id)) {
-      store.removeEnrichmentItem(item.id);
+    if (enrichmentItems.some((ei: MediaItem) => ei.id === item.id)) {
+      removeEnrichmentItem(item.id);
     } else {
-      store.addEnrichmentItem(item);
+      addEnrichmentItem(item);
     }
-  }, [store]);
+  }, [enrichmentItems, addEnrichmentItem, removeEnrichmentItem]);
 
-  const handleUpdate = useCallback(async () => {
-    if (!vectorId || store.enrichmentItems.length === 0) return;
-    setUpdating(true);
+  const handleUpdate = useCallback(() => {
+    if (enrichmentItems.length === 0) return;
+    // Taste is local now: enriching just adds ids to the persisted favourites —
+    // no server call, so this can't fail or hit a cold start.
     setUpdateError(null);
-    try {
-      await updateTasteVector(vectorId, { add_favourites: store.enrichmentItems.map((i) => i.id) });
-      sessionStorage.setItem("unbored-enrich-success", String(store.enrichmentItems.length));
-      navigate("/", { replace: true });
-    } catch (e) {
-      setUpdateError(e instanceof Error ? e.message : "Failed to update taste.");
-    } finally {
-      setUpdating(false);
-    }
-  }, [vectorId, store.enrichmentItems, navigate]);
+    const count = enrichmentItems.length;
+    addFavouriteIds(enrichmentItems.map((i) => i.id));
+    sessionStorage.setItem("unbored-enrich-success", String(count));
+    clearEnrichmentItems();
+    navigate("/", { replace: true });
+  }, [enrichmentItems, addFavouriteIds, clearEnrichmentItems, navigate]);
 
-  const enrichmentCount = store.enrichmentItems.length;
-  const selectedIds = store.enrichmentItems.map((ei: MediaItem) => ei.id);
+  const enrichmentCount = enrichmentItems.length;
+  const selectedIds = enrichmentItems.map((ei: MediaItem) => ei.id);
   const searching = query.trim().length > 0;
   const gridItems = searching
     ? results
@@ -121,6 +151,26 @@ export default function EnrichPage() {
         The more you add, the sharper your picks get.
       </motion.p>
 
+      {favItems.length > 0 && (
+        <div className={styles.favSection}>
+          <p className={styles.sectionLabel}>Your taste · {favItems.length}</p>
+          <div className={styles.favRow}>
+            {favItems.map((f) => (
+              <button
+                key={f.id}
+                className={styles.favChip}
+                onClick={() => removeFavouriteId(f.id)}
+                title={`Remove ${f.title}`}
+                aria-label={`Remove ${f.title} from your taste`}
+              >
+                <span className={styles.favTitle}>{f.title}</span>
+                <span className={styles.favX} aria-hidden="true">×</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <motion.div
         className={styles.searchSection}
         initial={prefersReduced ? false : { opacity: 0, y: 12 }}
@@ -140,7 +190,12 @@ export default function EnrichPage() {
         {!searching && gridItems.length > 0 && (
           <p className={styles.sectionLabel}>Popular picks</p>
         )}
-        {searching && results.length === 0 && !searchLoading && !searchError ? (
+        {!searching && suggestionsError && gridItems.length === 0 ? (
+          <div className={styles.empty}>
+            <p>Couldn't load suggestions.</p>
+            <button className={styles.retryButton} onClick={loadSuggestions}>Try again</button>
+          </div>
+        ) : searching && results.length === 0 && !searchLoading && !searchError ? (
           <p className={styles.empty}>No matches for “{query.trim()}”.</p>
         ) : (
           <PosterGrid items={gridItems} selectedIds={selectedIds} onToggle={handleToggle} maxSelections={99} loading={searchLoading} />
@@ -159,15 +214,14 @@ export default function EnrichPage() {
           <motion.button
             className={styles.updateButton}
             onClick={handleUpdate}
-            disabled={updating}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.8 }}
-            whileHover={!updating && !prefersReduced ? { scale: 1.03 } : {}}
-            whileTap={!updating && !prefersReduced ? { scale: 0.96 } : {}}
+            whileHover={!prefersReduced ? { scale: 1.03 } : {}}
+            whileTap={!prefersReduced ? { scale: 0.96 } : {}}
           >
-            {updating ? "Updating…" : `Add ${enrichmentCount} to my taste`}
+            {`Add ${enrichmentCount} to my taste`}
           </motion.button>
         )}
       </AnimatePresence>

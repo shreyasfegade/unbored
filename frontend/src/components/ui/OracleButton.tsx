@@ -5,15 +5,16 @@ interface OracleButtonProps {
   disabled: boolean;
   loading: boolean;
   onClick: () => void;
+  label?: string;
 }
 
-export function OracleButton({ disabled, loading, onClick }: OracleButtonProps) {
+export function OracleButton({ disabled, loading, onClick, label = "Find my pick" }: OracleButtonProps) {
   const prefersReduced = useReducedMotion();
 
   return (
     <motion.button
       className={`${styles.button} ${loading ? styles.loading : ""}`}
-      disabled={disabled}
+      disabled={disabled || loading}
       onClick={onClick}
       initial={prefersReduced ? false : { opacity: 0, y: 20, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -42,7 +43,7 @@ export function OracleButton({ disabled, loading, onClick }: OracleButtonProps) 
           <span className={styles.dot3}>.</span>
         </span>
       ) : (
-        <span>Just decide for me.</span>
+        <span>{label}</span>
       )}
     </motion.button>
   );
