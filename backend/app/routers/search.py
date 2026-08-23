@@ -26,9 +26,11 @@ MAX_QUERY_LEN = 100
 MAX_RESULTS = 20
 SHORTLIST_SIZE = 36
 
-# Both endpoints are pure functions of the frozen catalog, so they're safe to
-# cache hard at the CDN/browser (a catalog rebuild ships a new deploy anyway).
-_CATALOG_CACHE = "public, max-age=86400, immutable"
+# The catalog changes with each deploy, so these must not be cached as
+# "immutable" — clients kept serving a stale set of rows for a day after a
+# rebuild. Short freshness plus a long stale-while-revalidate keeps it fast
+# while still self-healing within minutes.
+_CATALOG_CACHE = "public, max-age=300, stale-while-revalidate=604800"
 
 _TYPE_MAP = {"movie": MediaType.MOVIE, "tv": MediaType.TV, "anime": MediaType.ANIME}
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { MediaItem } from "../../types/media";
 import { getBrowseShelves, type BrowseShelf } from "../../api/browse";
 import BrowseRail from "./BrowseRail";
+import ShelfGrid from "./ShelfGrid";
 import styles from "./BrowseCatalog.module.css";
 
 interface BrowseCatalogProps {
@@ -26,6 +27,7 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
   const [loading, setLoading] = useState(true);
   const [slow, setSlow] = useState(false);
   const [reload, setReload] = useState(0);
+  const [expanded, setExpanded] = useState<{ key: string; title: string } | null>(null);
 
   const mediaType = filter === "all" ? undefined : filter;
 
@@ -51,6 +53,22 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
       });
     return () => { cancelled = true; clearTimeout(slowTimer); };
   }, [mediaType, reload]);
+
+  // "See all" opens one shelf as a full grid, which is the only comfortable way
+  // to work through a long row.
+  if (expanded) {
+    return (
+      <ShelfGrid
+        shelfKey={expanded.key}
+        title={expanded.title}
+        mediaType={mediaType}
+        selectedIds={selectedIds}
+        onToggle={onToggle}
+        maxSelections={maxSelections}
+        onBack={() => setExpanded(null)}
+      />
+    );
+  }
 
   return (
     <div className={styles.catalog}>
@@ -102,6 +120,7 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
               mediaType={mediaType}
               selectedIds={selectedIds}
               onToggle={onToggle}
+              onSeeAll={(key, title) => setExpanded({ key, title })}
               maxSelections={maxSelections}
             />
           ))}

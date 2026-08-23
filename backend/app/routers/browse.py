@@ -25,8 +25,11 @@ from app.services.catalog import load_catalog
 
 router = APIRouter()
 
-# Same immutable cache as search: a catalog rebuild ships a new deploy anyway.
-_CATALOG_CACHE = "public, max-age=86400, immutable"
+# The catalog changes with each deploy, so these must not be cached as
+# "immutable" — clients kept serving a stale set of rows for a day after a
+# rebuild. Short freshness plus a long stale-while-revalidate keeps it fast
+# while still self-healing within minutes.
+_CATALOG_CACHE = "public, max-age=300, stale-while-revalidate=604800"
 
 MAX_LIMIT = 40
 DEFAULT_LIMIT = 24

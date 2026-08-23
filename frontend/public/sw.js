@@ -2,7 +2,7 @@
  *
  * - Navigations: network-first, fall back to the cached app shell when offline.
  * - Same-origin static assets (Vite hashed files): stale-while-revalidate.
- * - Immutable catalog data (browse, curated shortlist, catalog items): cache-first.
+ * - Catalog data (browse, shortlist, items): stale-while-revalidate.
  * - /api/recommend and everything else: always network (never cached).
  * - Cross-origin requests (posters, fonts) are NOT intercepted: a fetch() from
  *   the worker is checked against CSP's connect-src, which doesn't list the image
@@ -12,7 +12,7 @@
  * This can only ever *add* an offline fallback; it never intercepts the dynamic
  * recommendation call, so a stale cache can't serve a wrong pick.
  */
-const CACHE = "unbored-v2";
+const CACHE = "unbored-v3";
 const SHELL = "/index.html";
 
 self.addEventListener("install", (event) => {
@@ -26,17 +26,6 @@ self.addEventListener("activate", (event) => {
     ).then(() => self.clients.claim())
   );
 });
-
-function cacheFirst(request) {
-  return caches.open(CACHE).then((cache) =>
-    cache.match(request).then((hit) =>
-      hit || fetch(request).then((res) => {
-        if (res.ok) cache.put(request, res.clone());
-        return res;
-      })
-    )
-  );
-}
 
 function staleWhileRevalidate(request) {
   return caches.open(CACHE).then((cache) =>
@@ -74,13 +63,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Immutable catalog data.
+  // Catalog data: serve the cached copy for speed, but always refresh behind
+  // it. Cache-first was wrong here — the catalog changes with each deploy, and
+  // a cached-forever copy pinned clients to an old set of rows.
   if (
     url.pathname.startsWith("/api/browse/") ||
     url.pathname.startsWith("/api/search/") ||
     url.pathname.startsWith("/api/media/")
   ) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 

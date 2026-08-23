@@ -1,10 +1,13 @@
 import api from './client';
+import { CATALOG_VERSION } from './catalogVersion';
 import type { MediaItem } from '../types/media';
 
 // The taste vector is no longer a server resource — taste lives in the browser
 // and is sent per request. These endpoints are pure functions of that input.
 export const fetchCuratedShortlist = () =>
-  api.get<{ items: MediaItem[] }>('/api/search/curated-shortlist');
+  api.get<{ items: MediaItem[] }>('/api/search/curated-shortlist', {
+    params: { v: CATALOG_VERSION },
+  });
 
 export interface GenreWeight {
   name: string;

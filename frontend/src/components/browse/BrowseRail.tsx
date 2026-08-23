@@ -13,6 +13,8 @@ interface BrowseRailProps {
   maxSelections: number;
   /** Fires once the first page loads empty, so the parent can hide this rail. */
   onEmpty?: (key: string) => void;
+  /** Opens the whole shelf as a grid. Omit to hide the affordance. */
+  onSeeAll?: (key: string, title: string) => void;
 }
 
 const PAGE = 18;
@@ -25,12 +27,16 @@ export default function BrowseRail({
   onToggle,
   maxSelections,
   onEmpty,
+  onSeeAll,
 }: BrowseRailProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [offset, setOffset] = useState<number | null>(0); // null = exhausted
   const [loading, setLoading] = useState(false);
   const [empty, setEmpty] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
   const started = useRef(false);
   const rootRef = useRef<HTMLElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -47,6 +53,7 @@ export default function BrowseRail({
       const { data } = await getBrowseShelf(shelfKey, { offset, limit: PAGE, mediaType });
       setItems((prev) => [...prev, ...data.items]);
       setOffset(data.next_offset);
+      setTotal(data.total);
       if (offset === 0 && data.items.length === 0) {
         setEmpty(true);
         onEmpty?.(shelfKey);
@@ -112,12 +119,74 @@ export default function BrowseRail({
     return () => io.disconnect();
   }, [loadMore]);
 
+  // A horizontal strip is unreachable with a normal mouse: a vertical wheel
+  // doesn't scroll it and there's nothing to grab. Arrows (plus wheel
+  // translation below) are what make the row usable on a desktop at all.
+  const updateArrows = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 8);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+
+  useEffect(() => { updateArrows(); }, [items.length, updateArrows]);
+
+  const nudge = (dir: -1 | 1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    // Just under a full screen, so a partly-visible tile stays as an anchor.
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+    if (dir === 1) loadMore();
+  };
+
+  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = trackRef.current;
+    if (!el) return;
+    // Trackpads send deltaX themselves; only translate a vertical wheel.
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    const atStart = el.scrollLeft <= 0 && e.deltaY < 0;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && e.deltaY > 0;
+    if (atStart || atEnd) return; // let the page scroll past the row
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  };
+
   if (empty) return null;
 
   return (
     <section className={styles.rail} aria-label={title} ref={rootRef}>
-      <h3 className={styles.title}>{title}</h3>
-      <div className={styles.track} ref={trackRef}>
+      <div className={styles.head}>
+        <h3 className={styles.title}>{title}</h3>
+        {onSeeAll && total > items.length && (
+          <button type="button" className={styles.seeAll} onClick={() => onSeeAll(shelfKey, title)}>
+            See all →
+          </button>
+        )}
+      </div>
+
+      <div className={styles.viewport}>
+        {canLeft && (
+          <button
+            type="button"
+            className={`${styles.arrow} ${styles.arrowLeft}`}
+            onClick={() => nudge(-1)}
+            aria-label={`Scroll ${title} back`}
+          >
+            ‹
+          </button>
+        )}
+        {canRight && (
+          <button
+            type="button"
+            className={`${styles.arrow} ${styles.arrowRight}`}
+            onClick={() => nudge(1)}
+            aria-label={`Scroll ${title} forward`}
+          >
+            ›
+          </button>
+        )}
+
+      <div className={styles.track} ref={trackRef} onScroll={updateArrows} onWheel={onWheel}>
         {items.map((item, i) => (
           <div className={styles.tile} key={item.id}>
             <PosterCard
@@ -143,6 +212,7 @@ export default function BrowseRail({
         )}
         {/* Trailing sentinel — visible at the right edge (or on the empty rail). */}
         <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />
+      </div>
       </div>
     </section>
   );
