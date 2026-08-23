@@ -123,6 +123,12 @@ class BrowseShelfList(BaseModel):
     shelves: list[BrowseShelf] = Field(default_factory=list)
 
 
+class BrowseDeck(BaseModel):
+    """A shuffled, diverse set of titles for the swipe deck."""
+
+    items: list[MediaItem] = Field(default_factory=list)
+
+
 class BrowseShelfPage(BaseModel):
     """A paginated slice of one shelf, for infinite horizontal scrolling."""
 

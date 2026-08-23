@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from app.config import APP_VERSION, settings
 from app.exceptions import AppError
 from app.middleware import RateLimitMiddleware, RequestLoggingMiddleware
-from app.routers import health, recommend, search, media, llm, browse
+from app.routers import health, recommend, search, media, llm, browse, taste
 from app.services.tmdb_service import TMDBService
 from app.services.anilist_service import AniListService
 from app.services.candidate_pool import CandidatePool
@@ -80,6 +80,7 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(recommend.router, prefix="/api", tags=["recommend"])
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(browse.router, prefix="/api", tags=["browse"])
+app.include_router(taste.router, prefix="/api", tags=["taste"])
 app.include_router(media.router, prefix="/api", tags=["media"])
 app.include_router(llm.router, prefix="/api", tags=["llm"])
 

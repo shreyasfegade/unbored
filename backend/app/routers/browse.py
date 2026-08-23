@@ -8,11 +8,13 @@ calls, so browsing is instant and cache-friendly.
 
 from __future__ import annotations
 
+import random
 from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException, Query, Response
 
 from app.models.media import (
+    BrowseDeck,
     BrowseShelf,
     BrowseShelfList,
     BrowseShelfPage,
@@ -118,6 +120,65 @@ async def get_shelves(response: Response, media_type: str | None = Query(None)):
         if items:
             shelves.append(BrowseShelf(key=s["key"], title=s["title"], count=len(items)))
     return BrowseShelfList(shelves=shelves)
+
+
+@router.get("/browse/deck", response_model=BrowseDeck)
+async def get_deck(
+    response: Response,
+    limit: int = Query(30, ge=1, le=60),
+    exclude: str | None = Query(None, description="Comma-separated ids to leave out"),
+    media_type: str | None = Query(None),
+    seed: int | None = Query(None, description="Set for a reproducible deck"),
+):
+    """A diverse deck for swipe-to-build-taste.
+
+    Round-robins across the genre pools so consecutive cards feel different,
+    weights toward popular titles (people recognise them, so they can judge
+    fast), and never repeats a title within the deck.
+    """
+    # Not cacheable like the shelves: the deck is shuffled and exclusion-aware.
+    response.headers["Cache-Control"] = "no-store"
+    excluded = {e for e in (exclude or "").split(",") if e}
+    want = _TYPE_MAP.get((media_type or "").lower())
+    rng = random.Random(seed)
+
+    pools: list[list[MediaItem]] = []
+    for shelf in _shelves():
+        if not shelf["key"].startswith("genre:"):
+            continue
+        pool = [
+            m for m in shelf["items"][:80]
+            if m.id not in excluded and (not want or m.media_type == want)
+        ]
+        if pool:
+            rng.shuffle(pool)
+            pools.append(pool)
+
+    if not pools:  # no genre pool survived the filter — fall back to trending
+        base = [
+            m for m in (_shelf_by_key("trending") or {"items": []})["items"]
+            if m.id not in excluded and (not want or m.media_type == want)
+        ]
+        rng.shuffle(base)
+        return BrowseDeck(items=base[:limit])
+
+    rng.shuffle(pools)
+    picked: list[MediaItem] = []
+    seen: set[str] = set()
+    cursors = [0] * len(pools)
+    while len(picked) < limit and any(cursors[i] < len(pools[i]) for i in range(len(pools))):
+        for i, pool in enumerate(pools):
+            if len(picked) >= limit:
+                break
+            while cursors[i] < len(pool):
+                item = pool[cursors[i]]
+                cursors[i] += 1
+                if item.id not in seen:
+                    seen.add(item.id)
+                    picked.append(item)
+                    break
+
+    return BrowseDeck(items=picked[:limit])
 
 
 @router.get("/browse/shelf/{key}", response_model=BrowseShelfPage)

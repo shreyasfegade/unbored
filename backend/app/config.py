@@ -58,7 +58,13 @@ class Settings(BaseSettings):
 
     # ── Runtime ────────────────────────────────────────────────────────
     storage_dir: str = "./data"
-    cors_origins: str = "http://localhost:5173,http://localhost:4173"
+    # Includes the deployed frontend so a cross-origin setup works out of the
+    # box. Today the Vercel rewrite makes calls same-origin, but if
+    # VITE_API_BASE_URL is ever pointed straight at this API, a localhost-only
+    # default would block every request with no obvious cause.
+    cors_origins: str = (
+        "http://localhost:5173,http://localhost:4173,https://unbored-five.vercel.app"
+    )
     log_level: str = "INFO"
     candidate_pool_size: int = 500
     pool_refresh_hours: int = 6

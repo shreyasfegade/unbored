@@ -54,6 +54,36 @@ async def test_shelf_media_type_filter():
 
 
 @pytest.mark.asyncio
+async def test_deck_is_diverse_and_unique():
+    async with _client() as c:
+        resp = await c.get("/api/browse/deck", params={"limit": 30, "seed": 7})
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) == 30
+    ids = [i["id"] for i in items]
+    assert len(set(ids)) == len(ids), "deck repeated a title"
+    assert all(i["poster_path"] for i in items)
+    # Round-robining across genre pools should not yield one-note runs.
+    lead_genres = {i["genres"][0] for i in items if i["genres"]}
+    assert len(lead_genres) >= 4, f"deck only spans {lead_genres}"
+
+
+@pytest.mark.asyncio
+async def test_deck_honours_exclude_and_media_type():
+    async with _client() as c:
+        first = (await c.get("/api/browse/deck", params={"limit": 10, "seed": 1})).json()["items"]
+        drop = ",".join(i["id"] for i in first[:5])
+        second = (await c.get(
+            "/api/browse/deck", params={"limit": 10, "seed": 1, "exclude": drop}
+        )).json()["items"]
+        typed = (await c.get(
+            "/api/browse/deck", params={"limit": 10, "media_type": "movie", "seed": 3}
+        )).json()["items"]
+    assert not ({i["id"] for i in second} & set(drop.split(",")))
+    assert typed and all(i["media_type"] == "movie" for i in typed)
+
+
+@pytest.mark.asyncio
 async def test_unknown_shelf_is_404():
     async with _client() as c:
         resp = await c.get("/api/browse/shelf/genre:nonexistent")
