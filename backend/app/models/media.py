@@ -110,6 +110,28 @@ class SearchResponse(BaseModel):
     total_results: int = Field(default=0, ge=0)
     query: str
 
+
+class BrowseShelf(BaseModel):
+    """One browsable row (a genre, a media type, a decade, a collection)."""
+
+    key: str = Field(..., examples=["genre:action", "trending", "decade:1990s"])
+    title: str
+    count: int = Field(default=0, ge=0)
+
+
+class BrowseShelfList(BaseModel):
+    shelves: list[BrowseShelf] = Field(default_factory=list)
+
+
+class BrowseShelfPage(BaseModel):
+    """A paginated slice of one shelf, for infinite horizontal scrolling."""
+
+    key: str
+    title: str
+    items: list[MediaItem] = Field(default_factory=list)
+    total: int = Field(default=0, ge=0)
+    next_offset: int | None = None
+
 class TMDBMovie(BaseModel):
     id: int
     title: str = ""
