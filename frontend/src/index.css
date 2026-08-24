@@ -27,6 +27,9 @@
   --color-glass: rgba(255, 255, 255, 0.04);
   --color-glass-border: rgba(255, 255, 255, 0.08);
   --color-glass-hover: rgba(255, 255, 255, 0.06);
+  /* A hairline divider. Referenced across ten stylesheets that predated this
+     definition, so those borders silently didn't paint until it existed. */
+  --color-border: rgba(255, 255, 255, 0.09);
 
   /* ═══ TYPOGRAPHY ═══ */
   --font-display: 'Playfair Display', Georgia, serif;
@@ -108,6 +111,9 @@
   /* ═══ LAYOUT ═══ */
   --max-width: 1200px;
   --content-width: 800px;
+  /* The persistent bottom nav's height (content + padding + safe area). One
+     token so every fixed page CTA can dock above it instead of guessing. */
+  --nav-height: calc(62px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ═══ RESET ═══ */

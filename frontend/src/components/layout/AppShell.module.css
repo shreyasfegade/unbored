@@ -10,11 +10,15 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* Top-align by default: centring pushed the first row of tall pages
+     (onboarding, browse) below the fold. Short pages opt back into centring
+     via .center on their own container. */
+  justify-content: flex-start;
   align-items: center;
   padding: var(--space-4);
-  /* Clear the fixed bottom nav so it never covers the end of a page. */
-  padding-bottom: calc(var(--space-4) + 68px + env(safe-area-inset-bottom, 0px));
+  /* Clear the fixed bottom nav so it never covers the end of a page. The nav
+     token already carries the safe-area inset, so it isn't added again here. */
+  padding-bottom: calc(var(--space-4) + var(--nav-height));
   position: relative;
   z-index: var(--z-base);
 }
