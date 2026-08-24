@@ -39,6 +39,13 @@ export function useRecommendation() {
     return merged.length > 200 ? merged.slice(-200) : merged;
   }, []);
 
+  /** The API caps favourite_ids at 100. Someone who saves a huge library would
+   *  otherwise 422 every request; keep the most recent, which best reflects
+   *  current taste. */
+  const buildFavourites = useCallback((ids: string[]) => {
+    return ids.length > 100 ? ids.slice(-100) : ids;
+  }, []);
+
   const recommend = useCallback(async () => {
     const taste = useTasteStore.getState();
     const ui = useUIStore.getState();
@@ -60,7 +67,7 @@ export function useRecommendation() {
 
     try {
       const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: favouriteIds, excluded_ids: buildExcluded(rec.excludedIds), ...base },
+        { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(rec.excludedIds), ...base },
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -70,7 +77,7 @@ export function useRecommendation() {
       useRecommendationStore.getState().setError(describeApiError(error));
       ui.setRevealPhase("idle");
     }
-  }, [buildBody, buildExcluded]);
+  }, [buildBody, buildExcluded, buildFavourites]);
 
   const regenerate = useCallback(async () => {
     const taste = useTasteStore.getState();
@@ -99,7 +106,7 @@ export function useRecommendation() {
 
     try {
       const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: favouriteIds, excluded_ids: buildExcluded(nextExcluded), ...base },
+        { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(nextExcluded), ...base },
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -110,7 +117,7 @@ export function useRecommendation() {
       useRecommendationStore.getState().setError(describeApiError(error));
       ui.setRevealPhase("idle");
     }
-  }, [buildBody, buildExcluded]);
+  }, [buildBody, buildExcluded, buildFavourites]);
 
   return { recommend, regenerate };
 }

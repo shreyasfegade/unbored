@@ -46,7 +46,8 @@ export const useTasteStore = create<TasteState>()(
         })),
       addFavourite: (item) =>
         set((state) => {
-          if (state.selectedFavourites.length >= 20) return state;
+          // Ceiling matches the picker's MAX_PICKS and stays within the API cap.
+          if (state.selectedFavourites.length >= 40) return state;
           if (state.selectedFavourites.some((f) => f.id === item.id)) return state;
           return { selectedFavourites: [...state.selectedFavourites, item] };
         }),

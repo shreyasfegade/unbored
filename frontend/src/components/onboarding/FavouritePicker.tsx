@@ -15,8 +15,9 @@ interface FavouritePickerProps {
   onComplete: (picks: MediaItem[]) => void;
 }
 
-// Browse-first: users can add many, but this many is plenty for a sharp profile.
-const MAX_PICKS = 20;
+// Browse-first: add as few or as many as you like. The 5 floor is the real
+// gate; this ceiling only exists so the request stays within the API's cap.
+const MAX_PICKS = 40;
 
 export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
   const prefersReduced = useReducedMotion();
@@ -89,7 +90,8 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.35 }}
       >
-        Pick at least 5 across movies, TV, and anime — browse below, or search for anything.
+        Pick at least 5 across movies, TV, and anime — the more you add, the
+        sharper your picks. Browse below, or search for anything.
       </motion.p>
 
       <div className={styles.searchRow}>

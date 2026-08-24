@@ -31,7 +31,7 @@ class RecommendationRequest(BaseModel):
     # are catalog ids; unknown ids are ignored by the engine. Empty is allowed:
     # the engine's cold-start path returns a strong popular pick, so a visitor
     # can try the product before naming any favourites.
-    favourite_ids: list[str] = Field(default_factory=list, max_length=50)
+    favourite_ids: list[str] = Field(default_factory=list, max_length=100)
     mood: MoodType
     time_available: TimeSlot
     time_of_day: TimeOfDay
