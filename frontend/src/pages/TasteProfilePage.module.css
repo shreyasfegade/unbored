@@ -250,6 +250,15 @@
 
 .error { color: #ff7a7a; font-size: var(--text-sm); }
 
+.ctaRow {
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
 .cta {
   align-self: center;
   display: inline-block;
@@ -261,4 +270,24 @@
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+.ctaRow .cta {
+  margin-top: 0;
+}
+
+.ctaGhost {
+  display: inline-block;
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-full);
+  padding: 9px 22px;
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.ctaGhost:hover {
+  border-color: var(--color-accent-solid);
 }

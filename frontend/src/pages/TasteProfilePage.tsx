@@ -171,7 +171,10 @@ export default function TasteProfilePage() {
             </section>
           )}
 
-          <Link to="/enrich" className={styles.cta}>Refine your taste</Link>
+          <div className={styles.ctaRow}>
+            <Link to="/enrich" className={styles.cta}>Refine your taste</Link>
+            <Link to="/together" className={styles.ctaGhost}>Watch with friends</Link>
+          </div>
         </div>
       )}
     </div>

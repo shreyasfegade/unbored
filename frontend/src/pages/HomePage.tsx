@@ -186,10 +186,15 @@ export default function HomePage() {
               )}
             </div>
 
-            <Link to="/enrich" className={styles.tasteLink}>
-              <span aria-hidden="true">✎</span> Tune your taste
-              {favouriteCount > 0 && <span className={styles.tasteCount}>{favouriteCount} saved</span>}
-            </Link>
+            <div className={styles.quickLinks}>
+              <Link to="/enrich" className={styles.tasteLink}>
+                <span aria-hidden="true">✎</span> Tune your taste
+                {favouriteCount > 0 && <span className={styles.tasteCount}>{favouriteCount} saved</span>}
+              </Link>
+              <Link to="/together" className={styles.tasteLink}>
+                <span aria-hidden="true">⁘</span> Watch with friends
+              </Link>
+            </div>
 
             <AnimatePresence>
               {isError && (
