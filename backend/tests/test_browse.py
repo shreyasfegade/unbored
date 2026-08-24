@@ -23,8 +23,10 @@ async def test_shelves_are_well_formed():
     shelves = resp.json()["shelves"]
     assert len(shelves) >= 8
     keys = {s["key"] for s in shelves}
-    # Curated + type rows are always present.
-    assert {"trending", "top_rated", "movie", "tv", "anime"} <= keys
+    # The three curated rows are always present; media-type rows were removed
+    # (the filter chips do that job, and they were the source of cross-row
+    # repetition). Genre rows fill the rest.
+    assert {"trending", "top_rated", "new_releases"} <= keys
     assert any(k.startswith("genre:") for k in keys)
     assert all(s["count"] > 0 for s in shelves)
 
@@ -57,46 +59,57 @@ async def test_shelf_media_type_filter():
     assert all(it["media_type"] == "anime" for it in body["items"])
 
 
-def test_titles_do_not_repeat_across_many_shelves():
+def test_every_title_appears_in_at_most_one_shelf():
     """The complaint was "half the stuff is repeated throughout" — a title used
-    to appear in 5.3 rows on average and up to 10."""
+    to appear in 5.3 rows on average, up to 10, because the media-type rows
+    re-listed everything. Now a title is claimed by exactly one row."""
     from collections import Counter
 
-    from app.routers.browse import _shelves
+    from app.services.shelves import build_shelves
 
     seen: Counter[str] = Counter()
-    for shelf in _shelves():
+    for shelf in build_shelves():
         for item in shelf["items"]:
             seen[item.id] += 1
-    counts = list(seen.values())
-    average = sum(counts) / len(counts)
-    assert average <= 2.5, f"titles appear in {average:.1f} rows on average"
-    assert max(counts) <= 4, f"one title appears in {max(counts)} rows"
+    worst = max(seen.values())
+    assert worst == 1, f"a title appears in {worst} shelves"
 
 
 def test_no_shelf_repeats_a_franchise():
     """One show must not fill a row with its own sequels or seasons."""
-    from app.routers.browse import _shelves
+    from app.services.shelves import build_shelves
 
-    for shelf in _shelves():
+    for shelf in build_shelves():
         franchises = [m.franchise for m in shelf["items"] if m.franchise]
         assert len(franchises) == len(set(franchises)), f"{shelf['key']} repeats a franchise"
 
 
+def test_genre_rows_actually_fit_their_genre():
+    """The old "rarest genre" rule filed dramas under Music and left no Action
+    row at all. Every title in a genre row must genuinely carry that genre."""
+    from app.services.shelves import build_shelves, effective_genres
+
+    genre_rows = [s for s in build_shelves() if s["key"].startswith("genre:")]
+    assert genre_rows, "expected genre rows"
+    # The specific regression: Action was dropped entirely before.
+    assert any(s["key"] == "genre:action" for s in genre_rows), "no Action row"
+
+    for shelf in genre_rows:
+        slug = shelf["key"].split(":", 1)[1]
+        for m in shelf["items"]:
+            assert slug in effective_genres(m), (
+                f"{m.title!r} is in {shelf['key']} but its genres are {m.genres}"
+            )
+
+
 def test_curated_shelves_span_media_types():
     """AniList popularity is ~1000x TMDB's, so ranking the raw numbers together
-    made the front-page rows 100% anime.
-
-    Only the curated rows are checked: a genre row legitimately reflects its
-    genre (there are no history TV shows in the catalog, so that row is all
-    films), whereas Trending and Critically Acclaimed are meant to represent
-    the whole library.
-    """
+    made the front-page rows 100% anime. The curated rows must stay mixed."""
     from collections import Counter
 
-    from app.routers.browse import _shelves
+    from app.services.shelves import build_shelves
 
-    for shelf in _shelves():
+    for shelf in build_shelves():
         if shelf["key"] not in {"trending", "top_rated"}:
             continue
         head = shelf["items"][:20]
