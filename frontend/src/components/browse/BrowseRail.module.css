@@ -50,29 +50,37 @@
   position: absolute;
   top: 0;
   bottom: var(--space-2);
-  width: 44px;
+  width: 52px;
   z-index: 3;
   border: none;
   cursor: pointer;
   font-size: 26px;
   line-height: 1;
   color: var(--color-text-primary);
-  background: linear-gradient(90deg, rgba(12, 11, 9, 0.92), rgba(12, 11, 9, 0));
+  background: linear-gradient(90deg, rgba(12, 11, 9, 0.95), rgba(12, 11, 9, 0));
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
+  /* An arrow only renders when the row can scroll that way (canLeft/canRight),
+     so its mere presence is the affordance. Persistently visible — dimmed at
+     rest, full on hover — because a control that only appears on hover can't
+     signal "there's more" before you touch it. The gradient doubles as the
+     edge fade that shows a tile is being cut off. */
+  opacity: 0.72;
   transition: opacity var(--transition-fast);
 }
 
-.arrowLeft { left: 0; }
+.arrowLeft { left: 0; justify-content: flex-start; padding-left: 6px; }
 
 .arrowRight {
   right: 0;
-  background: linear-gradient(270deg, rgba(12, 11, 9, 0.92), rgba(12, 11, 9, 0));
+  justify-content: flex-end;
+  padding-right: 6px;
+  background: linear-gradient(270deg, rgba(12, 11, 9, 0.95), rgba(12, 11, 9, 0));
 }
 
 .viewport:hover .arrow,
+.arrow:hover,
 .arrow:focus-visible {
   opacity: 1;
 }
@@ -94,6 +102,11 @@
   overflow-x: auto;
   overflow-y: visible;
   scroll-snap-type: x proximity;
+  /* Keep a snapped tile clear of the arrow overlay. */
+  scroll-padding-inline: 52px;
+  /* Explicitly auto: the global html{scroll-behavior:smooth} would otherwise be
+     inherited here and fight the JS scroll tween in BrowseRail. */
+  scroll-behavior: auto;
   padding: 4px var(--space-3) var(--space-2);
   scrollbar-width: none; /* Firefox */
   -webkit-overflow-scrolling: touch;

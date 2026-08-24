@@ -17,7 +17,11 @@ interface BrowseRailProps {
   onSeeAll?: (key: string, title: string) => void;
 }
 
-const PAGE = 18;
+const PAGE = 30;
+
+// Ease-out cubic: fast start, gentle settle — the feel of a flick that comes
+// to rest rather than a hard stop.
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function BrowseRail({
   shelfKey,
@@ -41,6 +45,8 @@ export default function BrowseRail({
   const rootRef = useRef<HTMLElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // A single in-flight scroll tween; a new nudge or wheel spin retargets it.
+  const tween = useRef<{ raf: number; to: number } | null>(null);
 
   const selected = new Set(selectedIds);
   const reachedMax = selected.size >= maxSelections;
@@ -113,7 +119,7 @@ export default function BrowseRail({
     if (!el || !root || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) loadMore(); },
-      { root, rootMargin: "0px 400px 0px 0px" },
+      { root, rootMargin: "0px 800px 0px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -131,15 +137,47 @@ export default function BrowseRail({
 
   useEffect(() => { updateArrows(); }, [items.length, updateArrows]);
 
+  // A hand-rolled rAF tween instead of scrollTo({behavior:"smooth"}): native
+  // smooth scrolling silently no-ops on this track in some engines (that was
+  // the "arrow doesn't move" bug), and it can't be retargeted mid-flight the
+  // way a flurry of clicks or wheel spins needs.
+  const scrollTo = useCallback((target: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const to = Math.max(0, Math.min(target, max));
+    if (tween.current) cancelAnimationFrame(tween.current.raf);
+    const from = el.scrollLeft;
+    const dist = to - from;
+    if (Math.abs(dist) < 1) return;
+    const dur = Math.min(520, 260 + Math.abs(dist) * 0.28);
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      el.scrollLeft = from + dist * easeOutCubic(t);
+      updateArrows();
+      if (t < 1) {
+        tween.current = { raf: requestAnimationFrame(step), to };
+      } else {
+        tween.current = null;
+        if (dist > 0) loadMore();
+      }
+    };
+    tween.current = { raf: requestAnimationFrame(step), to };
+  }, [updateArrows, loadMore]);
+
+  useEffect(() => () => {
+    if (tween.current) cancelAnimationFrame(tween.current.raf);
+  }, []);
+
   const nudge = (dir: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    // Instant, not smooth: smooth scrolling silently does nothing in some
-    // engines/contexts, and an arrow that doesn't move is the bug we're fixing.
-    // Just under a full screen, so a partly-visible tile stays as an anchor.
-    el.scrollLeft += dir * el.clientWidth * 0.85;
-    updateArrows();
-    if (dir === 1) loadMore();
+    // Retarget from the tween's destination, not the live scrollLeft, so rapid
+    // clicks add up instead of restarting from wherever the animation happens
+    // to be. Just under a full screen keeps a partly-visible tile as an anchor.
+    const base = tween.current ? tween.current.to : el.scrollLeft;
+    scrollTo(base + dir * el.clientWidth * 0.85);
   };
 
   const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -151,7 +189,18 @@ export default function BrowseRail({
     const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && e.deltaY > 0;
     if (atStart || atEnd) return; // let the page scroll past the row
     e.preventDefault();
-    el.scrollLeft += e.deltaY;
+    // Glide toward the wheel's direction through the same tween, so a spin
+    // eases instead of stepping. Amplified a little so one notch travels a
+    // readable distance.
+    const base = tween.current ? tween.current.to : el.scrollLeft;
+    scrollTo(base + e.deltaY * 2.4);
+  };
+
+  // Arrow keys scroll the row, but only when focus is inside this track — a
+  // window-level listener would hijack arrow keys for every rail on the page.
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); nudge(1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); nudge(-1); }
   };
 
   if (empty) return null;
@@ -189,7 +238,13 @@ export default function BrowseRail({
           </button>
         )}
 
-      <div className={styles.track} ref={trackRef} onScroll={updateArrows} onWheel={onWheel}>
+      <div
+        className={styles.track}
+        ref={trackRef}
+        onScroll={updateArrows}
+        onWheel={onWheel}
+        onKeyDown={onKeyDown}
+      >
         {items.map((item, i) => (
           <div className={styles.tile} key={item.id}>
             <PosterCard
