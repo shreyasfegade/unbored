@@ -183,22 +183,27 @@ export default function EnrichPage() {
         </AnimatePresence>
       </div>
 
-      <AnimatePresence>
-        {enrichmentCount > 0 && (
-          <motion.button
-            className={styles.updateButton}
-            onClick={handleUpdate}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.8 }}
-            whileHover={!prefersReduced ? { scale: 1.03 } : {}}
-            whileTap={!prefersReduced ? { scale: 0.96 } : {}}
-          >
-            {`Add ${enrichmentCount} to my taste`}
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* The fixed, transform-free wrapper centres the button, so framer can
+          animate y/scale without clobbering a translateX and flinging it into a
+          corner. It docks above the bottom nav via the shared token. */}
+      <div className={styles.updateBar}>
+        <AnimatePresence>
+          {enrichmentCount > 0 && (
+            <motion.button
+              className={styles.updateButton}
+              onClick={handleUpdate}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.8 }}
+              whileHover={!prefersReduced ? { scale: 1.03 } : {}}
+              whileTap={!prefersReduced ? { scale: 0.96 } : {}}
+            >
+              {`Add ${enrichmentCount} to my taste`}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {updateError && (

@@ -58,11 +58,19 @@
   padding: var(--space-6) var(--space-3);
 }
 
-.commit {
+.commitBar {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-height) + var(--space-3));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 45;
+}
+
+.commit {
+  pointer-events: auto;
   background: var(--color-accent-solid);
   color: #fff;
   border: none;
@@ -73,7 +81,6 @@
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-lg, 0 12px 32px -8px rgba(0, 0, 0, 0.6));
-  z-index: 20;
 }
 
 .commit:focus-visible {

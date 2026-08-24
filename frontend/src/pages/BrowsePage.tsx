@@ -101,15 +101,17 @@ export default function BrowsePage() {
       )}
 
       {staged.length > 0 && (
-        <motion.button
-          className={styles.commit}
-          onClick={commit}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          {`Add ${staged.length} to my taste`}
-        </motion.button>
+        <div className={styles.commitBar}>
+          <motion.button
+            className={styles.commit}
+            onClick={commit}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            {`Add ${staged.length} to my taste`}
+          </motion.button>
+        </div>
       )}
     </div>
   );
