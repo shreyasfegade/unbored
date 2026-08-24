@@ -136,11 +136,42 @@
   border-color: #5ee6a8;
 }
 
+.undo {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 18px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.undo:hover:not(:disabled) {
+  color: var(--color-text-secondary);
+  transform: scale(1.08);
+}
+
+.undo:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.undo:focus-visible {
+  outline: 2px solid var(--color-accent-solid);
+  outline-offset: 3px;
+}
+
 .counter {
   font-size: var(--text-sm);
   color: var(--color-text-tertiary);
-  min-width: 64px;
   text-align: center;
+  margin: 0;
 }
 
 .hint {

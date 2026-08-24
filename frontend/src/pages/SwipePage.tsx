@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { getBrowseDeck } from "../api/browse";
+import { sizedPoster } from "../utils/poster";
 import type { MediaItem } from "../types/media";
 import SwipeDeck, { type SwipeVerdict } from "../components/swipe/SwipeDeck";
 import styles from "./SwipePage.module.css";
@@ -16,6 +17,7 @@ export default function SwipePage() {
   const [liked, setLiked] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [exhausted, setExhausted] = useState(false);
   // Everything already judged or owned, so a refill never repeats a card.
   const decided = useRef<Set<string>>(new Set());
 
@@ -49,11 +51,21 @@ export default function SwipePage() {
     if (verdict === "like") setLiked((prev) => [...prev, item]);
   }, []);
 
-  const handleDone = () => {
+  const handleUndo = useCallback((item: MediaItem) => {
+    decided.current.delete(item.id);
+    setLiked((prev) => prev.filter((i) => i.id !== item.id));
+  }, []);
+
+  const loadMore = useCallback(() => {
+    setExhausted(false);
+    fetchDeck(true);
+  }, [fetchDeck]);
+
+  const commitLiked = useCallback(() => {
     if (liked.length) addFavouriteIds(liked.map((i) => i.id));
     sessionStorage.setItem("unbored-enrich-success", String(liked.length));
     navigate("/", { replace: true });
-  };
+  }, [liked, addFavouriteIds, navigate]);
 
   return (
     <div className={styles.page}>
@@ -68,7 +80,8 @@ export default function SwipePage() {
         Love it or leave it
       </motion.h1>
       <p className={styles.subtitle}>
-        Swipe through a few titles — we&rsquo;ll read your taste from what you keep.
+        Swipe right on what you&rsquo;d watch, left on what you wouldn&rsquo;t —
+        we read your taste from what you keep. Nothing here is saved until you add it.
       </p>
 
       {error && deck.length === 0 ? (
@@ -78,26 +91,84 @@ export default function SwipePage() {
         </div>
       ) : loading ? (
         <div className={styles.skeleton} aria-label="Loading titles" />
+      ) : exhausted ? (
+        <EndCard liked={liked} onAdd={commitLiked} onMore={loadMore} onDone={() => navigate("/")} />
       ) : (
         <SwipeDeck
           items={deck}
           onDecide={handleDecide}
+          onUndo={handleUndo}
           onRunningLow={() => fetchDeck(true)}
+          onExhausted={() => setExhausted(true)}
           emptyMessage="You've been through the deck — nice work."
         />
       )}
 
-      {liked.length > 0 && (
-        <motion.button
-          className={styles.done}
-          onClick={handleDone}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          {`Add ${liked.length} to my taste`}
-        </motion.button>
+      {/* Mid-swipe shortcut: bank what you've liked without reaching the end.
+          Docked above the bottom nav (see .commitBar). */}
+      {!exhausted && liked.length > 0 && (
+        <div className={styles.commitBar}>
+          <motion.button
+            className={styles.commit}
+            onClick={commitLiked}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Add {liked.length} to my taste
+          </motion.button>
+        </div>
       )}
     </div>
+  );
+}
+
+function EndCard({
+  liked,
+  onAdd,
+  onMore,
+  onDone,
+}: {
+  liked: MediaItem[];
+  onAdd: () => void;
+  onMore: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <motion.div
+      className={styles.endCard}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
+      <h2 className={styles.endTitle}>
+        {liked.length > 0 ? `You kept ${liked.length}` : "That's the deck"}
+      </h2>
+      <p className={styles.endSub}>
+        {liked.length > 0
+          ? "Add them to sharpen your picks, or keep going for more."
+          : "Nothing caught your eye — try a few more."}
+      </p>
+
+      {liked.length > 0 && (
+        <div className={styles.endPosters}>
+          {liked.slice(-8).map((m) => (
+            <div key={m.id} className={styles.endPoster}>
+              {m.poster_path ? <img src={sizedPoster(m.poster_path, "thumb")} alt={m.title} /> : null}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.endActions}>
+        {liked.length > 0 && (
+          <button className={styles.endPrimary} onClick={onAdd}>
+            Add {liked.length} to my taste
+          </button>
+        )}
+        <button className={styles.endSecondary} onClick={onMore}>Show me more</button>
+        <button className={styles.endGhost} onClick={onDone}>Done</button>
+      </div>
+    </motion.div>
   );
 }
