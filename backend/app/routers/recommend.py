@@ -121,6 +121,7 @@ async def _run_pipeline(
         time_of_day=body.time_of_day,
         taste=taste_dims_from_items(liked_items),
         genre_boosts=genre_boosts,
+        tuning=body.tuning.model_dump() if body.tuning else None,
     )
     result = engine.recommend(candidates, shortlist_size=8)
     if result is None:

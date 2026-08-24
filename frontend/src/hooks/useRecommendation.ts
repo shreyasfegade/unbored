@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { useUIStore } from "../stores/uiStore";
 import { useTasteStore } from "../stores/tasteStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
+import { usePreferencesStore, isNeutralTuning } from "../stores/preferencesStore";
 import { suppressedIds } from "../stores/libraryStore";
 import { useTimeContext } from "./useTimeContext";
 import { getRecommendation } from "../api/recommend";
@@ -23,12 +24,16 @@ export function useRecommendation() {
   const buildBody = useCallback(() => {
     const { selectedMood, selectedTimeSlot, selectedMediaType, selectedEra } = useUIStore.getState();
     if (!selectedMood || !selectedTimeSlot) return null;
+    // Only send tuning when the user has actually moved a slider, so a default
+    // request stays byte-for-byte what it always was.
+    const { tuning } = usePreferencesStore.getState();
     return {
       mood: selectedMood,
       time_available: selectedTimeSlot,
       time_of_day: timeOfDay,
       media_type: selectedMediaType,
       era: selectedEra,
+      ...(isNeutralTuning(tuning) ? {} : { tuning }),
     };
   }, [timeOfDay]);
 

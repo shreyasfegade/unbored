@@ -21,6 +21,13 @@ export interface ScoredMediaItem {
   rationale?: string | null;
 }
 
+export interface TuningWeights {
+  adventurous: number; // familiar ↔ adventurous
+  obscurity: number;   // crowd-pleasers ↔ hidden gems
+  acclaim: number;     // anything ↔ acclaimed
+  freshness: number;   // timeless ↔ fresh
+}
+
 export interface RecommendationRequest {
   // The taste itself, sent per request — the API is stateless.
   favourite_ids: string[];
@@ -30,6 +37,7 @@ export interface RecommendationRequest {
   media_type: MediaTypeChoice;
   era?: EraPreference;
   excluded_ids: string[];
+  tuning?: TuningWeights | null;
 }
 
 export interface RecommendationResponse {

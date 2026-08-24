@@ -55,6 +55,11 @@ _W_RECENCY = 0.14
 _RETRIEVE_N = 120
 _W_RERANK = (0.20, 0.40, 0.13, 0.09, 0.18)
 
+# Tuning-slider strengths (additive terms). Kept modest so a slider shifts the
+# ranking without overwhelming taste and mood. Both are exactly 0 at slider 0.
+_TUNE_K_POP = 0.22    # crowd-pleasers ↔ hidden gems
+_TUNE_K_FRESH = 0.20  # timeless ↔ fresh
+
 # Recency: reference year and per-era decay half-lives (years). ``None`` for
 # CLASSIC, which inverts the curve (older scores higher).
 _REF_YEAR = datetime.now(timezone.utc).year
@@ -155,6 +160,7 @@ class RecommendationEngine:
         time_of_day: str | None = None,
         taste: dict[str, float] | None = None,
         genre_boosts: dict[str, float] | None = None,
+        tuning: dict[str, float] | None = None,
     ) -> None:
         self._index = index
         self._mood = mood
@@ -169,6 +175,13 @@ class RecommendationEngine:
         # Optional AI-supplied bias (query expansion): genre -> weight in [0,1].
         # A soft additive nudge so the AI shapes what surfaces, not a hard filter.
         self._genre_boosts = {g.lower().strip(): float(w) for g, w in (genre_boosts or {}).items()}
+        # User-facing tuning sliders, each in [-1, 1]; all zero (the default) is a
+        # no-op, so an untuned request ranks exactly as before.
+        t = tuning or {}
+        self._adv = float(t.get("adventurous", 0.0))
+        self._obscurity = float(t.get("obscurity", 0.0))
+        self._acclaim = float(t.get("acclaim", 0.0))
+        self._freshness = float(t.get("freshness", 0.0))
         self._media_type_applied = True
 
     def _genre_bonus(self, item: MediaItem) -> float:
@@ -176,6 +189,34 @@ class RecommendationEngine:
             return 0.0
         hits = [self._genre_boosts.get(g.lower().strip(), 0.0) for g in item.genres]
         return max(hits) if hits else 0.0
+
+    def _tune_weights(
+        self, w: tuple[float, float, float, float, float]
+    ) -> tuple[float, float, float, float, float]:
+        """Apply the multiplicative slider effects to a weight tuple and
+        renormalise. Identity when every slider is 0."""
+        w_rel, w_mood, w_rt, w_q, w_rec = w
+        w_rel *= 1.0 - 0.5 * self._adv          # adventurous → lean off pure taste
+        w_q *= 1.0 + self._acclaim              # acclaimed → rating matters more
+        w_rec *= 1.0 + 0.8 * abs(self._freshness)  # either era pull cares about year more
+        total = w_rel + w_mood + w_rt + w_q + w_rec
+        if total <= 0:
+            return w
+        return (w_rel / total, w_mood / total, w_rt / total, w_q / total, w_rec / total)
+
+    def _retrieve_n(self) -> int:
+        """Adventurous widens the retrieve set so mood/era can reach further."""
+        return max(40, min(260, _RETRIEVE_N + int(80 * self._adv)))
+
+    def _lam(self) -> float:
+        """Adventurous lowers MMR lambda — more diverse, less safe."""
+        return max(0.45, min(0.92, 0.72 - 0.25 * self._adv))
+
+    def _tune_bonus(self, item: MediaItem, recency: float) -> float:
+        """Additive slider terms — popularity and freshness. Exactly 0 at 0."""
+        pop = _TUNE_K_POP * (-self._obscurity) * (item.popularity_norm - 0.5)
+        fresh = _TUNE_K_FRESH * self._freshness * (recency - 0.5)
+        return pop + fresh
 
     def _weights(self) -> tuple[float, float, float, float, float]:
         """Relevance leans out when the taste profile is too thin (cold start)."""
@@ -193,7 +234,7 @@ class RecommendationEngine:
                 _W_QUALITY + freed * 0.3,
                 _W_RECENCY + freed * 0.3,
             )
-        return self._apply_era_boost(base)
+        return self._apply_era_boost(self._tune_weights(base))
 
     def _apply_era_boost(
         self, w: tuple[float, float, float, float, float]
@@ -227,7 +268,7 @@ class RecommendationEngine:
         # Retrieve-then-rerank: first narrow to the strongest taste matches, then
         # let mood/era/runtime choose within them.
         if has_taste:
-            retrieve = sorted(pool, key=lambda c: raw_rel[c.id], reverse=True)[:_RETRIEVE_N]
+            retrieve = sorted(pool, key=lambda c: raw_rel[c.id], reverse=True)[:self._retrieve_n()]
             # AI genre bias can *introduce* strong-on-genre titles the taste kNN
             # didn't surface, so the model shapes the candidate set, not just its
             # order. Pull in the best-rated boost matches beyond the retrieve set.
@@ -236,7 +277,7 @@ class RecommendationEngine:
                 extra = [c for c in pool if c.id not in have and self._genre_bonus(c) > 0]
                 extra.sort(key=lambda c: (self._genre_bonus(c), c.vote_average, c.vote_count), reverse=True)
                 retrieve = retrieve + extra[:_RETRIEVE_N // 2]
-            w_rel, w_mood, w_rt, w_q, w_rec = self._apply_era_boost(_W_RERANK)
+            w_rel, w_mood, w_rt, w_q, w_rec = self._apply_era_boost(self._tune_weights(_W_RERANK))
         else:  # cold start — no taste signal yet
             retrieve = pool
             w_rel, w_mood, w_rt, w_q, w_rec = self._weights()
@@ -254,6 +295,7 @@ class RecommendationEngine:
                 w_rel * rel + w_mood * mood + w_rt * runtime
                 + w_q * quality + w_rec * recency
                 + 0.12 * self._genre_bonus(c)
+                + self._tune_bonus(c, recency)
             )
             scored.append(
                 ScoredMediaItem(
@@ -327,7 +369,7 @@ class RecommendationEngine:
             return None
         # Absolute relevance for honest confidence calibration.
         raw_rel = {s.media.id: self._index.relevance(s.media.id, self._profile) for s in ranked[:60]}
-        picks = self._mmr_select(ranked, 3)
+        picks = self._mmr_select(ranked, 3, lam=self._lam())
         primary = picks[0]
         alternates = picks[1:3]
         while len(alternates) < 2 and len(ranked) > len(alternates) + 1:

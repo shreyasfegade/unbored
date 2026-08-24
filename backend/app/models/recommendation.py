@@ -22,6 +22,23 @@ class ScoredMediaItem(BaseModel):
 
 MediaTypeChoice = Literal["movie", "tv", "anime", "surprise"]
 
+
+class TuningWeights(BaseModel):
+    """Per-request nudges to what a pick optimises for, each in [-1, 1].
+
+    All default to 0, and 0 on every axis reproduces the untuned ranking exactly
+    — the engine only departs from its defaults where a slider is actually
+    moved. Positive is the second word of each pair.
+    """
+
+    adventurous: float = Field(default=0.0, ge=-1.0, le=1.0)  # familiar ↔ adventurous
+    obscurity: float = Field(default=0.0, ge=-1.0, le=1.0)    # crowd-pleasers ↔ hidden gems
+    acclaim: float = Field(default=0.0, ge=-1.0, le=1.0)      # anything ↔ acclaimed
+    freshness: float = Field(default=0.0, ge=-1.0, le=1.0)    # timeless ↔ fresh
+
+    def is_neutral(self) -> bool:
+        return not any((self.adventurous, self.obscurity, self.acclaim, self.freshness))
+
 # Who actually made the AI call, and how it went. "off" = no key connected;
 # "used" = AI picked; the rest are silent-failure modes the UI can surface.
 AIStatus = Literal["off", "used", "timeout", "error"]
@@ -40,6 +57,8 @@ class RecommendationRequest(BaseModel):
     # Everything the user has already seen or rejected (incl. the current pick on
     # a "try again"), so regenerate needs no server-side request log.
     excluded_ids: list[str] = Field(default_factory=list, max_length=200)
+    # Optional fine-tuning of the ranking. Omitted / all-zero = untuned.
+    tuning: TuningWeights | None = None
 
 class RecommendationResponse(BaseModel):
     primary: ScoredMediaItem

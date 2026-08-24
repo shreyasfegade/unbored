@@ -11,6 +11,7 @@ import { MoodSelector } from "../components/mood";
 import { TimeSelector } from "../components/ui/TimeSelector";
 import { MediaTypeSelector } from "../components/ui/MediaTypeSelector";
 import { EraSelector } from "../components/ui/EraSelector";
+import TuningPanel from "../components/ui/TuningPanel";
 import { OracleButton } from "../components/ui/OracleButton";
 import { RevealOracle } from "../components/reveal";
 import { AIStatusBanner } from "../components/llm/AIStatusBanner";
@@ -173,6 +174,8 @@ export default function HomePage() {
             <div className={styles.mediaSection}>
               <EraSelector selected={selectedEra} onSelect={setEra} />
             </div>
+
+            <TuningPanel />
 
             <div className={styles.oracleWrap}>
               <OracleButton
