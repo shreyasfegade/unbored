@@ -9,6 +9,13 @@
   width: 100%;
 }
 
+/* The favourites step grows tall with browse rails; centring it pushed the
+   first rail below the fold. Top-align that step only — welcome/connect stay
+   centred. */
+.pageTop {
+  justify-content: flex-start;
+}
+
 .full {
   width: 100%;
 }

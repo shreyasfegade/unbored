@@ -8,8 +8,9 @@ import { SearchBar } from '../ui/SearchBar';
 import PosterGrid from '../poster/PosterGrid';
 import BrowseCatalog from '../browse/BrowseCatalog';
 import SelectionCounter from './SelectionCounter';
-import DoneButton from './DoneButton';
 import styles from './FavouritePicker.module.css';
+
+const MIN_PICKS = 5;
 
 interface FavouritePickerProps {
   onComplete: (picks: MediaItem[]) => void;
@@ -62,7 +63,7 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
   }, [selectedFavourites, removeFavourite, addFavourite]);
 
   const handleDone = async () => {
-    if (selectedFavourites.length < 5) return;
+    if (selectedFavourites.length < MIN_PICKS) return;
     try {
       await createFromFavourites(selectedFavourites);
       onComplete(selectedFavourites);
@@ -73,6 +74,9 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
 
   const selectedIds = selectedFavourites.map((f) => f.id);
   const searchActive = query.trim().length > 0;
+  const count = selectedFavourites.length;
+  const ready = count >= MIN_PICKS;
+  const progress = Math.min(count / MIN_PICKS, 1);
 
   return (
     <div className={styles.container}>
@@ -103,9 +107,15 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
         />
       </div>
 
-      <SelectionCounter current={selectedFavourites.length} target={5} />
+      <SelectionCounter current={selectedFavourites.length} target={MIN_PICKS} />
 
-      <div className={styles.scrollArea}>
+      {!searchActive && (
+        <p className={styles.scrollCue} aria-hidden="true">
+          Scroll for genres and hundreds more ↓
+        </p>
+      )}
+
+      <div className={styles.catalogArea}>
         {!searchActive ? (
           <BrowseCatalog selectedIds={selectedIds} onToggle={handleToggle} maxSelections={MAX_PICKS} />
         ) : results.length === 0 && !searching ? (
@@ -120,11 +130,29 @@ export default function FavouritePicker({ onComplete }: FavouritePickerProps) {
         )}
       </div>
 
-      <DoneButton
-        visible={selectedFavourites.length >= 5}
-        onClick={handleDone}
-        loading={isLoading}
-      />
+      {/* Docked so the action is always in reach — no scrolling to the bottom of
+          an endless rail list to find it. The bar shows progress toward the
+          minimum and only becomes actionable at five, with the count as the
+          label so the requirement is never a mystery. */}
+      <div className={styles.dock}>
+        <div className={styles.dockInner}>
+          <div className={styles.progress} aria-hidden="true">
+            <div className={styles.progressBar} style={{ transform: `scaleX(${progress})` }} />
+          </div>
+          <button
+            type="button"
+            className={styles.cta}
+            onClick={handleDone}
+            disabled={!ready || isLoading}
+          >
+            {isLoading
+              ? 'Building…'
+              : ready
+                ? `Continue with ${count} →`
+                : `Pick ${MIN_PICKS - count} more`}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

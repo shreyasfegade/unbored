@@ -80,6 +80,9 @@ export const useTasteStore = create<TasteState>()(
       partialize: (state) => ({
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         favouriteIds: state.favouriteIds,
+        // Persist the in-progress onboarding picks too, so a refresh mid-flow
+        // doesn't silently reset the counter to zero and lose every selection.
+        selectedFavourites: state.selectedFavourites,
       }),
     }
   )

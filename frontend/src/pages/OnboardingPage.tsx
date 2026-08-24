@@ -37,7 +37,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${step === 'favourites' ? styles.pageTop : ''}`}>
       <>
         {step === 'welcome' && (
           <motion.div key="welcome" className={styles.welcome} variants={stepVariants} initial="initial" animate="animate">
