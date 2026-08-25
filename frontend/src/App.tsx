@@ -1,8 +1,9 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { MotionConfig } from "framer-motion";
+import { MotionConfig, motion, useReducedMotion } from "framer-motion";
 import { useTasteStore } from './stores/tasteStore';
 import { usePreferencesStore } from './stores/preferencesStore';
+import { SPRING } from './config/motion';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
 // Onboarding is the only route a first-time visitor can reach, so it loads
@@ -21,21 +22,30 @@ const TasteProfilePage = lazy(() => import('./pages/TasteProfilePage'));
 const AccountPage = lazy(() => import('./pages/AccountPage'));
 
 /**
- * Pages animate in and are never animated out.
+ * Pages ease in on mount and are never animated out — enter-only, always
+ * mounted.
  *
- * Routes used to be wrapped in `AnimatePresence mode="wait"`, which holds the
- * incoming page until the outgoing one finishes its exit animation. When that
- * exit never completed, the old page stayed mounted, the new one never
- * appeared, and React stopped committing anything at all — the whole app froze.
- * An animation must never decide whether content renders, so there is no exit
- * animation here: the router swaps pages immediately and motion is decoration.
+ * This is NOT the pattern that froze the app before. That was
+ * `AnimatePresence mode="wait"` wrapping the routes: it held the incoming page
+ * until the outgoing one finished an exit animation that never completed, so
+ * React stopped committing entirely. Here there is no AnimatePresence and no
+ * exit — the router swaps pages instantly and this wrapper animates the new one
+ * in as decoration. A stalled frame can at worst leave the page a few pixels low
+ * and briefly translucent; it can never withhold the content. Reduced motion
+ * skips it. (AppShell, the whole-app wrapper, is deliberately never animated.)
  */
 function Page({ children }: { children: ReactNode }) {
-  // No mount animation on the wrapper either. Fading in from opacity 0 means
-  // the whole page is invisible until an animation frame runs, and frames are
-  // paused in a background tab — a page was caught frozen at opacity 0.33 that
-  // way. Individual elements may animate; the container holding them must not.
-  return <div style={{ width: '100%', height: '100%' }}>{children}</div>;
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      style={{ width: '100%' }}
+      initial={reduce ? false : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={SPRING.gentle}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 function AppRoutes() {
