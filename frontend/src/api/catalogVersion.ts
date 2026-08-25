@@ -8,4 +8,4 @@
  *
  * Bump this whenever the catalog is rebuilt.
  */
-export const CATALOG_VERSION = '2';
+export const CATALOG_VERSION = '3';

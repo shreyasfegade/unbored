@@ -12,7 +12,7 @@
  * This can only ever *add* an offline fallback; it never intercepts the dynamic
  * recommendation call, so a stale cache can't serve a wrong pick.
  */
-const CACHE = "unbored-v3";
+const CACHE = "unbored-v4";
 const SHELL = "/index.html";
 
 self.addEventListener("install", (event) => {
