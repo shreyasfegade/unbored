@@ -114,6 +114,16 @@
   /* The persistent bottom nav's height (content + padding + safe area). One
      token so every fixed page CTA can dock above it instead of guessing. */
   --nav-height: calc(62px + env(safe-area-inset-bottom, 0px));
+
+  /* Browse poster tile width, overridable by the density setting (see the
+     [data-density] rules the app sets on <html>). */
+  --tile-w: 116px;
+  --tile-w-lg: 140px;
+}
+
+:root[data-density="compact"] {
+  --tile-w: 96px;
+  --tile-w-lg: 116px;
 }
 
 /* ═══ RESET ═══ */

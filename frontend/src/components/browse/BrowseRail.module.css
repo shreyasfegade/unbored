@@ -118,13 +118,13 @@
 
 .tile {
   flex: 0 0 auto;
-  width: 116px;
+  width: var(--tile-w, 116px);
   scroll-snap-align: start;
 }
 
 @media (min-width: 768px) {
   .tile {
-    width: 140px;
+    width: var(--tile-w-lg, 140px);
   }
   .title {
     font-size: var(--text-lg);

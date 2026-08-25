@@ -5,6 +5,8 @@ import Header from './Header';
 import { Toast } from '../ui/Toast';
 import BottomNav from './BottomNav';
 import WakeGate from '../system/WakeGate';
+import { usePreferencesStore } from '../../stores/preferencesStore';
+import { useUIStore } from '../../stores/uiStore';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -27,6 +29,25 @@ export default function AppShell({ children }: AppShellProps) {
   const mainRef = useRef<HTMLElement>(null);
   const [announce, setAnnounce] = useState("");
   const firstRender = useRef(true);
+  const density = usePreferencesStore((s) => s.density);
+
+  // Reflect the density preference on <html> so the poster-tile CSS vars pick it
+  // up everywhere at once.
+  useEffect(() => {
+    document.documentElement.dataset.density = density;
+  }, [density]);
+
+  // On a fresh session (no persisted UI selections yet), seed the mood-flow
+  // defaults from the durable preferences, so a chosen default type/era/time is
+  // pre-selected without overriding a mid-session change.
+  useEffect(() => {
+    if (sessionStorage.getItem("unbored-ui")) return;
+    const p = usePreferencesStore.getState();
+    const ui = useUIStore.getState();
+    ui.setMediaType(p.defaultMediaType);
+    ui.setEra(p.defaultEra);
+    if (p.defaultTimeSlot) ui.setTimeSlot(p.defaultTimeSlot);
+  }, []);
 
   // On route change, move focus to <main> (so keyboard users don't restart from
   // the top of the document) and announce the new page for screen readers.

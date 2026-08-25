@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MotionConfig } from "framer-motion";
 import { useTasteStore } from './stores/tasteStore';
+import { usePreferencesStore } from './stores/preferencesStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
 // Onboarding is the only route a first-time visitor can reach, so it loads
@@ -68,10 +69,11 @@ function AppRoutes() {
 }
 
 function App() {
+  const reduceMotion = usePreferencesStore((s) => s.reduceMotion);
   return (
-    // One switch makes every framer animation in the tree honour the user's OS
-    // reduced-motion preference (JS-driven, so the CSS escape hatch can't).
-    <MotionConfig reducedMotion="user">
+    // "user" honours the OS setting; the in-app toggle can force it to "always".
+    // Either way this is JS-driven, so framer animations obey it (CSS can't).
+    <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>
       <BrowserRouter>
         {/* Inside the router so a crash boundary can still navigate to safety. */}
         <ErrorBoundary label="app">

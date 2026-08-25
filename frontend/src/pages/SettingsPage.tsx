@@ -1,13 +1,62 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useRecommendationStore } from "../stores/recommendationStore";
 import { useUIStore } from "../stores/uiStore";
 import { useLlmStore } from "../stores/llmStore";
+import { useLibraryStore } from "../stores/libraryStore";
+import { usePreferencesStore } from "../stores/preferencesStore";
+import { useToastStore } from "../stores/toastStore";
+import { downloadProfile, applyProfileSnapshot } from "../utils/profileTransfer";
+import type { MediaTypeChoice, EraPreference } from "../types/recommendation";
+import type { TimeSlot } from "../types/mood";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import ConnectAI from "../components/llm/ConnectAI";
 import styles from "./SettingsPage.module.css";
+
+const MEDIA_OPTS: { key: MediaTypeChoice; label: string }[] = [
+  { key: "surprise", label: "Surprise" },
+  { key: "movie", label: "Movies" },
+  { key: "tv", label: "TV" },
+  { key: "anime", label: "Anime" },
+];
+const ERA_OPTS: { key: EraPreference; label: string }[] = [
+  { key: "any", label: "Any" },
+  { key: "modern", label: "Modern" },
+  { key: "classic", label: "Classic" },
+];
+const TIME_OPTS: { key: TimeSlot | "none"; label: string }[] = [
+  { key: "none", label: "Ask me" },
+  { key: "short", label: "< 1 hr" },
+  { key: "medium", label: "~ 2 hrs" },
+  { key: "long", label: "Evening" },
+];
+
+function Segmented<T extends string>({
+  value, options, onChange, label,
+}: {
+  value: T; options: { key: T; label: string }[]; onChange: (v: T) => void; label: string;
+}) {
+  return (
+    <div className={styles.field}>
+      <span className={styles.fieldLabel}>{label}</span>
+      <div className={styles.segmented} role="group" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            className={`${styles.segment} ${value === o.key ? styles.segmentOn : ""}`}
+            onClick={() => onChange(o.key)}
+            aria-pressed={value === o.key}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -17,37 +66,82 @@ export default function SettingsPage() {
   const resetUI = useUIStore((s) => s.resetSelections);
   const connected = useLlmStore((s) => s.validated);
   const clearLlm = useLlmStore((s) => s.clear);
+  const addToast = useToastStore((s) => s.addToast);
+
+  const clearLibrary = useLibraryStore((s) => s.clearLibrary);
+  const watchlistCount = useLibraryStore((s) => s.watchlist.length);
+  const seenCount = useLibraryStore((s) => s.seen.length);
+  const skipCount = useLibraryStore((s) => s.notInterested.length);
+
+  const prefs = usePreferencesStore();
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showLibConfirm, setShowLibConfirm] = useState(false);
 
   const executeReset = useCallback(() => {
     resetProfile();
     resetRec();
     resetUI();
-    // "Reset everything" now also forgets the connected API key.
     clearLlm();
+    // Reset everything now genuinely means everything — the library survived
+    // this before, which was a bug.
+    clearLibrary();
     navigate("/onboarding", { replace: true });
-  }, [resetProfile, resetRec, resetUI, clearLlm, navigate]);
+  }, [resetProfile, resetRec, resetUI, clearLlm, clearLibrary, navigate]);
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be picked again later
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const added = applyProfileSnapshot(String(reader.result));
+        addToast(added > 0 ? `Imported — ${added} new favourite${added === 1 ? "" : "s"} added.` : "Profile imported.");
+      } catch (err) {
+        addToast(err instanceof Error ? err.message : "Couldn't read that file.");
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const itemVariant = {
     hidden: { opacity: 0, y: 16 },
     visible: (i: number) => ({
       opacity: 1,
       y: 0,
-      transition: { delay: 0.12 + i * 0.07, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
+      transition: { delay: 0.1 + i * 0.05, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
     }),
   };
+  const section = (i: number) => ({
+    variants: itemVariant,
+    initial: prefersReduced ? false : ("hidden" as const),
+    animate: "visible" as const,
+    custom: i,
+  });
 
   return (
     <div className={styles.page}>
       <ConfirmDialog
         open={showResetConfirm}
-        title="Reset your taste profile?"
-        message="This permanently clears all your favourites, taste data, and recommendations. You'll need to go through onboarding again."
+        title="Reset everything?"
+        message="This permanently clears your favourites, taste data, library and recommendations. You'll go through onboarding again."
         confirmLabel="Reset everything"
         cancelLabel="Keep my profile"
         variant="danger"
         onConfirm={executeReset}
         onCancel={() => setShowResetConfirm(false)}
+      />
+      <ConfirmDialog
+        open={showLibConfirm}
+        title="Clear your library?"
+        message="Removes your watchlist, and forgets what you've marked as seen or not for me. Your taste is untouched."
+        confirmLabel="Clear library"
+        cancelLabel="Keep it"
+        variant="danger"
+        onConfirm={() => { clearLibrary(); setShowLibConfirm(false); addToast("Library cleared."); }}
+        onCancel={() => setShowLibConfirm(false)}
       />
 
       <motion.button
@@ -56,8 +150,6 @@ export default function SettingsPage() {
         initial={prefersReduced ? false : { opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
-        whileHover={prefersReduced ? {} : { x: -4 }}
-        whileTap={prefersReduced ? {} : { scale: 0.95 }}
       >
         ← Back
       </motion.button>
@@ -71,14 +163,8 @@ export default function SettingsPage() {
         Settings
       </motion.h1>
 
-      {/* ── AI connection ─────────────────────────────────────────── */}
-      <motion.div
-        className={`${styles.section} ${styles.aiSection}`}
-        variants={itemVariant}
-        initial={prefersReduced ? false : "hidden"}
-        animate="visible"
-        custom={0}
-      >
+      {/* ── AI ─────────────────────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.aiSection}`} {...section(0)}>
         <span className={styles.sectionLabel}>Your AI</span>
         <p className={styles.aiBlurb}>
           {connected
@@ -88,23 +174,80 @@ export default function SettingsPage() {
         <ConnectAI variant="settings" />
       </motion.div>
 
-      <motion.div className={styles.section} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={1}>
-        <motion.button className={styles.actionBtn} onClick={() => navigate("/enrich")} whileHover={prefersReduced ? {} : { scale: 1.02 }} whileTap={prefersReduced ? {} : { scale: 0.96 }}>
-          Add more favourites
-        </motion.button>
+      {/* ── Defaults ───────────────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.wide}`} {...section(1)}>
+        <span className={styles.sectionLabel}>Defaults for a new pick</span>
+        <Segmented label="Type" value={prefs.defaultMediaType} options={MEDIA_OPTS} onChange={prefs.setDefaultMediaType} />
+        <Segmented label="Era" value={prefs.defaultEra} options={ERA_OPTS} onChange={prefs.setDefaultEra} />
+        <Segmented
+          label="Time"
+          value={prefs.defaultTimeSlot ?? "none"}
+          options={TIME_OPTS}
+          onChange={(v) => prefs.setDefaultTimeSlot(v === "none" ? null : (v as TimeSlot))}
+        />
       </motion.div>
 
-      <motion.div className={styles.section} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={2}>
-        <motion.button className={styles.dangerBtn} onClick={() => setShowResetConfirm(true)} whileHover={prefersReduced ? {} : { scale: 1.02 }} whileTap={prefersReduced ? {} : { scale: 0.96 }}>
-          Reset profile
-        </motion.button>
-        <p className={styles.dangerHint}>Clears your taste data. You'll go through onboarding again.</p>
+      {/* ── Appearance & motion ────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.wide}`} {...section(2)}>
+        <span className={styles.sectionLabel}>Appearance</span>
+        <Segmented
+          label="Poster size"
+          value={prefs.density}
+          options={[{ key: "comfortable", label: "Comfortable" }, { key: "compact", label: "Compact" }]}
+          onChange={prefs.setDensity}
+        />
+        <label className={styles.toggleRow}>
+          <span className={styles.fieldLabel}>Reduce motion</span>
+          <input
+            type="checkbox"
+            className={styles.toggle}
+            checked={prefs.reduceMotion}
+            onChange={(e) => prefs.setReduceMotion(e.target.checked)}
+          />
+        </label>
+        <p className={styles.hint}>Also follows your device setting; this forces it on.</p>
       </motion.div>
 
-      <motion.p className={styles.version} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={3}>
-        UNBORED v3.0.0
-      </motion.p>
-      <motion.p className={styles.attribution} variants={itemVariant} initial={prefersReduced ? false : "hidden"} animate="visible" custom={4}>
+      {/* ── Library ────────────────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.wide}`} {...section(3)}>
+        <span className={styles.sectionLabel}>Your library</span>
+        <p className={styles.hint}>
+          {watchlistCount} saved · {seenCount} seen · {skipCount} not for me
+        </p>
+        <button
+          type="button"
+          className={styles.actionBtn}
+          onClick={() => setShowLibConfirm(true)}
+          disabled={watchlistCount + seenCount + skipCount === 0}
+        >
+          Clear library
+        </button>
+      </motion.div>
+
+      {/* ── Move your profile ──────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.wide}`} {...section(4)}>
+        <span className={styles.sectionLabel}>Move your profile</span>
+        <p className={styles.hint}>Save a copy, or load it on another device. No account needed.</p>
+        <div className={styles.btnRow}>
+          <button type="button" className={styles.actionBtn} onClick={downloadProfile}>Export</button>
+          <button type="button" className={styles.actionBtn} onClick={() => fileRef.current?.click()}>Import</button>
+        </div>
+        <input ref={fileRef} type="file" accept="application/json,.json" onChange={handleImport} hidden />
+      </motion.div>
+
+      {/* ── More ───────────────────────────────────────────────────── */}
+      <motion.div className={styles.section} {...section(5)}>
+        <button className={styles.actionBtn} onClick={() => navigate("/enrich")}>Add more favourites</button>
+        <Link to="/together" className={styles.linkBtn}>Watch together</Link>
+      </motion.div>
+
+      <motion.div className={styles.section} {...section(6)}>
+        <button className={styles.dangerBtn} onClick={() => setShowResetConfirm(true)}>Reset everything</button>
+        <p className={styles.dangerHint}>Clears your taste and library. You'll go through onboarding again.</p>
+      </motion.div>
+
+      <motion.p className={styles.version} {...section(7)}>UNBORED v3.0.0</motion.p>
+      <motion.p className={styles.attribution} {...section(8)}>
         Movie &amp; TV data from{" "}
         <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">TMDB</a>;
         anime from{" "}
