@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import {
   motion,
   useMotionValue,
@@ -10,6 +18,7 @@ import {
 import type { MediaItem } from "../../types/media";
 import PosterArt from "../poster/PosterArt";
 import { sizedPoster } from "../../utils/poster";
+import { SPRING, EASE_OUT } from "../../config/motion";
 import styles from "./SwipeDeck.module.css";
 
 export type SwipeVerdict = "like" | "skip";
@@ -33,20 +42,28 @@ const FLICK_VELOCITY = 480;
 const LOW_WATER = 5;
 // How deep the visible stack is (top + this many peeking behind).
 const DEPTH = 2;
+// Where a committed card flies to — comfortably off any screen.
+const FLY_OUT = 1400;
 
 // Resting transform for a card at a given depth (0 = top).
 const depthScale = (d: number) => 1 - d * 0.05;
 const depthY = (d: number) => d * 14;
 
+interface CardHandle {
+  flick: (verdict: SwipeVerdict) => void;
+}
+
 /**
- * A swipeable card stack with a springy, snap-free promotion.
+ * A swipeable card stack that flings and promotes seamlessly.
  *
- * The old deck advanced on a `setTimeout`, resetting the behind card's inline
- * transform in the same frame — so the next card *jumped* from its dragged
- * position back to rest and then sat there. Here each card is keyed by id and
- * animates its depth, so when the top card leaves, the one behind springs
- * forward continuously instead of cutting. Dragging uses framer's pointer
- * handling for finger-accurate follow and real flick velocity.
+ * The rebuilt design gives **each card its own `x` motion value** and drives
+ * **depth through an `animate` target**. There is no shared drag value and no
+ * timer coupling — the two things that made the old deck dart sideways and
+ * hitch. A committed card animates its *own* `x` off-screen and only tells the
+ * parent to advance once that animation completes, so unmounting it can never
+ * corrupt the next card. The card behind keeps the same key as `cursor`
+ * advances; its `depth` prop drops from 1 to 0 and framer springs it forward,
+ * a continuous promotion rather than a remount.
  */
 export default function SwipeDeck({
   items,
@@ -60,13 +77,9 @@ export default function SwipeDeck({
   const [cursor, setCursor] = useState(0);
   const lowFired = useRef(false);
   const exhaustedFired = useRef(false);
+  const committingRef = useRef(false);
   const lastDecision = useRef<{ item: MediaItem; verdict: SwipeVerdict } | null>(null);
-
-  // The top card's live horizontal drag, shared so the card behind can rise
-  // toward the front as the top one is pulled away — without a React re-render
-  // on every pointer move.
-  const drag = useMotionValue(0);
-  const peek = useTransform(drag, (v) => Math.min(Math.abs(v) / COMMIT_PX, 1));
+  const topRef = useRef<CardHandle>(null);
 
   const remaining = items.length - cursor;
   const current = items[cursor];
@@ -87,54 +100,16 @@ export default function SwipeDeck({
     if (remaining > 0) exhaustedFired.current = false;
   }, [remaining, items.length, onExhausted]);
 
-  const advance = useCallback(
+  // Called by a card once it has finished flying off. The flown card owns its
+  // own x, so advancing here can't disturb the card being promoted.
+  const handleExit = useCallback(
     (item: MediaItem, verdict: SwipeVerdict) => {
       lastDecision.current = { item, verdict };
+      committingRef.current = false;
       onDecide(item, verdict);
-      drag.set(0);
       setCursor((c) => c + 1);
     },
-    [onDecide, drag],
-  );
-
-  // Button / keyboard path: fling the card off, then advance.
-  const fling = useCallback(
-    (verdict: SwipeVerdict) => {
-      const item = items[cursor];
-      if (!item) return;
-      const to = verdict === "like" ? 1000 : -1000;
-      if (prefersReduced) {
-        advance(item, verdict);
-        return;
-      }
-      animate(drag, to, { duration: 0.26, ease: [0.4, 0, 1, 1] });
-      window.setTimeout(() => advance(item, verdict), 200);
-    },
-    [items, cursor, advance, drag, prefersReduced],
-  );
-
-  const onDragEnd = useCallback(
-    (_e: unknown, info: PanInfo) => {
-      const item = items[cursor];
-      if (!item) return;
-      const committed =
-        Math.abs(info.offset.x) > COMMIT_PX || Math.abs(info.velocity.x) > FLICK_VELOCITY;
-      if (!committed) {
-        // Spring the card back under the finger's release point.
-        animate(drag, 0, { type: "spring", stiffness: 420, damping: 34 });
-        return;
-      }
-      const verdict: SwipeVerdict =
-        info.offset.x > 0 || info.velocity.x > FLICK_VELOCITY ? "like" : "skip";
-      const to = verdict === "like" ? 1000 : -1000;
-      animate(drag, to, {
-        type: "tween",
-        duration: 0.24,
-        ease: [0.4, 0, 1, 1],
-      });
-      window.setTimeout(() => advance(item, verdict), 180);
-    },
-    [items, cursor, advance, drag],
+    [onDecide],
   );
 
   const undo = useCallback(() => {
@@ -142,26 +117,25 @@ export default function SwipeDeck({
     const { item } = lastDecision.current;
     lastDecision.current = null;
     onUndo?.(item);
-    drag.set(0);
     setCursor((c) => Math.max(0, c - 1));
-  }, [cursor, onUndo, drag]);
+  }, [cursor, onUndo]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") fling("like");
-      else if (e.key === "ArrowLeft") fling("skip");
+      if (e.key === "ArrowRight") topRef.current?.flick("like");
+      else if (e.key === "ArrowLeft") topRef.current?.flick("skip");
       else if (e.key === "ArrowDown" || e.key === "Backspace") undo();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [fling, undo]);
+  }, [undo]);
 
   if (!current) {
     return <p className={styles.empty}>{emptyMessage ?? "That's everything for now."}</p>;
   }
 
-  // Render the top card plus a couple peeking behind. Reverse order so the top
-  // card is painted last (highest in the DOM) without manual z-index juggling.
+  // Reverse order so the top card is painted last (highest in the DOM) without
+  // manual z-index juggling.
   const stack: { item: MediaItem; depth: number }[] = [];
   for (let d = Math.min(DEPTH, remaining - 1); d >= 0; d--) {
     stack.push({ item: items[cursor + d], depth: d });
@@ -170,26 +144,25 @@ export default function SwipeDeck({
   return (
     <div className={styles.deck}>
       <div className={styles.stage}>
-        {stack.map(({ item, depth }) =>
-          depth === 0 ? (
-            <TopCard
-              key={item.id}
-              item={item}
-              drag={drag}
-              prefersReduced={prefersReduced}
-              onDragEnd={onDragEnd}
-            />
-          ) : (
-            <BehindCard key={item.id} item={item} depth={depth} peek={peek} />
-          ),
-        )}
+        {stack.map(({ item, depth }) => (
+          <SwipeCard
+            key={item.id}
+            ref={depth === 0 ? topRef : undefined}
+            item={item}
+            depth={depth}
+            isTop={depth === 0}
+            prefersReduced={Boolean(prefersReduced)}
+            committingRef={committingRef}
+            onExit={handleExit}
+          />
+        ))}
       </div>
 
       <div className={styles.controls}>
         <button
           type="button"
           className={`${styles.action} ${styles.skip}`}
-          onClick={() => fling("skip")}
+          onClick={() => topRef.current?.flick("skip")}
           aria-label={`Skip ${current.title}`}
         >
           ✕
@@ -206,7 +179,7 @@ export default function SwipeDeck({
         <button
           type="button"
           className={`${styles.action} ${styles.like}`}
-          onClick={() => fling("like")}
+          onClick={() => topRef.current?.flick("like")}
           aria-label={`Add ${current.title} to my taste`}
         >
           ♥
@@ -218,76 +191,92 @@ export default function SwipeDeck({
   );
 }
 
-function TopCard({
-  item,
-  drag,
-  prefersReduced,
-  onDragEnd,
-}: {
+interface SwipeCardProps {
   item: MediaItem;
-  drag: ReturnType<typeof useMotionValue<number>>;
-  prefersReduced: boolean | null;
-  onDragEnd: (e: unknown, info: PanInfo) => void;
-}) {
-  const rotate = useTransform(drag, [-260, 0, 260], [-13, 0, 13]);
-  const likeOpacity = useTransform(drag, [30, 120], [0, 1]);
-  const skipOpacity = useTransform(drag, [-120, -30], [1, 0]);
+  depth: number;
+  isTop: boolean;
+  prefersReduced: boolean;
+  committingRef: MutableRefObject<boolean>;
+  onExit: (item: MediaItem, verdict: SwipeVerdict) => void;
+}
+
+const SwipeCard = forwardRef<CardHandle, SwipeCardProps>(function SwipeCard(
+  { item, depth, isTop, prefersReduced, committingRef, onExit },
+  ref,
+) {
+  // Each card owns its horizontal position — no value is ever shared between
+  // cards, which is what keeps a departing card from disturbing the next one.
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-FLY_OUT, 0, FLY_OUT], [-16, 0, 16]);
+  const likeOpacity = useTransform(x, [30, 120], [0, 1]);
+  const skipOpacity = useTransform(x, [-120, -30], [1, 0]);
+
+  const flyOff = useCallback(
+    (verdict: SwipeVerdict) => {
+      if (committingRef.current) return;
+      committingRef.current = true;
+      const to = verdict === "like" ? FLY_OUT : -FLY_OUT;
+      if (prefersReduced) {
+        onExit(item, verdict);
+        return;
+      }
+      animate(x, to, { duration: 0.34, ease: EASE_OUT }).then(() => onExit(item, verdict));
+    },
+    [committingRef, prefersReduced, onExit, item, x],
+  );
+
+  useImperativeHandle(ref, () => ({ flick: flyOff }), [flyOff]);
+
+  const onDragEnd = useCallback(
+    (_e: unknown, info: PanInfo) => {
+      const committed =
+        Math.abs(info.offset.x) > COMMIT_PX || Math.abs(info.velocity.x) > FLICK_VELOCITY;
+      if (!committed) {
+        animate(x, 0, { type: "spring", stiffness: 500, damping: 34 });
+        return;
+      }
+      const verdict: SwipeVerdict =
+        info.offset.x > 0 || info.velocity.x > FLICK_VELOCITY ? "like" : "skip";
+      flyOff(verdict);
+    },
+    [x, flyOff],
+  );
 
   return (
     <motion.div
-      className={styles.card}
-      style={{ x: drag, rotate }}
-      drag={prefersReduced ? false : "x"}
-      dragElastic={0.55}
+      className={`${styles.card} ${isTop ? "" : styles.behind}`}
+      // x + rotate (drag) and scale + y (depth) are independent props, so the
+      // drag and the promotion never fight. Depth changes spring via `animate`.
+      style={isTop ? { x, rotate } : { x: 0 }}
+      animate={{ scale: depthScale(depth), y: depthY(depth) }}
+      transition={SPRING.gentle}
+      drag={isTop && !prefersReduced ? "x" : false}
+      dragElastic={0.6}
       dragMomentum={false}
-      onDragEnd={onDragEnd}
-      // No enter animation: by the time this card is promoted, the card behind
-      // has already risen to the front under the outgoing card (peek → 1), so
-      // the new top mounts exactly where the eye already is. An enter spring
-      // here would yank it back a step and hitch.
-      initial={false}
+      onDragEnd={isTop ? onDragEnd : undefined}
     >
       <CardFace item={item} />
-      <motion.span
-        className={`${styles.stamp} ${styles.stampLike}`}
-        style={{ opacity: likeOpacity }}
-        aria-hidden="true"
-      >
-        LOVE IT
-      </motion.span>
-      <motion.span
-        className={`${styles.stamp} ${styles.stampSkip}`}
-        style={{ opacity: skipOpacity }}
-        aria-hidden="true"
-      >
-        NOT FOR ME
-      </motion.span>
+      {isTop && (
+        <>
+          <motion.span
+            className={`${styles.stamp} ${styles.stampLike}`}
+            style={{ opacity: likeOpacity }}
+            aria-hidden="true"
+          >
+            LOVE IT
+          </motion.span>
+          <motion.span
+            className={`${styles.stamp} ${styles.stampSkip}`}
+            style={{ opacity: skipOpacity }}
+            aria-hidden="true"
+          >
+            NOT FOR ME
+          </motion.span>
+        </>
+      )}
     </motion.div>
   );
-}
-
-function BehindCard({
-  item,
-  depth,
-  peek,
-}: {
-  item: MediaItem;
-  depth: number;
-  peek: ReturnType<typeof useMotionValue<number>>;
-}) {
-  // At rest, sit at this depth; as the top card is dragged away (peek → 1),
-  // rise one step toward the front so the stack feels alive.
-  const scale = useTransform(peek, [0, 1], [depthScale(depth), depthScale(depth - 1)]);
-  const y = useTransform(peek, [0, 1], [depthY(depth), depthY(depth - 1)]);
-  // Purely peek + depth driven. Layering an `animate` here would fight these
-  // controlled motion values and snap; the depth change is a small, dim,
-  // mostly-occluded move behind the incoming top card, so it needs no spring.
-  return (
-    <motion.div className={`${styles.card} ${styles.behind}`} style={{ scale, y }} aria-hidden="true">
-      <CardFace item={item} />
-    </motion.div>
-  );
-}
+});
 
 function CardFace({ item }: { item: MediaItem }) {
   const [failed, setFailed] = useState(false);
