@@ -7,10 +7,25 @@
 .filters {
   display: flex;
   gap: var(--space-2);
-  padding: 0 var(--space-3) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   position: sticky;
   top: 0;
   z-index: 2;
+  /* Was transparent, so rails scrolled visibly underneath. A blurred backdrop
+     keeps the chips legible over moving posters. */
+  background: color-mix(in srgb, var(--color-bg-primary, #0c0b09) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-md);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 200);
+  overflow-y: auto;
+  background: var(--color-bg-primary, #0c0b09);
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-4) + var(--nav-height));
 }
 
 .chip {

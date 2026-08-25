@@ -54,24 +54,25 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
     return () => { cancelled = true; clearTimeout(slowTimer); };
   }, [mediaType, reload]);
 
-  // "See all" opens one shelf as a full grid, which is the only comfortable way
-  // to work through a long row.
-  if (expanded) {
-    return (
-      <ShelfGrid
-        shelfKey={expanded.key}
-        title={expanded.title}
-        mediaType={mediaType}
-        selectedIds={selectedIds}
-        onToggle={onToggle}
-        maxSelections={maxSelections}
-        onBack={() => setExpanded(null)}
-      />
-    );
-  }
-
   return (
     <div className={styles.catalog}>
+      {/* "See all" opens one shelf as a full grid in an overlay — laid over the
+          catalog rather than replacing it, so every rail keeps its loaded pages
+          and scroll position for when the grid closes. */}
+      {expanded && (
+        <div className={styles.overlay}>
+          <ShelfGrid
+            shelfKey={expanded.key}
+            title={expanded.title}
+            mediaType={mediaType}
+            selectedIds={selectedIds}
+            onToggle={onToggle}
+            maxSelections={maxSelections}
+            onBack={() => setExpanded(null)}
+          />
+        </div>
+      )}
+
       <div className={styles.filters} role="tablist" aria-label="Filter by type">
         {FILTERS.map((f) => (
           <button

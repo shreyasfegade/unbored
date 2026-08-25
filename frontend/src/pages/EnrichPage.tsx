@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useDebounce } from "../hooks/useDebounce";
 import { searchMulti } from "../api/search";
-import { getCatalogItem } from "../api/media";
+import { getCatalogItems } from "../api/media";
 import type { MediaItem } from "../types/media";
 import { EnrichTabs } from "../components/onboarding/EnrichTabs";
 import type { EnrichTab } from "../components/onboarding/EnrichTabs";
@@ -37,14 +37,18 @@ export default function EnrichPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [favItems, setFavItems] = useState<MediaItem[]>([]);
 
-  // Fetch the user's current favourites so they can review and remove them.
+  // Fetch the user's current favourites so they can review and remove them —
+  // one batch request rather than one round trip per saved id.
   useEffect(() => {
     let cancelled = false;
-    Promise.all(
-      favouriteIds.map((id) => getCatalogItem(id).then((r) => r.data).catch(() => null)),
-    ).then((items) => {
-      if (!cancelled) setFavItems(items.filter((i): i is MediaItem => i !== null));
-    });
+    if (favouriteIds.length === 0) {
+      // Deferred so it isn't a synchronous setState in the effect body.
+      queueMicrotask(() => { if (!cancelled) setFavItems([]); });
+      return () => { cancelled = true; };
+    }
+    getCatalogItems(favouriteIds)
+      .then((res) => { if (!cancelled) setFavItems(res.data.items); })
+      .catch(() => { if (!cancelled) setFavItems([]); });
     return () => { cancelled = true; };
   }, [favouriteIds]);
 

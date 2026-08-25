@@ -55,6 +55,7 @@ function PosterCard({ item, isSelected, onToggle, disabled, index = 0 }: PosterC
             src={sizedPoster(item.poster_path, 'card')}
             alt=""
             loading="lazy"
+            decoding="async"
             width={200}
             height={300}
             onError={() => setFailed(true)}

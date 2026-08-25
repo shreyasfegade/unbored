@@ -2,14 +2,32 @@
 
 import logging
 
-from fastapi import APIRouter, Path, Request, Response
+from fastapi import APIRouter, Path, Query, Request, Response
 
 from app.exceptions import AppError
-from app.models.media import MediaItem
+from app.models.media import MediaItem, MediaItemList
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_MAX_BATCH = 100
+
+
+@router.get("/media/batch", response_model=MediaItemList)
+async def get_catalog_items(
+    request: Request,
+    response: Response,
+    ids: str = Query(..., description="Comma-separated composite ids"),
+):
+    """Resolve many catalog items in one request, preserving the given order and
+    silently skipping unknown ids. Replaces N per-item round trips (the enrich
+    page used to fire one request per saved favourite on mount)."""
+    catalog_map = request.app.state.catalog_map
+    wanted = [i for i in (ids or "").split(",") if i][:_MAX_BATCH]
+    items = [catalog_map[i] for i in wanted if i in catalog_map]
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return MediaItemList(items=items)
 
 
 @router.get("/media/item/{composite_id}", response_model=MediaItem)

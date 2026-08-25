@@ -141,6 +141,12 @@ class BrowseDeck(BaseModel):
     items: list[MediaItem] = Field(default_factory=list)
 
 
+class MediaItemList(BaseModel):
+    """A plain ordered list of catalog items, for batch id resolution."""
+
+    items: list[MediaItem] = Field(default_factory=list)
+
+
 class BrowseShelfPage(BaseModel):
     """A paginated slice of one shelf, for infinite horizontal scrolling."""
 
