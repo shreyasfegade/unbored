@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import type { MediaItem } from '../../types/media';
 import PosterArt from './PosterArt';
 import { sizedPoster } from '../../utils/poster';
+import { SPRING, pressable } from '../../config/motion';
 import styles from './PosterCard.module.css';
 
 interface PosterCardProps {
@@ -31,11 +32,16 @@ function PosterCard({ item, isSelected, onToggle, disabled, index = 0 }: PosterC
       disabled={disabled && !isSelected}
       aria-pressed={isSelected}
       aria-label={`${item.title}${isSelected ? ' — selected' : ''}`}
-      initial={{ opacity: 0, scale: 0.9, y: 12 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ delay: 0.05 + index * 0.03, stiffness: 350, damping: 26, mass: 0.7 }}
-      whileHover={!disabled || isSelected ? { scale: 1.05, y: -4 } : {}}
-      whileTap={!disabled || isSelected ? { scale: 0.95 } : {}}
+      initial={{ opacity: 0, scale: 0.92, y: 12 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: { ...SPRING.gentle, delay: 0.04 + Math.min(index, 12) * 0.03 },
+      }}
+      whileHover={!disabled || isSelected ? pressable.whileHover : {}}
+      whileTap={!disabled || isSelected ? pressable.whileTap : {}}
+      transition={SPRING.snappy}
     >
       {isSelected && (
         <motion.div

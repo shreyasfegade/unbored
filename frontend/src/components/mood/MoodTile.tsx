@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { MoodType } from "../../types/mood";
 import type { MoodConfig } from "../../config/moodData";
+import { SPRING, pressable } from "../../config/motion";
 import styles from "./MoodTile.module.css";
 
 interface MoodTileProps {
@@ -39,16 +40,16 @@ export const MoodTile = forwardRef<HTMLButtonElement, MoodTileProps>(
         tabIndex={tabbable ? 0 : -1}
         aria-label={`${mood.label} — ${mood.description}`}
         title={mood.description}
-        initial={prefersReduced || skipEntrance ? false : { opacity: 0, y: 20, scale: 0.92 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={skipEntrance ? {} : {
-          delay: 0.15 + index * 0.04,
-          stiffness: 400,
-          damping: 28,
-          mass: 0.7,
+        initial={prefersReduced || skipEntrance ? false : { opacity: 0, y: 16, scale: 0.94 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: skipEntrance ? { duration: 0 } : { ...SPRING.snappy, delay: 0.12 + index * 0.04 },
         }}
-        whileHover={prefersReduced ? {} : { scale: 1.05 }}
-        whileTap={prefersReduced ? {} : { scale: 0.95 }}
+        whileHover={pressable.whileHover}
+        whileTap={pressable.whileTap}
+        transition={SPRING.snappy}
       >
         <span className={styles.icon} aria-hidden="true">{mood.icon}</span>
         <span className={styles.label}>{mood.label}</span>

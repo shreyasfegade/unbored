@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { SPRING, pressableFlat } from "../../config/motion";
 import styles from "./OracleButton.module.css";
 
 interface OracleButtonProps {
@@ -16,17 +17,11 @@ export function OracleButton({ disabled, loading, onClick, label = "Find my pick
       className={`${styles.button} ${loading ? styles.loading : ""}`}
       disabled={disabled || loading}
       onClick={onClick}
-      initial={prefersReduced ? false : { opacity: 0, y: 20, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        delay: 0.6,
-        type: "spring",
-        stiffness: 300,
-        damping: 22,
-        mass: 0.9,
-      }}
-      whileHover={!disabled && !loading && !prefersReduced ? { scale: 1.04 } : {}}
-      whileTap={!disabled && !loading && !prefersReduced ? { scale: 0.96 } : {}}
+      initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1, transition: { ...SPRING.gentle, delay: 0.5 } }}
+      whileHover={!disabled && !loading ? pressableFlat.whileHover : {}}
+      whileTap={!disabled && !loading ? pressableFlat.whileTap : {}}
+      transition={SPRING.snappy}
     >
       {loading ? (
         <span className={styles.scanningLabel}>
