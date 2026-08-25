@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from 'react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useLlmStore } from '../../stores/llmStore';
+import { useAuthStore } from '../../stores/authStore';
 import styles from './Header.module.css';
 
 const letters = "UNBORED".split("");
@@ -11,6 +12,9 @@ const ANIMATED_KEY = "unbored-wordmark-animated";
 export default function Header() {
   const prefersReduced = useReducedMotion();
   const aiConnected = useLlmStore((s) => s.validated);
+  const accountConfigured = useAuthStore((s) => s.configured);
+  const userEmail = useAuthStore((s) => s.user?.email ?? null);
+  const initial = userEmail ? userEmail[0]!.toUpperCase() : null;
   // Read once (pure) in an initialiser; persist in an effect — never write to
   // storage during render.
   const [hasAnimated] = useState(() => sessionStorage.getItem(ANIMATED_KEY) !== null);
@@ -50,6 +54,25 @@ export default function Header() {
         {aiConnected && (
           <Link to="/settings" className={styles.aiBadge} title="AI picks are on — manage in Settings">
             <span className={styles.aiSpark} aria-hidden="true">✦</span> AI
+          </Link>
+        )}
+        {/* Account, present on every screen. When signed in it shows the
+            user's initial; otherwise a plain person icon. Hidden only when
+            accounts aren't configured on this deployment. */}
+        {accountConfigured && (
+          <Link
+            to="/account"
+            className={styles.accountLink}
+            aria-label={userEmail ? `Account (${userEmail})` : "Account"}
+          >
+            {initial ? (
+              <span className={styles.avatar} aria-hidden="true">{initial}</span>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="8.5" r="3.5" />
+                <path d="M5 20a7 7 0 0 1 14 0" />
+              </svg>
+            )}
           </Link>
         )}
         {/* The library lives in the bottom nav now, labelled. */}
