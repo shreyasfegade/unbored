@@ -6,9 +6,36 @@ import { useAuthStore } from '../stores/authStore';
 import FavouritePicker from '../components/onboarding/FavouritePicker';
 import AccountStep from '../components/onboarding/AccountStep';
 import ConnectAI from '../components/llm/ConnectAI';
+import { pressableFlat } from '../config/motion';
 import styles from './OnboardingPage.module.css';
 
 type Step = 'welcome' | 'favourites' | 'account' | 'connect';
+
+const STEP_LABEL: Record<Step, string> = {
+  welcome: 'Welcome',
+  favourites: 'Taste',
+  account: 'Account',
+  connect: 'AI',
+};
+
+/** A slim step tracker so people know where they are and that it's short. */
+function StepProgress({ steps, current }: { steps: Step[]; current: Step }) {
+  const idx = steps.indexOf(current);
+  return (
+    <div className={styles.progress} aria-label={`Step ${idx + 1} of ${steps.length}`}>
+      {steps.map((s, i) => (
+        <div key={s} className={styles.progressItem}>
+          <span
+            className={`${styles.progressDot} ${i < idx ? styles.progressDone : ''} ${i === idx ? styles.progressCurrent : ''}`}
+          >
+            {i < idx ? '✓' : i + 1}
+          </span>
+          <span className={styles.progressLabel}>{STEP_LABEL[s]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Enter-only. An exit animation that stalls would trap the user on a step, so
 // steps swap immediately and the motion is purely decorative.
@@ -42,8 +69,13 @@ export default function OnboardingPage() {
     navigate('/', { replace: true });
   };
 
+  const flowSteps: Step[] = accountConfigured
+    ? ['favourites', 'account', 'connect']
+    : ['favourites', 'connect'];
+
   return (
     <div className={`${styles.page} ${step === 'favourites' ? styles.pageTop : ''}`}>
+      {step !== 'welcome' && <StepProgress steps={flowSteps} current={step} />}
       <>
         {step === 'welcome' && (
           <motion.div key="welcome" className={styles.welcome} variants={stepVariants} initial="initial" animate="animate">
@@ -61,7 +93,13 @@ export default function OnboardingPage() {
               <li><span>3</span> Get one pick, chosen for you</li>
             </ol>
 
-            <motion.button className={styles.cta} onClick={() => setStep('favourites')} whileTap={{ scale: 0.97 }}>
+            <motion.button
+              className={styles.cta}
+              onClick={() => setStep('favourites')}
+              whileHover={pressableFlat.whileHover}
+              whileTap={pressableFlat.whileTap}
+              transition={pressableFlat.transition}
+            >
               Get started
             </motion.button>
             <button className={styles.skipDemo} onClick={skipToDemo}>
