@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTasteStore } from '../stores/tasteStore';
+import { useAuthStore } from '../stores/authStore';
 import FavouritePicker from '../components/onboarding/FavouritePicker';
+import AccountStep from '../components/onboarding/AccountStep';
 import ConnectAI from '../components/llm/ConnectAI';
 import styles from './OnboardingPage.module.css';
 
-type Step = 'welcome' | 'favourites' | 'connect';
+type Step = 'welcome' | 'favourites' | 'account' | 'connect';
 
 // Enter-only. An exit animation that stalls would trap the user on a step, so
 // steps swap immediately and the motion is purely decorative.
@@ -19,7 +21,11 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const hasCompleted = useTasteStore((s) => s.hasCompletedOnboarding);
   const completeOnboarding = useTasteStore((s) => s.completeOnboarding);
+  const accountConfigured = useAuthStore((s) => s.configured);
   const [step, setStep] = useState<Step>('welcome');
+
+  // Skip the account step entirely when accounts aren't configured.
+  const afterFavourites: Step = accountConfigured ? 'account' : 'connect';
 
   // Returning (already-onboarded) users go straight home; the connect step is
   // still reachable right after picking favourites in this same session.
@@ -66,7 +72,13 @@ export default function OnboardingPage() {
 
         {step === 'favourites' && (
           <motion.div key="favourites" className={styles.full} variants={stepVariants} initial="initial" animate="animate">
-            <FavouritePicker onComplete={() => setStep('connect')} />
+            <FavouritePicker onComplete={() => setStep(afterFavourites)} />
+          </motion.div>
+        )}
+
+        {step === 'account' && (
+          <motion.div key="account" className={styles.connect} variants={stepVariants} initial="initial" animate="animate">
+            <AccountStep onDone={() => setStep('connect')} />
           </motion.div>
         )}
 
