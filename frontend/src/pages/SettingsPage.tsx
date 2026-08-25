@@ -8,6 +8,7 @@ import { useLlmStore } from "../stores/llmStore";
 import { useLibraryStore } from "../stores/libraryStore";
 import { usePreferencesStore } from "../stores/preferencesStore";
 import { useToastStore } from "../stores/toastStore";
+import { useAuthStore } from "../stores/authStore";
 import { downloadProfile, applyProfileSnapshot } from "../utils/profileTransfer";
 import type { MediaTypeChoice, EraPreference } from "../types/recommendation";
 import type { TimeSlot } from "../types/mood";
@@ -75,6 +76,10 @@ export default function SettingsPage() {
 
   const prefs = usePreferencesStore();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const accountConfigured = useAuthStore((s) => s.configured);
+  const signedIn = useAuthStore((s) => Boolean(s.user));
+  const userEmail = useAuthStore((s) => s.user?.email ?? "");
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLibConfirm, setShowLibConfirm] = useState(false);
@@ -235,19 +240,32 @@ export default function SettingsPage() {
         <input ref={fileRef} type="file" accept="application/json,.json" onChange={handleImport} hidden />
       </motion.div>
 
+      {/* ── Account ────────────────────────────────────────────────── */}
+      {accountConfigured && (
+        <motion.div className={`${styles.section} ${styles.wide}`} {...section(5)}>
+          <span className={styles.sectionLabel}>Account</span>
+          <p className={styles.hint}>
+            {signedIn ? `Signed in as ${userEmail}` : "Sign in to sync across devices — optional."}
+          </p>
+          <button className={styles.actionBtn} onClick={() => navigate("/account")}>
+            {signedIn ? "Manage account" : "Sign in"}
+          </button>
+        </motion.div>
+      )}
+
       {/* ── More ───────────────────────────────────────────────────── */}
-      <motion.div className={styles.section} {...section(5)}>
+      <motion.div className={styles.section} {...section(6)}>
         <button className={styles.actionBtn} onClick={() => navigate("/enrich")}>Add more favourites</button>
         <Link to="/together" className={styles.linkBtn}>Watch together</Link>
       </motion.div>
 
-      <motion.div className={styles.section} {...section(6)}>
+      <motion.div className={styles.section} {...section(7)}>
         <button className={styles.dangerBtn} onClick={() => setShowResetConfirm(true)}>Reset everything</button>
         <p className={styles.dangerHint}>Clears your taste and library. You'll go through onboarding again.</p>
       </motion.div>
 
-      <motion.p className={styles.version} {...section(7)}>UNBORED v3.0.0</motion.p>
-      <motion.p className={styles.attribution} {...section(8)}>
+      <motion.p className={styles.version} {...section(8)}>UNBORED v3.0.0</motion.p>
+      <motion.p className={styles.attribution} {...section(9)}>
         Movie &amp; TV data from{" "}
         <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">TMDB</a>;
         anime from{" "}

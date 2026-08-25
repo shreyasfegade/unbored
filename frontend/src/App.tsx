@@ -18,6 +18,7 @@ const SwipePage = lazy(() => import('./pages/SwipePage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const TogetherPage = lazy(() => import('./pages/TogetherPage'));
 const TasteProfilePage = lazy(() => import('./pages/TasteProfilePage'));
+const AccountPage = lazy(() => import('./pages/AccountPage'));
 
 /**
  * Pages animate in and are never animated out.
@@ -56,6 +57,7 @@ function AppRoutes() {
         <Route path="/enrich" element={<Page><EnrichPage /></Page>} />
         <Route path="/settings" element={<Page><SettingsPage /></Page>} />
         <Route path="/taste" element={<Page><TasteProfilePage /></Page>} />
+        <Route path="/account" element={<Page><AccountPage /></Page>} />
         {/* Group mode: the invite carries the host's taste, so a guest needs no
             account and the server keeps no session. */}
         <Route path="/together/:code?" element={<Page><TogetherPage /></Page>} />

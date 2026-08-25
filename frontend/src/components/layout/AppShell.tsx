@@ -7,6 +7,7 @@ import BottomNav from './BottomNav';
 import WakeGate from '../system/WakeGate';
 import { usePreferencesStore } from '../../stores/preferencesStore';
 import { useUIStore } from '../../stores/uiStore';
+import { useProfileSync } from '../../hooks/useProfileSync';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -22,6 +23,7 @@ const ROUTE_NAME: Record<string, string> = {
   "/taste": "Your taste",
   "/together": "Watch together",
   "/swipe": "Swipe",
+  "/account": "Account",
 };
 
 export default function AppShell({ children }: AppShellProps) {
@@ -30,6 +32,8 @@ export default function AppShell({ children }: AppShellProps) {
   const [announce, setAnnounce] = useState("");
   const firstRender = useRef(true);
   const density = usePreferencesStore((s) => s.density);
+  // Mounted once here so there's a single sync subscriber for the whole app.
+  useProfileSync();
 
   // Reflect the density preference on <html> so the poster-tile CSS vars pick it
   // up everywhere at once.

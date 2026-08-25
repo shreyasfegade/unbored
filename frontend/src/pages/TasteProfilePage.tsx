@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
+import { useAuthStore } from "../stores/authStore";
 import { fetchTasteProfile, type TasteProfile } from "../api/taste";
 import { describeApiError } from "../api/client";
 import styles from "./TasteProfilePage.module.css";
@@ -17,6 +18,7 @@ const TYPE_LABELS: Record<string, string> = { movie: "Films", tv: "TV", anime: "
 export default function TasteProfilePage() {
   const navigate = useNavigate();
   const favouriteIds = useTasteStore((s) => s.favouriteIds);
+  const accountConfigured = useAuthStore((s) => s.configured);
   const [profile, setProfile] = useState<TasteProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +176,7 @@ export default function TasteProfilePage() {
           <div className={styles.ctaRow}>
             <Link to="/enrich" className={styles.cta}>Refine your taste</Link>
             <Link to="/together" className={styles.ctaGhost}>Watch with friends</Link>
+            {accountConfigured && <Link to="/account" className={styles.ctaGhost}>Account</Link>}
           </div>
         </div>
       )}
