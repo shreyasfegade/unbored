@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useLibraryStore } from "../../stores/libraryStore";
+import { SPRING } from "../../config/motion";
 import styles from "./BottomNav.module.css";
 
 /**
@@ -75,13 +77,31 @@ export default function BottomNav() {
           end={item.to === "/"}
           className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ""}`}
         >
-          <span className={styles.icon} aria-hidden="true">
-            {item.icon}
-            {item.to === "/library" && savedCount > 0 && (
-              <span className={styles.badge}>{savedCount > 9 ? "9+" : savedCount}</span>
-            )}
-          </span>
-          <span className={styles.label}>{item.label}</span>
+          {({ isActive }) => (
+            <>
+              {/* A single shared pill that springs between tabs as they activate. */}
+              {isActive && (
+                <motion.span
+                  layoutId="navActive"
+                  className={styles.indicator}
+                  transition={SPRING.snappy}
+                  aria-hidden="true"
+                />
+              )}
+              <motion.span
+                className={styles.icon}
+                aria-hidden="true"
+                animate={{ scale: isActive ? 1.12 : 1 }}
+                transition={SPRING.snappy}
+              >
+                {item.icon}
+                {item.to === "/library" && savedCount > 0 && (
+                  <span className={styles.badge}>{savedCount > 9 ? "9+" : savedCount}</span>
+                )}
+              </motion.span>
+              <span className={styles.label}>{item.label}</span>
+            </>
+          )}
         </NavLink>
       ))}
     </nav>

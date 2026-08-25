@@ -14,6 +14,7 @@
 }
 
 .link {
+  position: relative;
   flex: 1 1 0;
   max-width: 96px;
   min-height: 44px;
@@ -40,6 +41,21 @@
 
 .active {
   color: var(--color-accent-bright, var(--color-text-primary));
+}
+
+.indicator {
+  position: absolute;
+  inset: 2px 8px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent-solid) 16%, transparent);
+  z-index: 0;
+}
+
+/* Keep icon + label above the sliding pill. */
+.icon,
+.label {
+  position: relative;
+  z-index: 1;
 }
 
 .icon {
