@@ -36,10 +36,16 @@ const AccountPage = lazy(() => import('./pages/AccountPage'));
  */
 function Page({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion();
+  // Freeze-proofing the freeze-proofing: framer's animation loop is paused while
+  // the tab is hidden, so a page that MOUNTS in a background tab would sit stuck
+  // at its `initial` opacity 0 and render invisible until the user interacts.
+  // If the document is hidden at mount, skip the enter entirely and render the
+  // final state — the animation is pure decoration and never worth a blank page.
+  const animate = !reduce && typeof document !== 'undefined' && !document.hidden;
   return (
     <motion.div
       style={{ width: '100%' }}
-      initial={reduce ? false : { opacity: 0, y: 12 }}
+      initial={animate ? { opacity: 0, y: 12 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.gentle}
     >
