@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import type { MediaItem } from "../../types/media";
 import { getBrowseShelves, type BrowseShelf } from "../../api/browse";
+import { DURATION } from "../../config/motion";
 import BrowseRail from "./BrowseRail";
 import ShelfGrid from "./ShelfGrid";
 import styles from "./BrowseCatalog.module.css";
@@ -112,7 +114,12 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
           ))}
         </div>
       ) : (
-        <div className={styles.rails}>
+        <motion.div
+          className={styles.rails}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: DURATION.base }}
+        >
           {shelves.map((s) => (
             <BrowseRail
               key={`${s.key}:${filter}`}
@@ -125,7 +132,7 @@ export default function BrowseCatalog({ selectedIds, onToggle, maxSelections }: 
               maxSelections={maxSelections}
             />
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { useRecommendationStore } from "../../stores/recommendationStore";
 import { useToastStore } from "../../stores/toastStore";
 import { useLibraryStore } from "../../stores/libraryStore";
 import type { MediaItem } from "../../types/media";
+import { pressableFlat } from "../../config/motion";
 import styles from "./ActionButtons.module.css";
 
 interface ActionButtonsProps {
@@ -117,19 +118,36 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
         animate="animate"
         custom={2}
       >
-        <button
+        <motion.button
           className={`${styles.verdict} ${saved ? styles.verdictOn : ""}`}
           onClick={handleSave}
           aria-pressed={saved}
+          whileHover={pressableFlat.whileHover}
+          whileTap={pressableFlat.whileTap}
+          transition={pressableFlat.transition}
         >
           {saved ? "★ Saved" : "☆ Watchlist"}
-        </button>
-        <button className={styles.verdict} onClick={handleSeen} disabled={isRegenerating}>
+        </motion.button>
+        <motion.button
+          className={styles.verdict}
+          onClick={handleSeen}
+          disabled={isRegenerating}
+          whileHover={pressableFlat.whileHover}
+          whileTap={pressableFlat.whileTap}
+          transition={pressableFlat.transition}
+        >
           ✓ Seen it
-        </button>
-        <button className={styles.verdict} onClick={handleNotInterested} disabled={isRegenerating}>
+        </motion.button>
+        <motion.button
+          className={styles.verdict}
+          onClick={handleNotInterested}
+          disabled={isRegenerating}
+          whileHover={pressableFlat.whileHover}
+          whileTap={pressableFlat.whileTap}
+          transition={pressableFlat.transition}
+        >
           ✕ Not for me
-        </button>
+        </motion.button>
       </motion.div>
 
       {/* Everything past the verdicts is occasional, and ten equally-weighted
