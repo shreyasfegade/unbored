@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTasteStore } from "../stores/tasteStore";
 import { useToastStore } from "../stores/toastStore";
+import { useAuthStore } from "../stores/authStore";
 import { getRecommendation } from "../api/recommend";
 import { createRoom, joinRoom, getRoom, roomPick, type RoomState } from "../api/together";
 import { describeApiError } from "../api/client";
@@ -93,7 +94,16 @@ export default function TogetherPage() {
   const urlIsRoomCode = Boolean(code && ROOM_CODE_RE.test(code.toUpperCase()));
   const urlIsLegacy = Boolean(code && !urlIsRoomCode);
 
-  const [name, setName] = useState(() => localStorage.getItem("unbored-name") || "");
+  // A signed-in user joins rooms as themselves, so the room shows real names.
+  const accountName = useAuthStore((s) =>
+    s.user ? (s.user.email ? s.user.email.split("@")[0] : "") : "",
+  );
+  // Prefer a stored name, else the account name; used as the fallback at submit
+  // and to seed the input so the field isn't empty for a signed-in user.
+  const [name, setName] = useState(
+    () => localStorage.getItem("unbored-name") || "",
+  );
+  const effectiveName = name || accountName;
   const [room, setRoom] = useState<RoomState | null>(null);
   const [memberId, setMemberId] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
@@ -140,7 +150,7 @@ export default function TogetherPage() {
     setBusy(true);
     setError(null);
     try {
-      const { data } = await createRoom(name.trim() || "Host", myIds);
+      const { data } = await createRoom(effectiveName.trim() || "Host", myIds);
       enterRoom(data.room, data.member_id);
     } catch (e) {
       setError(describeApiError(e));
@@ -158,7 +168,7 @@ export default function TogetherPage() {
     setBusy(true);
     setError(null);
     try {
-      const { data } = await joinRoom(c, name.trim() || "Guest", myIds);
+      const { data } = await joinRoom(c, effectiveName.trim() || "Guest", myIds);
       enterRoom(data.room, data.member_id);
     } catch (e) {
       setError(describeApiError(e));
@@ -259,7 +269,7 @@ export default function TogetherPage() {
         </p>
         <input
           className={styles.input}
-          value={name}
+          value={effectiveName}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
           maxLength={24}
@@ -291,7 +301,7 @@ export default function TogetherPage() {
 
       <input
         className={styles.input}
-        value={name}
+        value={effectiveName}
         onChange={(e) => setName(e.target.value)}
         placeholder="Your name"
         maxLength={24}
