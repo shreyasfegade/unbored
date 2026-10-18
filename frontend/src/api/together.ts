@@ -1,6 +1,6 @@
-import api from './client';
 import type { RecommendationResponse } from '../types/recommendation';
 import type { MoodType, TimeSlot } from '../types/mood';
+import { request } from './client';
 
 export interface MemberView {
   id: string;
@@ -21,13 +21,16 @@ export interface JoinResult {
 }
 
 export const createRoom = (name: string, favourite_ids: string[]) =>
-  api.post<JoinResult>('/api/together/rooms', { name, favourite_ids });
+  request<JoinResult>('POST', '/api/together/rooms', { body: { name, favourite_ids }, timeoutMs: 90000 });
 
 export const joinRoom = (code: string, name: string, favourite_ids: string[]) =>
-  api.post<JoinResult>(`/api/together/rooms/${code}/join`, { name, favourite_ids });
+  request<JoinResult>('POST', `/api/together/rooms/${code}/join`, { body: { name, favourite_ids }, timeoutMs: 90000 });
 
 export const getRoom = (code: string) =>
-  api.get<RoomState>(`/api/together/rooms/${code}`);
+  request<RoomState>('GET', `/api/together/rooms/${code}`, { timeoutMs: 90000 });
 
 export const roomPick = (code: string, mood: MoodType, time_available: TimeSlot) =>
-  api.post<RecommendationResponse>(`/api/together/rooms/${code}/pick`, { mood, time_available });
+  request<RecommendationResponse>('POST', `/api/together/rooms/${code}/pick`, {
+    body: { mood, time_available },
+    timeoutMs: 90000,
+  });

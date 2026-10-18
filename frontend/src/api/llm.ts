@@ -1,5 +1,5 @@
-import api from './client';
 import type { LlmProvider } from '../stores/llmStore';
+import { request } from './client';
 
 export interface ValidateResult {
   ok: boolean;
@@ -9,10 +9,11 @@ export interface ValidateResult {
 }
 
 /** Validate a key with one tiny generation. The key is passed explicitly here
- *  (it isn't in the store yet) so the request interceptor doesn't shadow it. */
+ *  because it isn't in the store yet. */
 export async function validateKey(provider: LlmProvider, key: string): Promise<ValidateResult> {
-  const { data } = await api.post<ValidateResult>('/api/llm/validate', null, {
+  const { data } = await request<ValidateResult>('POST', '/api/llm/validate', {
     headers: { 'X-LLM-Provider': provider, 'X-LLM-Key': key },
+    timeoutMs: 90000,
   });
   return data;
 }

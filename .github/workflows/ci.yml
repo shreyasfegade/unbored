@@ -20,6 +20,16 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Tests (incl. engine quality eval harness)
         run: python -m pytest -q
+      - name: Web pack + parity fixtures are current
+        # The browser engine is checked against fixtures the Python engine
+        # writes; both must be rebuilt whenever the catalog or engine changes.
+        run: |
+          python scripts/build_web_pack.py
+          python scripts/export_parity_fixtures.py
+          git diff --exit-code -- ../frontend/public/data ../frontend/src/engine/__fixtures__ || {
+            echo "::error::Pack or fixtures are stale. Run scripts/build_web_pack.py and scripts/export_parity_fixtures.py and commit the result."
+            exit 1
+          }
 
   frontend:
     runs-on: ubuntu-latest

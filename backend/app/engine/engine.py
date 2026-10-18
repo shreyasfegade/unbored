@@ -109,16 +109,17 @@ def _item_year(item: MediaItem) -> int | None:
     return item.release_year or item.year
 
 
-def recency_fit(item: MediaItem, era: EraPreference) -> float:
+def recency_fit(item: MediaItem, era: EraPreference, ref_year: int | None = None) -> float:
     """How well an item's release year fits the era preference, in [0,1].
 
     Neutral (0.5) when the year is unknown, so the 11 undated catalog items are
-    never penalised or rewarded for it.
+    never penalised or rewarded for it. ``ref_year`` pins "now" so fixtures stay
+    deterministic across calendar years.
     """
     year = _item_year(item)
     if not year:
         return 0.5
-    age = max(0, _REF_YEAR - year)
+    age = max(0, (ref_year or _REF_YEAR) - year)
     if era == EraPreference.CLASSIC:
         # Older is better; plateau past ~45 years.
         return max(0.0, min(1.0, 0.35 + age / 45.0))
@@ -161,8 +162,10 @@ class RecommendationEngine:
         taste: dict[str, float] | None = None,
         genre_boosts: dict[str, float] | None = None,
         tuning: dict[str, float] | None = None,
+        ref_year: int | None = None,
     ) -> None:
         self._index = index
+        self._ref_year = ref_year
         self._mood = mood
         self._slot = time_available
         self._media_type = media_type if media_type in {"movie", "tv", "anime"} else None
@@ -290,7 +293,7 @@ class RecommendationEngine:
             mood = mood_fit_to_target(c, self._mood_target)
             runtime = runtime_fit(c, self._slot)
             quality = quality_prior(c)
-            recency = recency_fit(c, self._era)
+            recency = recency_fit(c, self._era, self._ref_year)
             final = (
                 w_rel * rel + w_mood * mood + w_rt * runtime
                 + w_q * quality + w_rec * recency

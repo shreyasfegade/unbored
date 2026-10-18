@@ -1,40 +1,22 @@
-import axios, { type InternalAxiosRequestConfig } from 'axios';
-import { useLlmStore } from '../stores/llmStore';
+/**
+ * Errors and the one network helper the app still needs.
+ *
+ * Catalog reads, search and recommendations all run in the browser now (see
+ * src/engine), so the network is only used for the optional AI functions under
+ * /api/ai. Every failure, local or remote, surfaces as an ApiError with a
+ * stable code, so callers never substring-match prose to decide what happened.
+ */
+import { PackError } from "../engine/pack";
 
-// The backend runs on a free tier that cold-starts in ~45s after idle. A 30s
-// timeout guaranteed a failure on the first request; 90s lets it wake up.
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
-  timeout: 90000,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-/** Endpoints that actually need the user's LLM key. The key is NOT attached to
- *  search, taste, or health calls — no reason to send a secret where it's unused. */
-function needsLlmKey(url: string | undefined): boolean {
-  if (!url) return false;
-  return url.includes('/api/recommend') || url.includes('/api/llm/');
-}
-
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (!needsLlmKey(config.url)) return config;
-  const { provider, apiKey, validated } = useLlmStore.getState();
-  if (provider && apiKey && validated) {
-    config.headers.set('X-LLM-Provider', provider);
-    config.headers.set('X-LLM-Key', apiKey);
-  }
-  return config;
-});
-
-/** A stable, machine-readable classification so callers never have to
- *  substring-match human-readable prose to decide what went wrong. */
 export type ApiErrorCode =
   | 'TIMEOUT'
   | 'NETWORK'
   | 'NOT_FOUND'
   | 'SERVER'
   | 'VALIDATION'
+  | 'RATE_LIMITED'
   | 'CANCELED'
+  | 'CATALOG'
   | 'UNKNOWN';
 
 export interface ApiError extends Error {
@@ -43,18 +25,37 @@ export interface ApiError extends Error {
   serverErrorCode?: string;
 }
 
-/** A user-facing sentence for an error, chosen by its stable code rather than
- *  by substring-matching the message — so a backend copy edit can never change
- *  what the user is told. */
+export function apiError(code: ApiErrorCode, message: string, status?: number): ApiError {
+  const err = new Error(message) as ApiError;
+  err.code = code;
+  if (status !== undefined) err.status = status;
+  return err;
+}
+
+/** Map anything thrown by the local engine or catalog into an ApiError. */
+export function toApiError(err: unknown): ApiError {
+  if ((err as ApiError)?.code) return err as ApiError;
+  if (err instanceof PackError) return apiError('CATALOG', err.message);
+  if ((err as Error)?.name === 'AbortError') return apiError('CANCELED', 'Request canceled');
+  return apiError('UNKNOWN', (err as Error)?.message || 'Something went wrong.');
+}
+
+/** A user-facing sentence for an error, chosen by its stable code. */
 export function describeApiError(err: unknown): string {
   const code = (err as ApiError | undefined)?.code;
   switch (code) {
+    case 'CATALOG':
+      return "Couldn't load the catalog. Check your connection and try again.";
     case 'TIMEOUT':
-      return 'The server was waking up — that first request can take up to a minute. Try again.';
+      return 'That took too long. Try again.';
     case 'NETWORK':
-      return "Can't reach the server. Check your connection.";
+      return "Can't reach the network. Check your connection.";
+    case 'RATE_LIMITED':
+      return 'Too many requests for now. Give it a minute.';
     case 'SERVER':
       return 'The server hit a problem. Give it another try.';
+    case 'NOT_FOUND':
+      return "That title isn't in the catalog.";
     default:
       return 'Something went wrong. Try again.';
   }
@@ -64,48 +65,54 @@ export function isCanceled(err: unknown): boolean {
   return (err as ApiError | undefined)?.code === 'CANCELED';
 }
 
-function classify(error: unknown): ApiError {
-  const e = error as {
-    code?: string;
-    name?: string;
-    message?: string;
-    response?: { status?: number; data?: { detail?: string; error_code?: string } };
-  };
-
-  // Request was aborted (a newer request superseded it) — not a real failure.
-  if (e.code === 'ERR_CANCELED' || e.name === 'CanceledError') {
-    const err = new Error('Request canceled') as ApiError;
-    err.code = 'CANCELED';
-    return err;
-  }
-
-  // Timeout / network failures never have a response.
-  if (!e.response) {
-    const isTimeout = e.code === 'ECONNABORTED' || /timeout/i.test(e.message || '');
-    const err = new Error(
-      isTimeout
-        ? 'The server took too long to respond.'
-        : "Can't reach the server."
-    ) as ApiError;
-    err.code = isTimeout ? 'TIMEOUT' : 'NETWORK';
-    return err;
-  }
-
-  const status = e.response.status;
-  const detail = e.response.data?.detail;
-  const err = new Error(typeof detail === 'string' && detail ? detail : 'Request failed') as ApiError;
-  err.status = status;
-  err.serverErrorCode = e.response.data?.error_code;
-  if (status === 404) err.code = 'NOT_FOUND';
-  else if (status === 422) err.code = 'VALIDATION';
-  else if (status && status >= 500) err.code = 'SERVER';
-  else err.code = 'UNKNOWN';
-  return err;
+interface RequestOptions {
+  body?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+  timeoutMs?: number;
 }
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(classify(error))
-);
+/** JSON over fetch with a timeout, classified errors, and `{ data }` results. */
+export async function request<T>(method: 'GET' | 'POST', url: string, opts: RequestOptions = {}): Promise<{ data: T }> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, opts.timeoutMs ?? 15000);
+  const onAbort = () => controller.abort();
+  opts.signal?.addEventListener('abort', onAbort);
 
-export default api;
+  let res: Response;
+  try {
+    res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      signal: controller.signal,
+    });
+  } catch {
+    if (opts.signal?.aborted) throw apiError('CANCELED', 'Request canceled');
+    throw timedOut ? apiError('TIMEOUT', 'The request took too long.') : apiError('NETWORK', "Can't reach the network.");
+  } finally {
+    clearTimeout(timer);
+    opts.signal?.removeEventListener('abort', onAbort);
+  }
+
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = (data as { detail?: string; error_code?: string } | null) ?? {};
+    const err = apiError(
+      res.status === 404 ? 'NOT_FOUND'
+        : res.status === 422 || res.status === 400 ? 'VALIDATION'
+        : res.status === 429 ? 'RATE_LIMITED'
+        : res.status >= 500 ? 'SERVER'
+        : 'UNKNOWN',
+      typeof detail.detail === 'string' && detail.detail ? detail.detail : 'Request failed',
+      res.status,
+    );
+    err.serverErrorCode = detail.error_code;
+    throw err;
+  }
+  return { data: data as T };
+}

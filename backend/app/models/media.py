@@ -68,6 +68,19 @@ class MediaItem(BaseModel):
     year: int | None = None
     episode_count: int | None = None
     source_api: str = "tmdb"
+    # Build-time enrichments (scripts/build_catalog.py). All optional so an
+    # older catalog still loads.
+    imdb_id: str | None = None
+    added_at: str | None = Field(
+        default=None, description="ISO date the title first entered the catalog."
+    )
+    watch: dict | None = Field(
+        default=None,
+        description="Where to watch, by region: {region: {link, flatrate, rent, buy}}.",
+    )
+    trailer: dict | None = Field(
+        default=None, description='Official trailer: {"site": "youtube", "key": ...}.'
+    )
 
     @property
     def inferred_emotional_intensity(self) -> float:

@@ -82,9 +82,17 @@ async def search_multi(
     type: str | None = Query(None),
 ):
     response.headers["Cache-Control"] = _CATALOG_CACHE
+    results, total = search_catalog(load_catalog(), q, type)
+    return SearchResponse(results=results, total_results=total, query=q)
+
+
+def search_catalog(
+    catalog: list[MediaItem], q: str, type: str | None = None
+) -> tuple[list[MediaItem], int]:
+    """Rank the catalog against a query: (top results, total matches). The
+    browser port (frontend/src/engine/search.ts) is checked against this."""
     needle = _norm(q)
     tokens = needle.split()
-    catalog = load_catalog()
     want = _TYPE_MAP.get((type or "").lower())
 
     scored: list[tuple[int, float, MediaItem]] = []
@@ -96,15 +104,12 @@ async def search_multi(
             scored.append((rank, -m.popularity_norm, m))
 
     scored.sort(key=lambda t: (t[0], t[1]))
-    results = [m for _, _, m in scored[:MAX_RESULTS]]
-    return SearchResponse(results=results, total_results=len(scored), query=q)
+    return [m for _, _, m in scored[:MAX_RESULTS]], len(scored)
 
 
-@router.get("/search/curated-shortlist")
-async def get_curated_shortlist(request: Request, response: Response):
-    """A diverse, high-quality starter set spanning movies, TV, and anime."""
-    response.headers["Cache-Control"] = _CATALOG_CACHE
-    catalog = load_catalog()
+def curated_shortlist(catalog: list[MediaItem]) -> list[MediaItem]:
+    """A diverse, high-quality starter set spanning movies, TV, and anime.
+    Shared with scripts/build_web_pack.py so the browser gets the same set."""
     by_type: dict[MediaType, list[MediaItem]] = {MediaType.MOVIE: [], MediaType.TV: [], MediaType.ANIME: []}
     for m in sorted(catalog, key=lambda c: c.popularity_norm, reverse=True):
         if m.poster_path and m.media_type in by_type:
@@ -125,5 +130,11 @@ async def get_curated_shortlist(request: Request, response: Response):
                 if item.id not in seen:
                     seen.add(item.id)
                     interleaved.append(item)
+    return interleaved[:SHORTLIST_SIZE]
 
-    return {"items": interleaved[:SHORTLIST_SIZE]}
+
+@router.get("/search/curated-shortlist")
+async def get_curated_shortlist(request: Request, response: Response):
+    """A diverse, high-quality starter set spanning movies, TV, and anime."""
+    response.headers["Cache-Control"] = _CATALOG_CACHE
+    return {"items": curated_shortlist(load_catalog())}

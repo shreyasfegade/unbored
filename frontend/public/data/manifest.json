@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "generated_at": "2026-08-23T22:58:31.026972+00:00",
+  "count": 2420,
+  "dims": 384,
+  "files": {
+    "cards": "cards.5788ec65aa69.json",
+    "engine": "engine.518501dbdca1.bin",
+    "shelves": "shelves.04a1efd16f7b.json"
+  },
+  "bytes": {
+    "cards": {
+      "raw": 2925394,
+      "gzip": 1005822
+    },
+    "engine": {
+      "raw": 938960,
+      "gzip": 729045
+    },
+    "shelves": {
+      "raw": 31051,
+      "gzip": 8475
+    }
+  }
+}
