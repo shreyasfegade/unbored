@@ -177,6 +177,18 @@
   color: var(--color-text-secondary);
 }
 
+.importLink {
+  margin-top: var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.importLink:hover {
+  color: var(--color-text-accent);
+}
+
 .connectHeading {
   font-family: var(--font-display);
   font-size: var(--text-3xl);

@@ -60,9 +60,14 @@ async def taste_profile(body: TasteProfileRequest, request: Request):
     """Summarise a set of favourites. Unknown ids are ignored, not an error."""
     catalog_map: dict[str, MediaItem] = request.app.state.catalog_map
     items = [m for m in (catalog_map.get(i) for i in body.favourite_ids) if m is not None]
+    return summarise(items, requested=len(body.favourite_ids))
 
+
+def summarise(items: list[MediaItem], *, requested: int) -> TasteProfile:
+    """The profile for a resolved set of favourites. Shared with the browser
+    port's parity fixtures."""
     if not items:
-        return TasteProfile(resolved=0, requested=len(body.favourite_ids))
+        return TasteProfile(resolved=0, requested=requested)
 
     genre_counts = Counter(g.lower().strip() for m in items for g in m.genres if g)
     total_genre = sum(genre_counts.values()) or 1
@@ -86,7 +91,7 @@ async def taste_profile(body: TasteProfileRequest, request: Request):
 
     return TasteProfile(
         resolved=len(items),
-        requested=len(body.favourite_ids),
+        requested=requested,
         genres=genres,
         decades=decades,
         media_types=dict(Counter(m.media_type.value for m in items)),

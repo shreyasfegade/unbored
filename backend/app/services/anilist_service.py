@@ -14,6 +14,7 @@ import httpx
 
 from app.models.media import MediaItem, MediaType, MediaSource
 from app.models.genres import normalize_genre, slugify_keyword
+from app.services.enrichment import anilist_trailer, anilist_watch
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,8 @@ query ($page: Int, $perPage: Int) {
             duration
             seasonYear
             status
+            trailer { id site }
+            externalLinks { site url type }
         }
     }
 }
@@ -101,6 +104,8 @@ query ($page: Int, $perPage: Int) {
             duration
             seasonYear
             status
+            trailer { id site }
+            externalLinks { site url type }
         }
     }
 }
@@ -408,6 +413,8 @@ class AniListService:
             release_date=release_date,
             year=year_val,
             episode_count=episodes,
+            watch=anilist_watch(media),
+            trailer=anilist_trailer(media),
             source_api="anilist",
         )
 

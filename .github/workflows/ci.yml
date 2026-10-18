@@ -12,14 +12,24 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install deps
         run: pip install -r requirements-dev.txt
       - name: Tests (incl. engine quality eval harness)
         run: python -m pytest -q
+      - name: Web pack + parity fixtures are current
+        # The browser engine is checked against fixtures the Python engine
+        # writes; both must be rebuilt whenever the catalog or engine changes.
+        run: |
+          python scripts/build_web_pack.py
+          python scripts/export_parity_fixtures.py
+          git diff --exit-code -- ../frontend/public/data ../frontend/src/engine/__fixtures__ ../frontend/api/_lib/titles.gen.ts || {
+            echo "::error::Pack or fixtures are stale. Run scripts/build_web_pack.py and scripts/export_parity_fixtures.py and commit the result."
+            exit 1
+          }
 
   frontend:
     runs-on: ubuntu-latest
@@ -27,8 +37,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: npm
@@ -42,3 +52,27 @@ jobs:
         run: npm test
       - name: Build
         run: npx vite build
+
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end (desktop + mobile)
+        run: npx playwright test
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: playwright-traces
+          path: frontend/test-results
+          retention-days: 7

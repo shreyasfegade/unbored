@@ -1,14 +1,18 @@
 import { motion } from "framer-motion";
-import type { ScoredMediaItem } from "../../types/recommendation";
+import { Link } from "react-router-dom";
+import type { AIStatus, AITier, ScoredMediaItem } from "../../types/recommendation";
 import type { ConfidenceLevel } from "../../types/mood";
 import { ConfidenceBadge } from "./ConfidenceBadge";
 import { WhyNow } from "./WhyNow";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { AlternatePicks } from "./AlternatePicks";
 import { ActionButtons } from "./ActionButtons";
+import { WatchPanel } from "../watch/WatchPanel";
+import { primaryWatchUrl } from "../watch/watchOptions";
+import { Trailer } from "../trailer/Trailer";
+import { WhyNot } from "../whynot/WhyNot";
+import { useRecommendationStore } from "../../stores/recommendationStore";
 import styles from "./InfoCascade.module.css";
-
-type AIStatus = "off" | "used" | "timeout" | "error";
 
 interface InfoCascadeProps {
   primary: ScoredMediaItem;
@@ -17,6 +21,7 @@ interface InfoCascadeProps {
   pickedBy: "ai" | "engine" | null;
   provider: string | null;
   aiStatus: AIStatus;
+  aiTier: AITier | null;
   mediaTypeApplied: boolean;
   alternates: ScoredMediaItem[];
   onAlternateSelect: (index: number) => void;
@@ -31,15 +36,15 @@ export function InfoCascade({
   pickedBy,
   provider,
   aiStatus,
+  aiTier,
   mediaTypeApplied,
   alternates,
   onAlternateSelect,
   onRegenerate,
   onStartOver,
 }: InfoCascadeProps) {
-  const watchUrl = primary.media.title
-    ? `https://www.google.com/search?q=watch+${encodeURIComponent(primary.media.title)}+${primary.media.release_year ?? ""}`
-    : null;
+  const watchUrl = primaryWatchUrl(primary.media);
+  const request = useRecommendationStore((s) => s.request);
 
   return (
     <motion.div
@@ -124,27 +129,47 @@ export function InfoCascade({
           <WhyNow
             text={rationale}
             attribution={
-              pickedBy === "ai" && provider
-                ? `AI pick · ${provider}`
-                : "Engine pick"
+              pickedBy !== "ai" || !provider
+                ? "Engine pick"
+                : aiTier === "free"
+                  ? "AI pick · Gemini, shared free tier"
+                  : `AI pick · ${provider}`
             }
             emphasis={pickedBy === "ai"}
           />
         </motion.div>
       )}
 
-      {/* Only pitch "connect AI" when no key is connected. If a connected key
-          merely failed (timeout/error), say that honestly instead of implying
-          the user should connect the AI they already connected. */}
+      {/* Only pitch "connect AI" when there's no AI at all. When AI was there
+          but didn't answer, say what happened instead. */}
       {pickedBy === "engine" && aiStatus === "off" && <UpgradePrompt />}
-      {pickedBy === "engine" && (aiStatus === "error" || aiStatus === "timeout") && (
+      {pickedBy === "engine" && aiStatus !== "off" && aiStatus !== "used" && (
         <motion.p
           className={styles.notice}
           variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
         >
-          Your AI was slow to respond, so the engine picked this time. Try again for an AI-chosen pick.
+          {aiStatus === "limited" && aiTier === "free" ? (
+            <>
+              Today&rsquo;s free AI picks are used up, so the engine chose this one. They reset
+              tomorrow, or <Link to="/settings">connect your own key</Link> for unlimited.
+            </>
+          ) : aiStatus === "limited" ? (
+            "Your AI key is rate-limited right now, so the engine picked this time."
+          ) : aiTier === "free" ? (
+            "The AI was slow to respond, so the engine picked this time. Try again for an AI-chosen pick."
+          ) : (
+            "Your AI was slow to respond, so the engine picked this time. Try again for an AI-chosen pick."
+          )}
         </motion.p>
       )}
+
+      <motion.div
+        style={{ width: "100%" }}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        transition={{ duration: 0.4 }}
+      >
+        <WatchPanel media={primary.media} />
+      </motion.div>
 
       <motion.div
         variants={{
@@ -169,7 +194,18 @@ export function InfoCascade({
           watchUrl={watchUrl}
           shareId={primary.media.id}
           media={primary.media}
+          reason={rationale}
         />
+      </motion.div>
+
+      {/* Exploring, after deciding: the trailer and "why not X?". */}
+      <motion.div
+        className={styles.extras}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        transition={{ duration: 0.3 }}
+      >
+        <Trailer key={`t-${primary.media.id}`} media={primary.media} />
+        {request && <WhyNot key={primary.media.id} pick={primary} request={request} pickedByAi={pickedBy === "ai"} />}
       </motion.div>
     </motion.div>
   );

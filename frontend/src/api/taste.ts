@@ -1,13 +1,11 @@
-import api from './client';
-import { CATALOG_VERSION } from './catalogVersion';
-import type { MediaItem } from '../types/media';
+import { summariseTaste } from '../engine/taste';
+import { toMedia, withCatalog } from './catalog';
 
-// The taste vector is no longer a server resource — taste lives in the browser
-// and is sent per request. These endpoints are pure functions of that input.
+// Taste lives in the browser; these are pure functions of it and the catalog.
 export const fetchCuratedShortlist = () =>
-  api.get<{ items: MediaItem[] }>('/api/search/curated-shortlist', {
-    params: { v: CATALOG_VERSION },
-  });
+  withCatalog(({ shelves, byId }) => ({
+    items: shelves.shortlist.map((id) => byId.get(id)).filter((c) => c !== undefined).map(toMedia),
+  }));
 
 export interface GenreWeight {
   name: string;
@@ -35,4 +33,8 @@ export interface TasteProfile {
 }
 
 export const fetchTasteProfile = (favouriteIds: string[]) =>
-  api.post<TasteProfile>('/api/taste/profile', { favourite_ids: favouriteIds });
+  withCatalog(({ byId }): TasteProfile => {
+    const ids = favouriteIds.slice(0, 200);
+    const items = ids.map((id) => byId.get(id)).filter((c) => c !== undefined);
+    return summariseTaste(items, ids.length);
+  });

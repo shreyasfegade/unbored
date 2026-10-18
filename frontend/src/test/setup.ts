@@ -3,13 +3,17 @@ import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 afterEach(() => {
+  if (typeof window === "undefined") return;
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
 });
 
+// Node-environment tests (the API functions) have no DOM to patch.
+const hasDom = typeof window !== "undefined";
+
 // jsdom implements neither, and components lean on both.
-if (!("IntersectionObserver" in globalThis)) {
+if (hasDom && !("IntersectionObserver" in globalThis)) {
   class NoopObserver {
     observe() {}
     unobserve() {}
@@ -19,7 +23,7 @@ if (!("IntersectionObserver" in globalThis)) {
   vi.stubGlobal("IntersectionObserver", NoopObserver);
 }
 
-if (!window.matchMedia) {
+if (hasDom && !window.matchMedia) {
   vi.stubGlobal("matchMedia", (query: string) => ({
     matches: false,
     media: query,
@@ -32,6 +36,6 @@ if (!window.matchMedia) {
   }));
 }
 
-if (!Element.prototype.scrollTo) {
+if (hasDom && !Element.prototype.scrollTo) {
   Element.prototype.scrollTo = () => {};
 }

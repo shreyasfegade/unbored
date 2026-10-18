@@ -4,7 +4,7 @@ import Background from './Background';
 import Header from './Header';
 import { Toast } from '../ui/Toast';
 import BottomNav from './BottomNav';
-import WakeGate from '../system/WakeGate';
+import CatalogStatus from '../system/CatalogStatus';
 import { usePreferencesStore } from '../../stores/preferencesStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useProfileSync } from '../../hooks/useProfileSync';
@@ -77,9 +77,8 @@ export default function AppShell({ children }: AppShellProps) {
       </main>
       <BottomNav />
       <p aria-live="polite" className={styles.routeAnnouncer}>{announce}</p>
-      {/* Probes the API and only takes over when it's actually cold; it also
-          replaces the old fire-and-forget warmup ping. */}
-      <WakeGate />
+      {/* Warms the catalog + engine; only visible if loading fails. */}
+      <CatalogStatus />
       <Toast />
     </div>
   );

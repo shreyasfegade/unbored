@@ -156,3 +156,55 @@ async def test_unknown_shelf_is_404():
     async with _client() as c:
         resp = await c.get("/api/browse/shelf/genre:nonexistent")
     assert resp.status_code == 404
+
+
+# ── New this week ───────────────────────────────────────────────────────
+
+
+def _titles(n: int, added: str) -> list:
+    from app.models.media import MediaItem, MediaSource, MediaType
+
+    return [
+        MediaItem(
+            id=f"t{i}", source=MediaSource.TMDB_MOVIE, title=f"T{i}", original_title=f"T{i}", overview="x",
+            genres=["drama"], vote_average=7, vote_count=1000, media_type=MediaType.MOVIE,
+            added_at=added, popularity_norm=i / max(n, 1),
+        )
+        for i in range(n)
+    ]
+
+
+def test_new_this_week_counts_from_the_build_date():
+    from app.services.shelves import new_this_week
+
+    catalog = _titles(40, "2026-08-23") + _titles(8, "2026-10-14")
+    for i, m in enumerate(catalog[40:]):
+        m.id = f"new{i}"
+    pct = {m.id: 0.5 for m in catalog}
+    fresh = new_this_week(catalog, "2026-10-18T03:00:00+00:00", pct)
+    assert {m.id for m in fresh} == {f"new{i}" for i in range(8)}
+    # The newest by popularity lead.
+    assert fresh[0].id == "new7"
+    # A week later nothing is new.
+    assert new_this_week(catalog, "2026-10-25T03:00:00+00:00", pct) == []
+
+
+def test_new_this_week_stays_empty_for_a_fresh_build_or_a_trickle():
+    from app.services.shelves import new_this_week
+
+    everything = _titles(30, "2026-10-18")
+    assert new_this_week(everything, "2026-10-18", {m.id: 1.0 for m in everything}) == []
+    trickle = _titles(100, "2026-08-23") + _titles(3, "2026-10-17")
+    for i, m in enumerate(trickle[100:]):
+        m.id = f"n{i}"
+    assert new_this_week(trickle, "2026-10-18", {m.id: 1.0 for m in trickle}) == []
+
+
+def test_new_this_week_skips_low_quality_titles():
+    from app.services.shelves import new_this_week
+
+    catalog = _titles(60, "2026-08-23") + _titles(10, "2026-10-16")
+    for i, m in enumerate(catalog[60:]):
+        m.id = f"n{i}"
+    pct = {m.id: (0.1 if m.id in ("n0", "n1") else 0.6) for m in catalog}
+    assert {m.id for m in new_this_week(catalog, "2026-10-18", pct)} == {f"n{i}" for i in range(2, 10)}

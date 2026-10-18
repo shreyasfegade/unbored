@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTasteStore } from '../stores/tasteStore';
 import { useAuthStore } from '../stores/authStore';
+import { useAiTierStore } from '../stores/aiTierStore';
 import FavouritePicker from '../components/onboarding/FavouritePicker';
 import AccountStep from '../components/onboarding/AccountStep';
 import ConnectAI from '../components/llm/ConnectAI';
@@ -49,6 +50,12 @@ export default function OnboardingPage() {
   const hasCompleted = useTasteStore((s) => s.hasCompletedOnboarding);
   const completeOnboarding = useTasteStore((s) => s.completeOnboarding);
   const accountConfigured = useAuthStore((s) => s.configured);
+  const freeTier = useAiTierStore((s) => s.freeTier);
+  const freeLimit = useAiTierStore((s) => s.limit);
+  const loadTier = useAiTierStore((s) => s.load);
+  useEffect(() => {
+    if (freeTier === null) void loadTier();
+  }, [freeTier, loadTier]);
   const [step, setStep] = useState<Step>('welcome');
 
   // Skip the account step entirely when accounts aren't configured.
@@ -89,7 +96,10 @@ export default function OnboardingPage() {
 
             <ol className={styles.steps}>
               <li><span>1</span> Pick a few things you love</li>
-              <li><span>2</span> Connect your AI <em>(Gemini or DeepSeek)</em></li>
+              <li>
+                <span>2</span>
+                {freeTier ? <>Optionally, add your own AI key <em>(Gemini or DeepSeek)</em></> : <>Connect your AI <em>(Gemini or DeepSeek)</em></>}
+              </li>
               <li><span>3</span> Get one pick, chosen for you</li>
             </ol>
 
@@ -105,6 +115,9 @@ export default function OnboardingPage() {
             <button className={styles.skipDemo} onClick={skipToDemo}>
               or just show me something →
             </button>
+            <Link to="/import?from=onboarding" className={styles.importLink}>
+              Rated films on Letterboxd or IMDb? Import them instead
+            </Link>
           </motion.div>
         )}
 
@@ -122,23 +135,46 @@ export default function OnboardingPage() {
 
         {step === 'connect' && (
           <motion.div key="connect" className={styles.connect} variants={stepVariants} initial="initial" animate="animate">
-            <span className={styles.kicker}>This is the part that matters</span>
-            <h2 className={styles.connectHeading}>Connect your AI</h2>
-            <p className={styles.connectPitch}>
-              Unbored is really about <strong>AI picking for you</strong>. Bring your own Gemini or
-              DeepSeek key and it chooses and explains your pick, grounded in the titles you love.
-            </p>
-
-            <div className={styles.compare}>
-              <div className={`${styles.compareCol} ${styles.compareAi}`}>
-                <span className={styles.compareTag}>✦ With your key</span>
-                <p>AI reads your taste and hand-picks one title, with a reason in your words.</p>
-              </div>
-              <div className={styles.compareCol}>
-                <span className={styles.compareTag}>Without</span>
-                <p>A solid built-in engine pick — good, but not chosen <em>for you</em>.</p>
-              </div>
-            </div>
+            {freeTier ? (
+              <>
+                <span className={styles.kicker}>Optional</span>
+                <h2 className={styles.connectHeading}>AI picks are already on</h2>
+                <p className={styles.connectPitch}>
+                  Your picks are chosen and explained by AI on a shared free tier,{" "}
+                  {freeLimit ?? "a few"} a day. Add your own Gemini or DeepSeek key to lift the limit
+                  and let the AI widen the search before it picks.
+                </p>
+                <div className={styles.compare}>
+                  <div className={styles.compareCol}>
+                    <span className={styles.compareTag}>Free tier</span>
+                    <p>AI picks up to {freeLimit ?? "a few"} times a day, then the built-in engine.</p>
+                  </div>
+                  <div className={`${styles.compareCol} ${styles.compareAi}`}>
+                    <span className={styles.compareTag}>✦ With your key</span>
+                    <p>No daily limit, and the AI also expands what it searches for.</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className={styles.kicker}>This is the part that matters</span>
+                <h2 className={styles.connectHeading}>Connect your AI</h2>
+                <p className={styles.connectPitch}>
+                  Unbored is really about <strong>AI picking for you</strong>. Bring your own Gemini or
+                  DeepSeek key and it chooses and explains your pick, grounded in the titles you love.
+                </p>
+                <div className={styles.compare}>
+                  <div className={`${styles.compareCol} ${styles.compareAi}`}>
+                    <span className={styles.compareTag}>✦ With your key</span>
+                    <p>AI reads your taste and hand-picks one title, with a reason in your words.</p>
+                  </div>
+                  <div className={styles.compareCol}>
+                    <span className={styles.compareTag}>Without</span>
+                    <p>A solid built-in engine pick — good, but not chosen <em>for you</em>.</p>
+                  </div>
+                </div>
+              </>
+            )}
 
             <ConnectAI variant="onboarding" onConnected={finish} onSkip={finish} />
           </motion.div>

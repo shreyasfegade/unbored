@@ -20,12 +20,13 @@ keep browsing from feeling repetitive and mislabelled:
 from __future__ import annotations
 
 import logging
+from datetime import date, timedelta
 from functools import lru_cache
 
 import numpy as np
 
 from app.models.media import MediaItem, MediaType
-from app.services.catalog import load_catalog, load_embeddings
+from app.services.catalog import catalog_metadata, load_catalog, load_embeddings
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,10 @@ TYPE_CAP = 0.55          # no media type may exceed this share of a mixed row
 ACCLAIM_MIN_VOTES = 400
 ACCLAIM_PRIOR = 3000     # votes of "average" a title is pulled toward
 FIT_FLOOR = 0.34         # a genre row whose members fit it weakly is dropped
+NEW_WINDOW_DAYS = 7      # "New This Week": titles that entered the catalog this recently
+NEW_MIN = 6              # fewer than this and the row isn't worth a shelf
+NEW_MAX_SHARE = 0.25     # more than this is a from-scratch build, not a week's additions
+NEW_QUALITY_FLOOR = 0.25 # quality percentile a new title needs to make the row
 
 # Genres that describe a format or a scrap of metadata rather than a thing to
 # browse for — they never carry a satisfying row.
@@ -188,6 +193,24 @@ def _best_genre(
     return (best_g, best_fit) if best_g else None
 
 
+def new_this_week(
+    catalog: list[MediaItem], built: str | None, quality_pct: dict[str, float]
+) -> list[MediaItem]:
+    """Titles added in the week before the catalog was built, best first.
+
+    Measured against the build date rather than today, so the pack is
+    reproducible and the row means "new in this week's refresh". Empty when the
+    build is a fresh start (everything is new) or too little arrived."""
+    if not built:
+        return []
+    cutoff = (date.fromisoformat(built[:10]) - timedelta(days=NEW_WINDOW_DAYS)).isoformat()
+    fresh = [m for m in catalog if m.added_at and m.added_at[:10] > cutoff]
+    if len(fresh) < NEW_MIN or len(fresh) > NEW_MAX_SHARE * len(catalog):
+        return []
+    fresh = [m for m in fresh if quality_pct.get(m.id, 0.0) >= NEW_QUALITY_FLOOR]
+    return sorted(fresh, key=lambda m: (quality_pct.get(m.id, 0.0) + m.popularity_norm), reverse=True)
+
+
 @lru_cache(maxsize=1)
 def build_shelves() -> list[dict]:
     """The ordered shelf catalog, built once. Each entry carries its members
@@ -233,11 +256,14 @@ def build_shelves() -> list[dict]:
 
     # Most-specific pool first so the narrow rows keep their defining titles;
     # trending is huge and can afford to claim last.
+    fresh = take(new_this_week(catalog, catalog_metadata().get("generated_at"), quality_pct), CURATED_SIZE)
     acclaimed = take(sorted(rated, key=lambda m: acclaim_pct.get(m.id, 0.0), reverse=True), CURATED_SIZE)
     recent = take([m for m in by_pop if (m.release_year or 0) >= 2023], CURATED_SIZE)
     trending = take(by_pop, CURATED_SIZE)
 
     add("trending", "Trending Now", trending)
+    if len(fresh) >= NEW_MIN:
+        add("new_this_week", "New This Week", fresh)
     add("top_rated", "Critically Acclaimed", acclaimed)
     add("new_releases", "New & Recent", recent)
 

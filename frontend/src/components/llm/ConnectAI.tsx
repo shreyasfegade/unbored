@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLlmStore, type LlmProvider } from "../../stores/llmStore";
 import { validateKey } from "../../api/llm";
+import { useAiTierStore } from "../../stores/aiTierStore";
 import styles from "./ConnectAI.module.css";
 
 interface ConnectAIProps {
@@ -20,6 +21,12 @@ export default function ConnectAI({ onConnected, onSkip, variant = "onboarding" 
   const savedProvider = useLlmStore((s) => s.provider);
   const setKey = useLlmStore((s) => s.setKey);
   const clear = useLlmStore((s) => s.clear);
+  const freeTier = useAiTierStore((s) => s.freeTier);
+  const freeLimit = useAiTierStore((s) => s.limit);
+  const loadTier = useAiTierStore((s) => s.load);
+  useEffect(() => {
+    void loadTier();
+  }, [loadTier]);
 
   const [provider, setProvider] = useState<LlmProvider>(savedProvider ?? "gemini");
   const [key, setKeyInput] = useState("");
@@ -111,9 +118,17 @@ export default function ConnectAI({ onConnected, onSkip, variant = "onboarding" 
         Kept in this browser and sent with each pick request over HTTPS — never stored on our servers.
       </p>
 
+      {freeTier && (
+        <p className={styles.hint}>
+          No key? You still get {freeLimit ?? "a few"} AI picks a day on a shared Gemini free tier.
+          Only titles from the catalog are sent, never anything that identifies you, but Google may
+          use free-tier requests to improve its models. Your own key lifts the limit.
+        </p>
+      )}
+
       {onSkip && (
         <button className={styles.skip} onClick={onSkip}>
-          Skip for now — use the built-in engine
+          {freeTier ? "Skip for now — use the free tier" : "Skip for now — use the built-in engine"}
         </button>
       )}
     </div>
