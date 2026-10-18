@@ -15,10 +15,10 @@
  * costs no quota. Any failure answers 200 with an `ai_status` that says what
  * happened, and the browser keeps the engine's own pick and reason.
  */
-import { CURATOR_SYSTEM, EXPAND_SYSTEM, curatorPrompt, expandPrompt, parseCurator, parseExpansion, type Curated } from "./prompts";
-import { deepseekModel, generate, geminiModel, type Outcome, type ProviderName } from "./providers";
-import { cacheGet, cachePut, clientIp, ipHash, sha256, storeConfigured, take, thisMinute, today, used } from "./store";
-import { TITLES } from "./titles.gen";
+import { CURATOR_SYSTEM, EXPAND_SYSTEM, curatorPrompt, expandPrompt, parseCurator, parseExpansion, type Curated } from "./prompts.js";
+import { deepseekModel, generate, geminiModel, type Outcome, type ProviderName } from "./providers.js";
+import { cacheGet, cachePut, clientIp, ipHash, sha256, storeConfigured, take, thisMinute, today, used } from "./store.js";
+import { TITLES } from "./titles.gen.js";
 
 const MOODS = new Set(["happy_energetic", "tired_low", "anxious", "want_to_cry", "mindblown_curious", "want_to_laugh", "thrilled"]);
 const SLOTS = new Set(["short", "medium", "long"]);
