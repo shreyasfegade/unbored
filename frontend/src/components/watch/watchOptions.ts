@@ -39,12 +39,10 @@ export function searchUrl(media: Pick<MediaItem, "title" | "release_year">): str
   return `https://www.google.com/search?q=${encodeURIComponent(`watch ${media.title} ${media.release_year ?? ""}`.trim())}`;
 }
 
-/** Where the main "Where to watch" button goes. */
+/** Where the main "Where to watch" button goes, or null when the panel already
+ *  carries the links (or says there's nowhere to watch). */
 export function primaryWatchUrl(media: Pick<MediaItem, "title" | "release_year" | "watch">): string | null {
-  const opts = watchOptions(media);
-  if (opts.kind === "providers" && opts.link) return opts.link;
-  if (opts.kind === "links") return opts.links[0].url;
-  return searchUrl(media);
+  return watchOptions(media).kind === "unchecked" ? searchUrl(media) : null;
 }
 
 export const logoUrl = (path: string | null) => (path ? `https://image.tmdb.org/t/p/w92${path}` : null);

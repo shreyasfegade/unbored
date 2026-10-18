@@ -9,6 +9,9 @@ import { AlternatePicks } from "./AlternatePicks";
 import { ActionButtons } from "./ActionButtons";
 import { WatchPanel } from "../watch/WatchPanel";
 import { primaryWatchUrl } from "../watch/watchOptions";
+import { Trailer } from "../trailer/Trailer";
+import { WhyNot } from "../whynot/WhyNot";
+import { useRecommendationStore } from "../../stores/recommendationStore";
 import styles from "./InfoCascade.module.css";
 
 interface InfoCascadeProps {
@@ -41,6 +44,7 @@ export function InfoCascade({
   onStartOver,
 }: InfoCascadeProps) {
   const watchUrl = primaryWatchUrl(primary.media);
+  const request = useRecommendationStore((s) => s.request);
 
   return (
     <motion.div
@@ -190,7 +194,18 @@ export function InfoCascade({
           watchUrl={watchUrl}
           shareId={primary.media.id}
           media={primary.media}
+          reason={rationale}
         />
+      </motion.div>
+
+      {/* Exploring, after deciding: the trailer and "why not X?". */}
+      <motion.div
+        className={styles.extras}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        transition={{ duration: 0.3 }}
+      >
+        <Trailer key={`t-${primary.media.id}`} media={primary.media} />
+        {request && <WhyNot key={primary.media.id} pick={primary} request={request} pickedByAi={pickedBy === "ai"} />}
       </motion.div>
     </motion.div>
   );

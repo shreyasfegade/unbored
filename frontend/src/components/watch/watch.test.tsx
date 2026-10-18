@@ -28,9 +28,9 @@ describe("watchOptions", () => {
     expect(watchOptions({ watch: { IN: { flatrate: [netflix] }, any } }).kind).toBe("providers");
   });
 
-  it("points the main button at the best place it knows", () => {
-    expect(primaryWatchUrl({ ...base, watch: { IN: { link: LINK, flatrate: [netflix] } } })).toBe(LINK);
-    expect(primaryWatchUrl({ ...base, watch: { any: { links: [{ name: "X", url: "https://x.example" }] } } })).toBe("https://x.example");
+  it("keeps the web-search button only when the panel has nothing to show", () => {
+    expect(primaryWatchUrl({ ...base, watch: { IN: { link: LINK, flatrate: [netflix] } } })).toBeNull();
+    expect(primaryWatchUrl({ ...base, watch: {} })).toBeNull();
     expect(primaryWatchUrl(base)).toContain("google.com/search?q=watch%20Dune%202021");
   });
 });

@@ -71,12 +71,10 @@ export function useRecommendation() {
     ui.setRevealPhase("scanning");
 
     try {
-      const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(rec.excludedIds), ...base },
-        controller.signal,
-      );
+      const body = { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(rec.excludedIds), ...base };
+      const res: { data: RecommendationResponse } = await getRecommendation(body, controller.signal);
       if (controller.signal.aborted) return;
-      useRecommendationStore.getState().setResult(res.data);
+      useRecommendationStore.getState().setResult(res.data, body);
     } catch (error) {
       if (isCanceled(error)) return;
       useRecommendationStore.getState().setError(describeApiError(error));
@@ -110,13 +108,11 @@ export function useRecommendation() {
     const nextExcluded = primary ? [...excludedIds, primary.media.id] : excludedIds;
 
     try {
-      const res: { data: RecommendationResponse } = await getRecommendation(
-        { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(nextExcluded), ...base },
-        controller.signal,
-      );
+      const body = { favourite_ids: buildFavourites(favouriteIds), excluded_ids: buildExcluded(nextExcluded), ...base };
+      const res: { data: RecommendationResponse } = await getRecommendation(body, controller.signal);
       if (controller.signal.aborted) return;
       if (primary) useRecommendationStore.getState().addExcludedId(primary.media.id);
-      useRecommendationStore.getState().setResult(res.data);
+      useRecommendationStore.getState().setResult(res.data, body);
     } catch (error) {
       if (isCanceled(error)) return;
       useRecommendationStore.getState().setError(describeApiError(error));

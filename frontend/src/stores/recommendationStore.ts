@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AIStatus, AITier, ScoredMediaItem, RecommendationResponse } from '../types/recommendation';
+import type { AIStatus, AITier, ScoredMediaItem, RecommendationRequest, RecommendationResponse } from '../types/recommendation';
 import type { ConfidenceLevel } from '../types/mood';
 
 type Status = 'idle' | 'loading' | 'revealed' | 'regenerating' | 'error';
@@ -24,10 +24,13 @@ interface RecommendationState {
   excludedIds: string[];
   error: string | null;
   swapped: boolean;
+  /** The request behind the current result, so the reveal can ask the engine
+   *  how another title would have scored under it. */
+  request: RecommendationRequest | null;
 
   setLoading: () => void;
   setRegenerating: () => void;
-  setResult: (res: RecommendationResponse) => void;
+  setResult: (res: RecommendationResponse, request?: RecommendationRequest) => void;
   setError: (msg: string) => void;
   addExcludedId: (id: string) => void;
   swapAlternate: (index: number) => void;
@@ -49,12 +52,14 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
   excludedIds: [],
   error: null,
   swapped: false,
+  request: null,
 
   setLoading: () => set({ status: 'loading', error: null }),
   setRegenerating: () => set({ status: 'regenerating', error: null }),
-  setResult: (res) =>
+  setResult: (res, request) =>
     set({
       status: 'revealed',
+      request: request ?? null,
       primary: res.primary,
       alternates: res.alternates,
       rationale: res.rationale,
@@ -107,5 +112,6 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
       excludedIds: [],
       error: null,
       swapped: false,
+      request: null,
     }),
 }));

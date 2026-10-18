@@ -32,7 +32,7 @@ export function devApi(): Plugin {
       Object.assign(process.env, loadEnv(server.config.mode, server.config.root, ''));
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const path = (req.url ?? '').split('?')[0];
-        const m = /^\/api\/(ai\/[a-z]+)$/.exec(path);
+        const m = /^\/api\/(ai\/[a-z]+|poster)$/.exec(path);
         if (!m) return next();
         try {
           const mod = (await server.ssrLoadModule(`/api/${m[1]}.ts`)) as Record<string, Handler>;
