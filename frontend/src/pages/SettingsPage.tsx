@@ -240,6 +240,15 @@ export default function SettingsPage() {
         <input ref={fileRef} type="file" accept="application/json,.json" onChange={handleImport} hidden />
       </motion.div>
 
+      {/* ── Import ratings ───────────────────────────────────────────── */}
+      <motion.div className={`${styles.section} ${styles.wide}`} {...section(4)}>
+        <span className={styles.sectionLabel}>Import ratings</span>
+        <p className={styles.hint}>
+          Turn a Letterboxd or IMDb ratings export into favourites and seen titles. Read on this device only.
+        </p>
+        <Link to="/import" className={styles.linkBtn}>Import from Letterboxd or IMDb</Link>
+      </motion.div>
+
       {/* ── Account ────────────────────────────────────────────────── */}
       {accountConfigured && (
         <motion.div className={`${styles.section} ${styles.wide}`} {...section(5)}>

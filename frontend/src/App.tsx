@@ -23,6 +23,7 @@ const TogetherPage = lazyRetry(() => import('./pages/TogetherPage'));
 const TasteProfilePage = lazyRetry(() => import('./pages/TasteProfilePage'));
 const AccountPage = lazyRetry(() => import('./pages/AccountPage'));
 const NotFoundPage = lazyRetry(() => import('./pages/NotFoundPage'));
+const ImportPage = lazyRetry(() => import('./pages/ImportPage'));
 
 /**
  * Pages ease in on mount and are never animated out — enter-only, always
@@ -74,6 +75,7 @@ function AppRoutes() {
       <Route path="/browse" element={<Page label="browse"><BrowsePage /></Page>} />
       <Route path="/enrich" element={<Page label="enrich"><EnrichPage /></Page>} />
       <Route path="/settings" element={<Page label="settings"><SettingsPage /></Page>} />
+      <Route path="/import" element={<Page label="import"><ImportPage /></Page>} />
       <Route path="/taste" element={<Page label="taste"><TasteProfilePage /></Page>} />
       <Route path="/account" element={<Page label="account"><AccountPage /></Page>} />
       {/* Group mode: a live room on Supabase Realtime; no account needed. */}
