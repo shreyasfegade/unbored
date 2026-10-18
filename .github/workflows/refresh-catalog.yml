@@ -1,7 +1,9 @@
 name: Refresh catalog
 
-# Rebuilds the self-owned catalog + embeddings on a schedule and opens a PR with
-# the result, so the dataset the recommender serves never silently goes stale.
+# Rebuilds the catalog, its embeddings and the browser data pack on a schedule
+# and opens a PR with the result, so what the recommender serves never silently
+# goes stale. The browser engine is checked against the Python one on the new
+# data before the PR opens.
 # Needs a TMDB_API_KEY repo secret. Runs with plain httpx (no local DoH patch).
 
 on:
@@ -16,10 +18,23 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Check the TMDB key is set
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          if [ -z "$TMDB_API_KEY" ]; then
+            echo "::error::The TMDB_API_KEY repository secret is empty. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
       - name: Install deps (+ embeddings)
         run: |
           pip install -r requirements-dev.txt
@@ -31,16 +46,31 @@ jobs:
       - name: Rebuild embeddings
         run: python scripts/build_embeddings.py
       - name: Sanity-check the new catalog
-        run: python -m pytest tests/test_catalog.py tests/test_engine_quality.py -q
+        run: python -m pytest tests/test_catalog.py tests/test_engine_quality.py tests/test_browse.py -q
+      - name: Build the browser data pack (fails over the size budget)
+        run: python scripts/build_web_pack.py
+      - name: Quantization loss stays in bounds
+        run: python -m pytest tests/test_web_pack.py -q
+      - name: Export parity fixtures
+        run: python scripts/export_parity_fixtures.py
+      - name: Browser engine matches the Python engine
+        working-directory: frontend
+        run: |
+          npm ci
+          npx vitest run src/engine
       - name: Open PR
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: "chore: refresh catalog + embeddings"
+          commit-message: "chore: refresh catalog, embeddings and data pack"
           branch: chore/refresh-catalog
           title: "chore: weekly catalog refresh"
           body: |
-            Automated weekly rebuild of `catalog.json` + `catalog_embeddings.json`.
-            The engine-quality eval harness ran against the new data before this PR opened.
+            Automated weekly rebuild of the catalog, its embeddings and the browser data pack.
+            Before this PR opened, the engine-quality checks, the quantization-loss check and the
+            browser/Python parity suite all ran against the new data.
           add-paths: |
             backend/app/data/catalog.json
             backend/app/data/catalog_embeddings.json
+            frontend/public/data
+            frontend/src/engine/__fixtures__
+            frontend/api/_lib/titles.gen.ts

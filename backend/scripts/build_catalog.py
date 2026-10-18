@@ -97,10 +97,16 @@ OUT_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "catalog.js
 
 # How much to pull. TMDB pages are 20 items each. Weighted toward movies/TV so
 # a typical viewer's "surprise me" isn't dominated by anime.
-POPULAR_MOVIE_PAGES = 70
-TOP_RATED_MOVIE_PAGES = 50
-POPULAR_TV_PAGES = 55
-ANILIST_PAGES = 4  # 50 per page, trending + top-rated
+#
+# The ceiling is the browser data pack, not TMDB: build_web_pack.py fails over
+# 3 MB gzip. Each title costs about 0.4 KB of card text plus 0.3 KB of int8
+# embedding at 384 dims, so the pack holds roughly 4,000 titles. Cutting to 128
+# dims (--dims) only stretches that to about 6,000, since card text dominates.
+# These pages aim at ~3,500 after the quality floors and season collapsing.
+POPULAR_MOVIE_PAGES = 100
+TOP_RATED_MOVIE_PAGES = 70
+POPULAR_TV_PAGES = 80
+ANILIST_PAGES = 6  # 50 per page, trending + top-rated
 
 # Quality floors so the catalog stays strong.
 MIN_VOTE_MOVIE_TV = 6.3
@@ -266,6 +272,36 @@ def _previous_anime() -> list[MediaItem]:
     return out
 
 
+def _previous_added_at() -> dict[str, str]:
+    """When each title in the catalog on disk first entered it. Titles from
+    before added_at existed count from that catalog's build date."""
+    if not OUT_PATH.exists():
+        return {}
+    try:
+        raw = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    fallback = (raw.get("generated_at") or "")[:10] or None
+    out: dict[str, str] = {}
+    for entry in raw.get("items", []):
+        when = entry.get("added_at") or fallback
+        if entry.get("id") and when:
+            out[entry["id"]] = when
+    return out
+
+
+def stamp_added_at(items: list[MediaItem], previous: dict[str, str], today: str) -> int:
+    """Carry each title's first-seen date forward; new titles get today. Returns
+    how many are new."""
+    fresh = 0
+    for item in items:
+        item.added_at = previous.get(item.id)
+        if not item.added_at:
+            item.added_at = today
+            fresh += 1
+    return fresh
+
+
 def _quality_ok(item: MediaItem) -> bool:
     is_anime = item.media_type == MediaType.ANIME or item.source == MediaSource.ANILIST
     floor = MIN_VOTE_ANIME if is_anime else MIN_VOTE_MOVIE_TV
@@ -341,9 +377,13 @@ async def main() -> int:
     _apply_popularity_norm(catalog)
     catalog.sort(key=lambda m: m.popularity_norm, reverse=True)
 
+    now = datetime.now(timezone.utc)
+    fresh = stamp_added_at(catalog, _previous_added_at(), now.date().isoformat())
+    print(f"  {fresh} titles new since the last build")
+
     payload = {
         "version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": now.isoformat(),
         "attribution": "Movie & TV data from TMDB (themoviedb.org); anime from AniList (anilist.co).",
         "count": len(catalog),
         "items": [m.model_dump(mode="json") for m in catalog],

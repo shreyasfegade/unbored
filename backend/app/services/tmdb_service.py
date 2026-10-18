@@ -25,6 +25,7 @@ from app.models.tmdb import (
     TMDBTVListResponse,
     TMDBCredits,
 )
+from app.services.enrichment import tmdb_imdb_id, tmdb_trailer, tmdb_watch
 from app.services.tmdb_constants import (
     BACKDROP_SIZE_DISPLAY,
     CACHE_TTL_DETAIL,
@@ -45,6 +46,18 @@ from app.services.tmdb_constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Detail calls also bring back where-to-watch, trailers and the IMDb id, so the
+# catalog builder gets them without a second request per title.
+DETAIL_APPEND = "keywords,credits,external_ids,watch/providers,videos"
+
+
+def _enrich(data: dict) -> dict:
+    return {
+        "imdb_id": tmdb_imdb_id(data),
+        "watch": tmdb_watch(data),
+        "trailer": tmdb_trailer(data),
+    }
 
 
 class TMDBError(Exception):
@@ -465,7 +478,7 @@ class TMDBService:
 
         try:
             data = await self._request(
-                "GET", f"/movie/{movie_id}", {"append_to_response": "keywords,credits"}
+                "GET", f"/movie/{movie_id}", {"append_to_response": DETAIL_APPEND}
             )
         except TMDBNotFoundError:
             logger.info("Movie %d not found", movie_id)
@@ -518,6 +531,7 @@ class TMDBService:
             release_date=detail.release_date or None,
             year=self._extract_year(detail.release_date),
             source_api="tmdb",
+            **_enrich(data),
         )
 
         if not item.keywords:
@@ -534,7 +548,7 @@ class TMDBService:
 
         try:
             data = await self._request(
-                "GET", f"/tv/{tv_id}", {"append_to_response": "keywords,credits"}
+                "GET", f"/tv/{tv_id}", {"append_to_response": DETAIL_APPEND}
             )
         except TMDBNotFoundError:
             logger.info("TV show %d not found", tv_id)
@@ -585,6 +599,7 @@ class TMDBService:
             year=self._extract_year(detail.first_air_date),
             episode_count=detail.number_of_episodes,
             source_api="tmdb",
+            **_enrich(data),
         )
 
         if not item.keywords:
