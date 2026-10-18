@@ -1,13 +1,15 @@
-import api from './client';
-import type { MediaItem } from '../types/media';
+import { notFound, toMedia, withCatalog } from './catalog';
 
-// Fetch one catalog item by composite id — powers shareable /pick/:id links,
-// which render for anyone with no local state.
+// One catalog item by composite id — powers shareable /pick/:id links.
 export const getCatalogItem = (id: string) =>
-  api.get<MediaItem>(`/api/media/item/${encodeURIComponent(id)}`);
-
-// Resolve many ids in one request (order preserved, unknown ids skipped).
-export const getCatalogItems = (ids: string[]) =>
-  api.get<{ items: MediaItem[] }>(`/api/media/batch`, {
-    params: { ids: ids.join(",") },
+  withCatalog(({ byId }) => {
+    const card = byId.get(id);
+    if (!card) throw notFound(`Title ${id}`);
+    return toMedia(card);
   });
+
+// Many ids at once (order preserved, unknown ids skipped).
+export const getCatalogItems = (ids: string[]) =>
+  withCatalog(({ byId }) => ({
+    items: ids.map((id) => byId.get(id)).filter((c) => c !== undefined).map(toMedia),
+  }));

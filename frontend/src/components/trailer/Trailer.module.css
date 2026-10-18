@@ -1,0 +1,66 @@
+.poster,
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto var(--space-6);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.poster {
+  padding: 0;
+  cursor: pointer;
+}
+
+.poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.62);
+  transition: filter var(--transition-base);
+}
+
+.poster:hover img,
+.poster:focus-visible img {
+  filter: brightness(0.8);
+}
+
+.play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  background: rgba(12, 11, 9, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.note {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-2);
+  font-size: 0.6875rem;
+  color: rgba(246, 243, 236, 0.7);
+}
+
+.frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

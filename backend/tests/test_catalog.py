@@ -51,3 +51,27 @@ async def test_pool_exclusions():
     remaining = pool.get_candidates(exclude_ids=[first])
     assert all(c.id != first for c in remaining)
     assert len(remaining) == len(pool.candidates) - 1
+
+
+def test_added_at_carries_forward_and_stamps_new_titles():
+    import importlib.util
+    from pathlib import Path
+
+    from app.models.media import MediaItem, MediaSource, MediaType
+
+    spec = importlib.util.spec_from_file_location(
+        "build_catalog", Path(__file__).resolve().parent.parent / "scripts" / "build_catalog.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    def item(i):
+        return MediaItem(id=i, source=MediaSource.TMDB_MOVIE, title=i, original_title=i, media_type=MediaType.MOVIE)
+
+    items = [item("old"), item("new")]
+    assert mod.stamp_added_at(items, {"old": "2026-08-23"}, "2026-10-18") == 1
+    assert [m.added_at for m in items] == ["2026-08-23", "2026-10-18"]
+
+
+def test_every_title_has_an_added_at():
+    assert all(m.added_at for m in load_catalog())

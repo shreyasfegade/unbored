@@ -6,6 +6,7 @@ import { useToastStore } from "../../stores/toastStore";
 import { useLibraryStore } from "../../stores/libraryStore";
 import type { MediaItem } from "../../types/media";
 import { pressableFlat } from "../../config/motion";
+import { downloadCard, sharePick } from "../../share/shareCard";
 import styles from "./ActionButtons.module.css";
 
 interface ActionButtonsProps {
@@ -14,9 +15,10 @@ interface ActionButtonsProps {
   watchUrl: string | null;
   shareId: string | null;
   media: MediaItem;
+  reason?: string | null;
 }
 
-export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, media }: ActionButtonsProps) {
+export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, media, reason = null }: ActionButtonsProps) {
   const prefersReduced = useReducedMotion();
   const recStatus = useRecommendationStore((s) => s.status);
   const isRegenerating = recStatus === "regenerating";
@@ -54,19 +56,24 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
     onRegenerate();
   };
 
+  const [sharing, setSharing] = useState(false);
+  const shareInput = () => ({ media, reason, url: `${window.location.origin}/pick/${shareId}` });
+
   const handleShare = async () => {
-    if (!shareId) return;
-    const url = `${window.location.origin}/pick/${shareId}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ url, title: "My Unbored pick" });
-      } else {
-        await navigator.clipboard.writeText(url);
-        addToast("Link copied — share your pick.");
-      }
-    } catch {
-      /* user cancelled the share sheet — nothing to do */
-    }
+    if (!shareId || sharing) return;
+    setSharing(true);
+    const outcome = await sharePick(shareInput());
+    setSharing(false);
+    if (outcome === "copied") addToast("Link copied — share your pick.");
+    else if (outcome === "failed") addToast("Couldn't share from this browser. Try saving the image instead.");
+  };
+
+  const handleSaveImage = async () => {
+    if (!shareId || sharing) return;
+    setSharing(true);
+    const ok = await downloadCard(shareInput());
+    setSharing(false);
+    addToast(ok ? "Saved the card to your downloads." : "Couldn't make the image in this browser.");
   };
 
   const row = {
@@ -179,7 +186,12 @@ export function ActionButtons({ onRegenerate, onStartOver, watchUrl, shareId, me
           </Link>
           <div className={styles.moreRow}>
             {shareId && (
-              <button className={styles.link} onClick={handleShare}>Share pick</button>
+              <>
+                <button className={styles.link} onClick={handleShare} disabled={sharing}>
+                  {sharing ? "Preparing…" : "Share pick"}
+                </button>
+                <button className={styles.link} onClick={handleSaveImage} disabled={sharing}>Save as image</button>
+              </>
             )}
             <Link to="/together" className={styles.link}>Watch together</Link>
             <Link to="/taste" className={styles.link}>See your taste</Link>

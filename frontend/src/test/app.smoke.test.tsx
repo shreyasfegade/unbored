@@ -8,64 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
-const pickResponse = {
-  primary: {
-    media: {
-      id: "tmdb_475557",
-      source: "tmdb_movie",
-      title: "Joker",
-      original_title: "Joker",
-      overview: "A failed stand-up comedian turns to crime and chaos.",
-      poster_path: "https://image.tmdb.org/t/p/w500/x.jpg",
-      backdrop_path: null,
-      genres: ["crime", "thriller"],
-      keywords: [],
-      vote_average: 8.1,
-      vote_count: 27813,
-      runtime_minutes: 122,
-      release_year: 2019,
-      media_type: "movie",
-      status: "Released",
-      popularity: 15,
-      cast: [],
-      director: "Todd Phillips",
-      studio: null,
-      release_date: "2019-10-01",
-      year: 2019,
-      episode_count: null,
-      source_api: "tmdb",
-    },
-    score: 0.82,
-    score_breakdown: { relevance: 0.87, mood: 0.73, runtime: 0.99, quality: 0.69, recency: 0.9 },
-    rationale: "Right in your wheelhouse.",
-  },
-  alternates: [],
-  rationale: "Right in your wheelhouse.",
-  picked_by: "engine",
-  provider: null,
-  ai_status: "off",
-  media_type_applied: true,
-  confidence: "high",
-  request_id: "test",
-};
-
-// One fake transport for every call the app makes, routed by URL.
-vi.mock("../api/client", async () => {
-  const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
-  const get = vi.fn(async (url: string) => {
-    if (url.includes("/api/health")) return { data: { status: "ok" } };
-    if (url.includes("/api/browse/shelves")) return { data: { shelves: [] } };
-    if (url.includes("/api/browse/")) return { data: { items: [], total: 0, next_offset: null } };
-    if (url.includes("/api/search")) return { data: { results: [], items: [] } };
-    return { data: {} };
-  });
-  const post = vi.fn(async (url: string) => {
-    if (url.includes("/api/recommend")) return { data: pickResponse };
-    return { data: {} };
-  });
-  return { ...actual, default: { get, post } };
-});
+import { servePack } from "./servePack";
 
 async function renderApp() {
   localStorage.setItem(
@@ -78,6 +21,7 @@ async function renderApp() {
 
 beforeEach(() => {
   vi.resetModules();
+  servePack();
 });
 
 describe("the pick flow", () => {
@@ -93,8 +37,12 @@ describe("the pick flow", () => {
     await user.click(await screen.findByRole("button", { name: /find my pick/i }, wait));
 
     // The reveal is staged over a couple of seconds; what matters is that it
-    // arrives at all, which is exactly what regressed.
-    await waitFor(() => expect(screen.getByText("Joker")).toBeInTheDocument(), { timeout: 10000 });
+    // arrives at all, which is exactly what regressed. The engine is the real
+    // one, running on the real pack, so read the pick it chose.
+    const { useRecommendationStore } = await import("../stores/recommendationStore");
+    await waitFor(() => expect(useRecommendationStore.getState().primary).not.toBeNull(), { timeout: 10000 });
+    const title = useRecommendationStore.getState().primary!.media.title;
+    await waitFor(() => expect(screen.getAllByText(title).length).toBeGreaterThan(0), { timeout: 10000 });
     expect(screen.queryByText(/How are you feeling/i)).not.toBeInTheDocument();
   }, 20000);
 });

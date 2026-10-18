@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { ScoredMediaItem, RecommendationResponse } from '../types/recommendation';
+import type { AIStatus, AITier, ScoredMediaItem, RecommendationRequest, RecommendationResponse } from '../types/recommendation';
 import type { ConfidenceLevel } from '../types/mood';
 
 type Status = 'idle' | 'loading' | 'revealed' | 'regenerating' | 'error';
-export type AIStatus = 'off' | 'used' | 'timeout' | 'error';
+export type { AIStatus };
 
 // Keep the exclusion list bounded so it can't grow without limit across a long
 // session (and it's sent in every request body).
@@ -17,16 +17,20 @@ interface RecommendationState {
   pickedBy: 'ai' | 'engine' | null;
   provider: string | null;
   aiStatus: AIStatus;
+  aiTier: AITier | null;
   mediaTypeApplied: boolean;
   confidence: ConfidenceLevel | null;
   requestId: string | null;
   excludedIds: string[];
   error: string | null;
   swapped: boolean;
+  /** The request behind the current result, so the reveal can ask the engine
+   *  how another title would have scored under it. */
+  request: RecommendationRequest | null;
 
   setLoading: () => void;
   setRegenerating: () => void;
-  setResult: (res: RecommendationResponse) => void;
+  setResult: (res: RecommendationResponse, request?: RecommendationRequest) => void;
   setError: (msg: string) => void;
   addExcludedId: (id: string) => void;
   swapAlternate: (index: number) => void;
@@ -41,24 +45,28 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
   pickedBy: null,
   provider: null,
   aiStatus: 'off',
+  aiTier: null,
   mediaTypeApplied: true,
   confidence: null,
   requestId: null,
   excludedIds: [],
   error: null,
   swapped: false,
+  request: null,
 
   setLoading: () => set({ status: 'loading', error: null }),
   setRegenerating: () => set({ status: 'regenerating', error: null }),
-  setResult: (res) =>
+  setResult: (res, request) =>
     set({
       status: 'revealed',
+      request: request ?? null,
       primary: res.primary,
       alternates: res.alternates,
       rationale: res.rationale,
       pickedBy: res.picked_by,
       provider: res.provider,
       aiStatus: res.ai_status ?? (res.picked_by === 'ai' ? 'used' : 'off'),
+      aiTier: res.ai_tier ?? null,
       mediaTypeApplied: res.media_type_applied ?? true,
       confidence: res.confidence,
       requestId: res.request_id,
@@ -97,11 +105,13 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
       pickedBy: null,
       provider: null,
       aiStatus: 'off',
+      aiTier: null,
       mediaTypeApplied: true,
       confidence: null,
       requestId: null,
       excludedIds: [],
       error: null,
       swapped: false,
+      request: null,
     }),
 }));

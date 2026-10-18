@@ -1,11 +1,31 @@
 export type MediaSource = "tmdb_movie" | "tmdb_tv" | "anilist";
 export type MediaType = "movie" | "tv" | "anime";
 
+/** One provider in a region (TMDB watch providers, data by JustWatch). */
+export interface WatchProvider {
+  id: number;
+  name: string;
+  /** TMDB image path, e.g. "/abc.jpg". */
+  logo: string | null;
+}
+
+/** Where a title is available in one region. */
+export interface WatchRegion {
+  /** TMDB's watch page for the region, which links out to each provider. */
+  link?: string | null;
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+  /** AniList streaming links (region "any"): AniList doesn't say where they work. */
+  links?: Array<{ name: string; url: string }>;
+}
+
 export interface MediaItem {
   id: string;
   source: MediaSource;
-  tmdb_id?: number;
-  anilist_id?: number;
+  tmdb_id?: number | null;
+  anilist_id?: number | null;
+  imdb_id?: string | null;
   title: string;
   original_title: string;
   overview: string;
@@ -18,15 +38,23 @@ export interface MediaItem {
   runtime_minutes: number | null;
   release_year: number | null;
   media_type: MediaType;
-  status: string;
-  popularity: number;
+  popularity_norm?: number;
+  franchise?: string | null;
   cast: string[];
   director: string | null;
   studio: string | null;
-  release_date: string | null;
-  year: number | null;
   episode_count: number | null;
-  source_api: string;
+  /** ISO date the title first entered the catalog. */
+  added_at?: string | null;
+  watch?: Record<string, WatchRegion> | null;
+  trailer?: { site: string; key: string } | null;
+  // Legacy API fields. The browser pack folds `year` into release_year and
+  // drops the rest; kept optional so older payloads still type-check.
+  status?: string;
+  popularity?: number;
+  release_date?: string | null;
+  year?: number | null;
+  source_api?: string;
 }
 
 export interface SearchResults {

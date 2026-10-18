@@ -5,16 +5,16 @@ No infinite scroll, no twenty-minute "what should we watch" negotiation.
 
 ![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-146_passing-4ade80?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-721_passing-4ade80?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ### ▶ [Live demo → unbored-five.vercel.app](https://unbored-five.vercel.app)
 
-The free-tier backend may take ~50s to wake on the first visit. Bring a free Gemini or DeepSeek key
-in the app for the full AI experience — everything else works without one.
+Opens instantly: the recommender runs in your browser, so there's no server to wake up. AI picks
+work without a key on a shared free tier (a few a day); bring your own Gemini or DeepSeek key for
+unlimited.
 
 ![Unbored](screenshots/hero.png)
 
@@ -32,22 +32,23 @@ explained by an LLM grounded in the exact things you said you love.
 ## How it works
 
 **1. Tell it what you love.** A short, browse-first onboarding — search or scroll and tap a handful
-of favourites across movies, TV, and anime.
+of favourites across movies, TV, and anime. Or import your Letterboxd or IMDb ratings.
 
-**2. A real engine narrows the field.** Every title is both a **dense semantic embedding** (it
-understands *meaning* — "a film about grief" matches "a story of loss" with zero shared words) **and**
-a BM25 sparse vector (it nails exact title / keyword / cast matches). Your taste is the centroid of,
-and nearest neighbours among, the things you picked. The engine ranks the whole catalog by this
-hybrid similarity, then re-ranks the top matches by your mood and the time you have. It's genuinely
-good *on its own* — no LLM required.
+**2. A real engine narrows the field, on your device.** Every title is both a **dense semantic
+embedding** (it understands *meaning* — "a film about grief" matches "a story of loss" with zero
+shared words) **and** a BM25 sparse vector (it nails exact title / keyword / cast matches). Your taste
+is the centroid of, and nearest neighbours among, the things you picked. The engine ranks the whole
+catalog by this hybrid similarity, then re-ranks the top matches by your mood and the time you have.
+It runs in a Web Worker in your browser and is genuinely good *on its own* — no LLM required.
 
-**3. AI makes the final call.** Connect your own Gemini or DeepSeek key and the LLM picks the single
-best option from the engine's shortlist and explains it in one sentence, tied to what you love.
+**3. AI makes the final call.** The LLM picks the single best option from the engine's shortlist and
+explains it in one sentence, tied to what you love. If it's slow or out of free picks, the engine's
+pick stands and the app says so.
 
 ```text
- You pick favourites ─▶ Content engine ─▶ shortlist ─▶ Your LLM ─▶ one pick
- (movies/TV/anime)      BM25 · kNN+centroid           (Gemini /    + a reason
-                        tone · runtime · MMR           DeepSeek)    in your words
+ You pick favourites ─▶ Engine (in your browser) ─▶ shortlist ─▶ AI ─────────▶ one pick
+ (or import ratings)    BM25 · kNN+centroid                     (free tier     + a reason
+                        tone · runtime · MMR                     or your key)   in your words
 ```
 
 <p align="center">
@@ -59,33 +60,33 @@ best option from the engine's shortlist and explains it in one sentence, tied to
 
 ## What's inside
 
-Unbored grew from "one pick" into a small, coherent product. Everything below is built by hand — no
-UI kit, no component library, no chart library.
+Everything below is built by hand — no UI kit, no component library, no chart library.
 
-- **Pick** — the core flow: mood + time in, one confident pick out, with a cinematic reveal, alternates,
-  and where-to-watch.
-- **Browse** — a Netflix-style shelf view of the whole catalog. Genre rows are ranked by how well a
-  title *fits* the genre (not by raw popularity), every title appears in exactly one row, and the
-  rails scroll with eased, arrow-driven paging.
-- **Swipe** — a Tinder-style deck to build taste fast: fling right to keep, left to pass, with
-  spring physics, velocity flick, and undo.
-- **Watch Together** — start a room, share a four-character code, and everyone joins bringing the
-  taste their browser already holds. The group gets **one blended pick** that suits all of them.
+- **Pick** — mood + time in, one confident pick out, with a cinematic reveal and alternates. The
+  reveal shows **where to watch it in India** (subscription, rent and buy, from JustWatch via TMDB),
+  a **click-to-load trailer**, and a **share card** you can send as an image.
+- **Why not X?** — name any title you expected instead and see how it scored against your pick,
+  signal by signal, under the same request.
+- **Browse** — shelf rows over the whole catalog, including **New This Week** after each weekly
+  refresh. Genre rows rank by how well a title *fits* the genre, and every title appears in one row.
+- **Swipe** — a card deck to build taste fast: fling right to keep, left to pass, with undo.
+- **Watch Together** — start a room, share a four-character code, and everyone joins with the taste
+  their browser already holds. The group gets **one blended pick**, or runs **veto rounds**: five
+  titles, everyone strikes one per round, the best survivor wins. Rooms survive refreshes and
+  redeploys.
+- **Import ratings** — Letterboxd or IMDb CSV, read in the browser and never uploaded. A preview
+  shows what matched before anything is saved.
 - **Fine-tune** — four sliders (familiar ↔ adventurous, crowd-pleasers ↔ hidden gems,
-  anything ↔ acclaimed, timeless ↔ fresh) that nudge what a pick optimises for. Zero on every axis is
-  an exact no-op, so the defaults are untouched until you move something.
-- **Library** — a watchlist, plus *seen* and *not for me* so the engine never suggests the same thing
-  twice.
-- **Your taste** — a dashboard of what the engine sees: the genres you gravitate to, your tone
-  profile, eras, and the names that keep coming up.
-- **Accounts (optional)** — sign in and your taste, library and settings sync across devices. Fully
-  guest-first: nothing is gated behind an account.
-- **Settings** — defaults for a new pick, poster density, reduced-motion, library controls, and JSON
-  profile export/import.
-- **Installable PWA**, a cohesive motion system, and a dark, hand-built visual identity throughout.
+  anything ↔ acclaimed, timeless ↔ fresh). Zero on every axis is an exact no-op.
+- **Library** — a watchlist, plus *seen* and *not for me* so nothing is suggested twice.
+- **Your taste** — what the engine sees: genres, tone profile, eras, recurring names.
+- **Accounts (optional)** — sign in to sync taste, library and settings across devices. Nothing is
+  gated behind an account.
+- **Picks work offline** after your first visit (installable PWA): the catalog and engine are cached
+  on the device.
 
 <p align="center">
-  <img src="screenshots/browse.png" width="49%" alt="Browse — Netflix-style genre shelves" />
+  <img src="screenshots/browse.png" width="49%" alt="Browse — genre shelves" />
   <img src="screenshots/swipe.png" width="49%" alt="Swipe — a card deck to build taste fast" />
 </p>
 <p align="center">
@@ -95,153 +96,149 @@ UI kit, no component library, no chart library.
 
 ---
 
-## The engine (no LLM needed)
+## The engine
 
-The deterministic engine is the centrepiece. Embeddings are precomputed offline, so the **runtime is
-pure-Python with no ML dependencies** — it just loads vectors and does dot products:
+The engine is the centrepiece. It's written in Python as the reference implementation and ported
+line for line to TypeScript, which is what runs in the browser.
 
-- **Hybrid dense + sparse retrieval.** A dense semantic embedding (`bge-small-en-v1.5`, precomputed at
-  build time) captures *meaning*; a **BM25-weighted** sparse vector over title, genres, keywords,
-  overview, and people captures exact matches. The two are blended, dense-led — the same dense+sparse
-  hybrid that powers modern search.
-- **Hybrid kNN + centroid relevance** with a similarity-weighted neighbour mean, so loving *both*
-  horror and rom-coms doesn't average into mush.
+- **Hybrid dense + sparse retrieval.** A dense embedding (`bge-small-en-v1.5`, 384 dims, computed at
+  build time) captures meaning; a BM25-weighted sparse vector over title, genres, keywords, overview
+  and people captures exact matches. The browser builds the BM25 index from the catalog text when it
+  loads, so it costs no download.
+- **kNN + centroid relevance** with a similarity-weighted neighbour mean, so loving *both* horror and
+  rom-coms doesn't average into mush.
 - **Tone model** — five interpretable axes (energy, darkness, warmth, intensity, humor) give a smooth
-  "mood fit" instead of crude genre on/off toggles.
-- **Retrieve-then-rerank** — narrow to your strongest taste matches, then let mood and runtime choose
-  within them, so the mood you pick actually changes the result.
+  mood fit instead of genre on/off toggles.
+- **Retrieve-then-rerank** — the strongest 120 taste matches, re-ranked by mood and runtime, so the
+  mood you pick actually changes the result.
 - **Bayesian quality prior**, **smooth runtime fit**, **MMR-diversified alternates**, and
-  **distribution-calibrated confidence** — plus the optional per-request tuning weights.
+  **distribution-calibrated confidence**.
+
+**Keeping the two engines honest.** The Python engine generates fixtures — 320 seeded requests across
+every mood, time slot, era, media type, profile size and tuning setting, plus search and taste cases —
+and the TypeScript engine must reproduce every pick, alternate, confidence and top-20 score (to 1e-4).
+CI regenerates the fixtures and fails if they're stale.
+
+**What it ships.** The data pack is 2,420 titles in **1.7 MB gzipped**: card text plus embeddings
+stored as int8 with a scale per vector. Against full-precision vectors, int8 picks the same top title
+for **95%** of 100 seeded taste profiles, with a mean top-10 overlap of **0.97**; most disagreements
+are near-ties. The build fails if the pack goes over 3 MB.
 
 ---
 
-## Bring your own AI (Gemini or DeepSeek)
+## AI picks
 
-The LLM layer is **bring-your-own-key**, and token-frugal by design — one compact call sends your
-liked titles, mood, and the shortlist (titles only) and gets back the pick plus a one-line reason.
-
-| Provider | Get a key | Notes |
+| | Free tier | Your own key |
 | --- | --- | --- |
-| Google **Gemini** | [aistudio.google.com](https://aistudio.google.com/app/apikey) | Free tier, ~30s to set up |
-| **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com/api_keys) | Low-cost, OpenAI-compatible |
+| Model | Gemini (shared key) | Gemini or DeepSeek |
+| Limit | 20 picks a day per visitor, with a site-wide daily cap | none |
+| What the AI does | chooses from the shortlist and explains | also widens the search before the engine shortlists |
 
-Your key lives **in your browser**, is sent per request over HTTPS, and is **never logged or stored**
-on the server. Without a key you still get strong picks from the engine.
+One compact call per pick sends your liked titles, mood and the shortlist — catalog titles only —
+and gets back the pick and a one-line reason. The AI functions only accept catalog ids, so the shared
+key can't be used for anything else. Visitors are counted by a salted hash of their IP; the IP itself
+isn't stored. **Free-tier requests go to Google, which may use them to improve its models**; the app
+says so where you'd choose.
+
+With your own key ([Gemini](https://aistudio.google.com/app/apikey) is free to set up;
+[DeepSeek](https://platform.deepseek.com/api_keys) is low-cost), the key stays in your browser's
+session, is sent per request over HTTPS, and is never logged or stored.
 
 ---
 
-## Accounts & sync (optional)
+## Privacy
 
-Accounts are a thin, optional layer over [Supabase](https://supabase.com) that leaves the recommendation
-API completely stateless. Sync is **local-first**: the browser stores stay the source of truth, and on
-sign-in your favourites and library are *merged* (a second device adds to your taste rather than
-replacing it) and then kept in sync on a debounce. Sign out and everything stays on the device. If the
-project isn't configured, the app simply runs in guest mode — nothing breaks.
+- Taste, library and settings live in your browser unless you sign in.
+- Imported rating files are read on your device and never uploaded.
+- **Watch Together shares your favourite titles' ids with the other people in the room**, because each
+  member's browser computes the group pick. The room shows only counts, but anyone in it could see the
+  list. Rooms expire after 12 hours.
+- Errors are reported to Sentry when configured, without request bodies or headers.
 
 ---
 
 ## Run it locally
 
-One command sets everything up and starts both servers:
-
 ```bash
 python run.py
 ```
 
-(Or double-click `start.bat` on Windows / `./start.sh` on macOS/Linux.) Prerequisites: **Python 3.11+**
-and **Node.js 18+**. No API keys needed to start — connect a Gemini/DeepSeek key in the app for AI
-picks. Accounts are optional; without Supabase env vars the app runs guest-only.
-
-The app ships with a **self-owned catalog** (`backend/app/data/catalog.json`, ~2,400 titles built from
-TMDB + AniList), so there are **no live TMDB/AniList calls at request time** — it's fast and never
-blocked on a flaky upstream API.
+(Or `start.bat` / `./start.sh`.) Needs **Node.js 20+**; Python 3.11+ only for the engine tests and
+catalog tools. No keys needed: the app runs on the bundled catalog, and the AI functions run inside
+the Vite dev server. Put `GEMINI_API_KEY` in `frontend/.env` to try the free tier locally, and
+Supabase settings to enable accounts and Watch Together (see `frontend/.env.example`).
 
 ---
 
 ## Architecture
 
 ```text
- React + Vite (TS)                       FastAPI (Python) · stateless
- ┌───────────────────────────┐   /api   ┌──────────────────────────────┐
- │  Pick · Browse · Swipe     │ ───────▶ │  Catalog (catalog.json)      │
- │  Watch Together · Library  │          │  Content engine              │
- │  Taste · Tuning · Settings │          │   BM25 · kNN+centroid ·      │
- │  Cinematic reveal          │ ◀─────── │   tone · runtime · MMR       │
- │  BYO key (browser)         │  pick    │  LLM curator (per-request    │
- └───────────┬───────────────┘          │   user key: Gemini/DeepSeek) │
-             │                          │  Group rooms (in-memory, TTL)│
-             ▼                          └──────────────────────────────┘
-   Supabase (optional):
-   auth + profile sync                  API routes: recommend · search · browse ·
-   — the API stays stateless            media · taste · together · llm · health
+ Browser (Vercel, static)                              Vercel functions
+ ┌──────────────────────────────────────────┐ shortlist ┌───────────────────────────────┐
+ │ Data pack (content-hashed, cached):       │ ────────▶ │ /api/ai/curate  free or own key│
+ │   cards · int8 embeddings · shelves       │           │ /api/ai/expand  own key only   │
+ │ Engine in a Web Worker (TS port)          │ ◀──────── │ /api/ai/validate · quota       │
+ │ Search · taste · browse · import, local   │  reason   │ /api/poster     share-card art │
+ │ Rooms: Supabase Realtime presence+broadcast│          │ quota + reason cache ─▶ Supabase│
+ └──────────────────────────────────────────┘           └───────────────────────────────┘
+
+ Weekly (GitHub Actions): build_catalog → build_embeddings → build_web_pack
+   → parity fixtures → pytest + parity suite → pull request
 ```
 
-Data is owned, not fetched live: `scripts/build_catalog.py` builds the catalog once, offline, from
-TMDB + AniList (with attribution), and `scripts/build_embeddings.py` precomputes the semantic vectors.
-
-**Deployment** — the frontend deploys to **Vercel** (`frontend/vercel.json` proxies `/api` to the
-backend, so requests are same-origin), the API to **Render**. Supabase is optional and configured with
-two env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`); the publishable key is safe in the
-browser and protected by row-level security.
-
----
-
-## Project layout
-
-```text
-unbored/
-├── run.py                        # one-command launcher
-├── backend/
-│   ├── scripts/build_catalog.py  # offline catalog builder (+ build_embeddings.py)
-│   └── app/
-│       ├── engine/               # content.py (BM25 + dense), tone.py, engine.py
-│       ├── llm/                  # providers + per-request cache (BYO key)
-│       ├── services/             # catalog, shelves, curator, rooms, taste, rationale
-│       ├── routers/              # recommend, search, browse, media, taste, together, llm, health
-│       └── data/                 # catalog.json, embeddings, tone lexicon, mood targets
-└── frontend/
-    └── src/
-        ├── components/           # browse, swipe, reveal, mood, poster, layout, onboarding
-        ├── pages/                # onboarding, home, browse, swipe, library, taste, together, account, settings
-        ├── stores/               # taste, recommendation, library, preferences, auth, ui (Zustand)
-        └── config/motion.ts      # the shared motion vocabulary
-```
+- **Catalog.** `backend/scripts/build_catalog.py` builds ~2,400 titles from TMDB (movies, TV) and
+  AniList (anime), with India availability, trailers and IMDb ids. Each title keeps the date it first
+  appeared. A weekly workflow rebuilds everything and opens a PR once the checks pass. (The catalog
+  committed today predates availability and trailers; they arrive with the first refresh. Until then
+  the reveal falls back to a web search for where to watch.)
+- **Python's role.** The FastAPI app in `backend/` is the reference engine and the test oracle; it
+  isn't deployed.
+- **Supabase** holds optional accounts, the free-tier counters and reason cache (service role only),
+  and Watch Together room codes (reachable only through two database functions).
+- **Monitoring.** Per-route error boundaries, Sentry (optional), and an hourly uptime check that
+  opens an issue if the site, the data pack or the AI health endpoint stops answering.
 
 ---
 
 ## Development
 
 ```bash
-# Backend (from backend/)
-python -m uvicorn app.main:app --reload --port 8000
-python -m pytest                    # 146 tests
-
 # Frontend (from frontend/)
-npm run dev                         # http://localhost:5173
-npm run lint && npm test && npm run build
+npm run dev                       # http://localhost:5173, AI functions included
+npm run lint && npm test          # 544 tests: engine parity, local API, rooms, AI functions, UI
+npm run test:e2e                  # 16 Playwright runs (8 specs × desktop + mobile)
+npm run build
 
-# Rebuild the catalog (needs a TMDB key in backend/.env), then its embeddings
+# Backend (from backend/)
+python -m pytest                  # 161 tests: engine, catalog, pack, quantization
+
+# Rebuild data (needs TMDB_API_KEY in backend/.env)
 python scripts/build_catalog.py
-python scripts/build_embeddings.py   # build-time only (pip install fastembed)
+python scripts/build_embeddings.py   # pip install fastembed
+python scripts/build_web_pack.py
+python scripts/export_parity_fixtures.py
 ```
 
-API docs at `http://localhost:8000/docs`.
+Deployment needs these Vercel environment variables: `GEMINI_API_KEY`, `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `IP_HASH_SALT`, and optionally `SENTRY_DSN` / `VITE_SENTRY_DSN`. The
+database migrations are in `supabase/migrations/`.
 
 ---
 
 ## Tech stack
 
-**Frontend** — React 19, Vite, TypeScript, Zustand, Framer Motion, CSS Modules, an installable PWA.
-No UI kit, no chart library; the visual identity and every animation are hand-built.
-**Backend** — Python, FastAPI, Pydantic v2, httpx. The recommender is pure Python (no numpy/sklearn at
-request time).
-**Data** — a self-owned catalog from TMDB (movies/TV) + AniList (anime).
-**AI** — bring-your-own Gemini or DeepSeek key.
-**Accounts** — optional Supabase auth + local-first sync.
+**Frontend** — React 19, Vite, TypeScript, Zustand, Framer Motion, CSS Modules, Web Workers, an
+installable PWA. No UI kit; the visual identity and every animation are hand-built.
+**Functions** — Vercel (TypeScript), no SDKs.
+**Engine reference + data tools** — Python, FastAPI, numpy, Pydantic v2.
+**Data** — a self-owned catalog from TMDB (movies/TV, availability from JustWatch) and AniList (anime).
+**Realtime + accounts** — Supabase.
+**Testing** — pytest, Vitest, Playwright.
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Built by Shreyas Fegade. Catalog data from TMDB and AniList; this product
-uses the TMDB API but is not endorsed or certified by TMDB.
+MIT — see [LICENSE](LICENSE). Built by Shreyas Fegade. Catalog data from TMDB and AniList; streaming
+availability from JustWatch via TMDB. This product uses the TMDB API but is not endorsed or certified
+by TMDB.

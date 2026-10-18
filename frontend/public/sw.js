@@ -1,28 +1,59 @@
-/* Unbored service worker — conservative offline shell.
+/* Unbored service worker — offline shell + the catalog pack.
  *
  * - Navigations: network-first, fall back to the cached app shell when offline.
- * - Same-origin static assets (Vite hashed files): stale-while-revalidate.
- * - Catalog data (browse, shortlist, items): stale-while-revalidate.
- * - /api/recommend and everything else: always network (never cached).
+ * - /data/manifest.json: network-first, cached copy offline. When a new
+ *   manifest arrives, pack files it no longer names are dropped.
+ * - /data/<name>.<hash>.<ext>: cache-first. The hash is in the name, so a
+ *   cached copy can never be stale. Precached on install, so the engine works
+ *   offline from the second visit on.
+ * - /api/*: never intercepted (AI calls are per request and must not be cached).
  * - Cross-origin requests (posters, fonts) are NOT intercepted: a fetch() from
  *   the worker is checked against CSP's connect-src, which doesn't list the image
- *   CDNs, so routing them through here got them refused. Letting the browser load
- *   them directly keeps them under img-src/font-src, where they're allowed.
- *
- * This can only ever *add* an offline fallback; it never intercepts the dynamic
- * recommendation call, so a stale cache can't serve a wrong pick.
+ *   CDNs. Letting the browser load them keeps them under img-src/font-src.
+ * - Other same-origin static assets: stale-while-revalidate.
  */
-const CACHE = "unbored-v4";
+const CACHE = "unbored-v5";
+const PACK = "unbored-pack";
 const SHELL = "/index.html";
+const MANIFEST = "/data/manifest.json";
+const HASHED = /^\/data\/[a-z]+\.[0-9a-f]{12}\.[a-z]+$/;
+
+async function precachePack() {
+  try {
+    const res = await fetch(MANIFEST, { cache: "no-cache" });
+    if (!res.ok) return;
+    const manifest = await res.clone().json();
+    const cache = await caches.open(PACK);
+    await cache.put(MANIFEST, res);
+    await cache.addAll(Object.values(manifest.files).map((f) => `/data/${f}`));
+    await prunePack(manifest);
+  } catch {
+    /* offline at install: the pack is cached on first use instead */
+  }
+}
+
+async function prunePack(manifest) {
+  const keep = new Set(Object.values(manifest.files).map((f) => `/data/${f}`));
+  const cache = await caches.open(PACK);
+  for (const req of await cache.keys()) {
+    const path = new URL(req.url).pathname;
+    if (HASHED.test(path) && !keep.has(path)) await cache.delete(req);
+  }
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.add(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.add(SHELL))
+      .then(precachePack)
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE && k !== PACK).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -39,42 +70,52 @@ function staleWhileRevalidate(request) {
   );
 }
 
+async function cacheFirst(request) {
+  const cache = await caches.open(PACK);
+  const hit = await cache.match(request);
+  if (hit) return hit;
+  const res = await fetch(request);
+  if (res.ok) await cache.put(request, res.clone());
+  return res;
+}
+
+async function manifestNetworkFirst(request) {
+  const cache = await caches.open(PACK);
+  try {
+    const res = await fetch(request);
+    if (res.ok) {
+      await cache.put(MANIFEST, res.clone());
+      res.clone().json().then(prunePack).catch(() => {});
+    }
+    return res;
+  } catch {
+    const hit = await cache.match(MANIFEST);
+    if (hit) return hit;
+    throw new Error("offline and no cached manifest");
+  }
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  // Navigations → network-first, shell fallback offline.
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(SHELL))
-    );
+    event.respondWith(fetch(request).catch(() => caches.match(SHELL)));
     return;
   }
 
-  // Dynamic recommendation + validation must never be cached.
-  if (url.pathname.startsWith("/api/recommend") || url.pathname.startsWith("/api/llm")) {
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/api/")) return;
+
+  if (url.pathname === MANIFEST) {
+    event.respondWith(manifestNetworkFirst(request));
+    return;
+  }
+  if (HASHED.test(url.pathname)) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Cross-origin (posters, fonts): don't touch it — let the browser load it
-  // directly so it's governed by img-src/font-src, not the worker's connect-src.
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  // Catalog data: serve the cached copy for speed, but always refresh behind
-  // it. Cache-first was wrong here — the catalog changes with each deploy, and
-  // a cached-forever copy pinned clients to an old set of rows.
-  if (
-    url.pathname.startsWith("/api/browse/") ||
-    url.pathname.startsWith("/api/search/") ||
-    url.pathname.startsWith("/api/media/")
-  ) {
-    event.respondWith(staleWhileRevalidate(request));
-    return;
-  }
-
-  // Same-origin static assets.
   event.respondWith(staleWhileRevalidate(request));
 });

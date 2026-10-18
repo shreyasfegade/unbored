@@ -21,6 +21,7 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
   const provider = useRecommendationStore((s) => s.provider);
   const confidence = useRecommendationStore((s) => s.confidence);
   const aiStatus = useRecommendationStore((s) => s.aiStatus);
+  const aiTier = useRecommendationStore((s) => s.aiTier);
   const mediaTypeApplied = useRecommendationStore((s) => s.mediaTypeApplied);
   const swapAlternate = useRecommendationStore((s) => s.swapAlternate);
   const addToast = useToastStore((s) => s.addToast);
@@ -96,6 +97,7 @@ export function RevealOracle({ onRegenerate, onStartOver }: RevealOracleProps) {
                 pickedBy={pickedBy}
                 provider={provider}
                 aiStatus={aiStatus}
+                aiTier={aiTier}
                 mediaTypeApplied={mediaTypeApplied}
                 alternates={alternates}
                 onAlternateSelect={handleAlternateSwap}
