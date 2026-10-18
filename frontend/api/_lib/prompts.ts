@@ -3,7 +3,7 @@
  * (pick + reasons from the engine's shortlist) and query_expansion.py (genres
  * to lean into before ranking). Token-frugal by design: titles only, one call.
  */
-import type { TitleRow } from "./titles.gen";
+import type { TitleRow } from "./titles.gen.js";
 
 export const CURATOR_SYSTEM =
   "You are a sharp film, TV and anime taste expert. From a shortlist, you pick the ONE " +
