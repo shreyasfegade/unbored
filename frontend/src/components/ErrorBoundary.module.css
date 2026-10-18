@@ -36,3 +36,15 @@
 .reloadBtn:active {
   transform: scale(0.96);
 }
+
+.kicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright, var(--color-text-tertiary));
+}
+
+.message {
+  max-width: 40ch;
+  margin: 0;
+}

@@ -1,0 +1,37 @@
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(640px, 100%);
+  margin: var(--space-10) auto 0;
+  padding: 0 var(--space-4);
+}
+
+.bar,
+.block {
+  display: block;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.bar {
+  height: 14px;
+}
+
+.block {
+  height: 220px;
+  margin-top: var(--space-3);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .block {
+    animation: none;
+  }
+}

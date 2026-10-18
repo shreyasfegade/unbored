@@ -10,9 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@sentry/react": "^10.76.2",
     "@supabase/supabase-js": "^2.112.4",
     "framer-motion": "^12.40.0",
     "react": "^19.2.6",

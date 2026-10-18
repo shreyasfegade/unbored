@@ -1,6 +1,5 @@
 // GET /api/ai/quota — see api/_lib/ai.ts.
 import { quota } from "../_lib/ai";
+import { guarded } from "../_lib/report";
 
-export function GET(request: Request): Promise<Response> {
-  return quota(request);
-}
+export const GET = guarded("ai/quota", quota);
