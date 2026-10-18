@@ -72,7 +72,7 @@ def die(msg: str) -> None:
 def ensure_frontend(reinstall: bool) -> None:
     npm = shutil.which("npm")
     if npm is None:
-        die("npm not found. Install Node.js 18+ from https://nodejs.org and re-run.")
+        die("npm not found. Install Node.js 20+ from https://nodejs.org and re-run.")
     node_modules = FRONTEND / "node_modules"
     if reinstall and node_modules.exists():
         shutil.rmtree(node_modules, ignore_errors=True)

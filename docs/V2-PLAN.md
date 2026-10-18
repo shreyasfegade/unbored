@@ -18,6 +18,31 @@ The October 2026 V2 guide plan (`Unbored-V2-Plan.md`) asks for dependability fir
 
 ---
 
+## Status (2026-10-18)
+
+Every phase is implemented on `claude/rework-plan-kgfxyy`. Nothing has been deployed.
+
+| Phase | State | Notes |
+|---|---|---|
+| 0 Housekeeping | Done in repo | Real counts: backend 161 pytest, frontend 544 Vitest, 16 Playwright runs. README rewritten. `profiles` migration was reconstructed by hand from the client code; diff it against `supabase db pull` before applying. |
+| 1 Engine in the browser | Done | 320 parity requests plus search and taste fixtures; CI fails on stale fixtures. int8 vs float32: 95% top-1, 0.97 top-10 overlap (100 profiles). The test asserts ≥93% / ≥0.9 rather than the planned 95%, so a weekly refresh doesn't fail on noise. |
+| 2 Free AI, retire Render | Done | Default model `gemini-2.5-flash-lite` (`GEMINI_MODEL` overrides). Render config deleted; the FastAPI app stays as the reference engine. |
+| 3 Realtime rooms | Done | Deviation: room codes are reached only through `room_open` / `room_lookup` functions with no table policies, instead of anon insert/select, so nobody can list live codes. Expired rows are pruned when a room opens rather than by cron. Veto rounds (planned for 8) landed here. |
+| 4 Tests and monitoring | Done | Per-route boundaries, chunk-load retry, 404, Sentry (browser SDK lazy-loaded; functions use a dependency-free reporter), hourly uptime workflow. |
+| 5 Refresh and growth | Done | Refresh rebuilds pack and fixtures and runs the parity suite before its PR; node24 actions. `added_at` and New This Week added. Deviation: 10k titles can't fit 3 MB at any embedding size (card text alone is ~0.4 KB/title), so pages target ~3,500. `--dims` PCA exists but isn't adopted. `catalog_embeddings.json` is still in git. |
+| Design gate | Not held separately | The owner asked for the full plan in one go. The reveal changes were checked in real Chromium at desktop and mobile widths; review them before deploying. |
+| 6 Where to watch | Done | Shows once a refreshed catalog carries the data; until then the old web-search button stays. |
+| 7 CSV import | Done | `/import`, from onboarding and Settings. |
+| 8 Trailer, share, why-not | Done | Deviation: TMDB images send no CORS headers, so the share card fetches posters through a narrow same-origin `/api/poster` proxy instead of an OG-image function. Per-pick link previews were not built. |
+
+**Owner actions before deploy:** add the `TMDB_API_KEY` secret and run "Refresh catalog"; set the
+Vercel env vars (`GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `IP_HASH_SALT`,
+optional `SENTRY_DSN` / `VITE_SENTRY_DSN`); apply `supabase/migrations/`; confirm the Gemini model is
+on the free tier; set the `SITE_URL` repo variable if the domain differs; suspend Render once the new
+deploy is verified; fix the portfolio's test count and mark `.ai-docs/` historical.
+
+---
+
 ## What the code actually says (guide vs reality)
 
 | Guide claim | Verified reality | Consequence |
