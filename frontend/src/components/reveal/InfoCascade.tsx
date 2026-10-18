@@ -7,6 +7,8 @@ import { WhyNow } from "./WhyNow";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { AlternatePicks } from "./AlternatePicks";
 import { ActionButtons } from "./ActionButtons";
+import { WatchPanel } from "../watch/WatchPanel";
+import { primaryWatchUrl } from "../watch/watchOptions";
 import styles from "./InfoCascade.module.css";
 
 interface InfoCascadeProps {
@@ -38,9 +40,7 @@ export function InfoCascade({
   onRegenerate,
   onStartOver,
 }: InfoCascadeProps) {
-  const watchUrl = primary.media.title
-    ? `https://www.google.com/search?q=watch+${encodeURIComponent(primary.media.title)}+${primary.media.release_year ?? ""}`
-    : null;
+  const watchUrl = primaryWatchUrl(primary.media);
 
   return (
     <motion.div
@@ -158,6 +158,14 @@ export function InfoCascade({
           )}
         </motion.p>
       )}
+
+      <motion.div
+        style={{ width: "100%" }}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+        transition={{ duration: 0.4 }}
+      >
+        <WatchPanel media={primary.media} />
+      </motion.div>
 
       <motion.div
         variants={{

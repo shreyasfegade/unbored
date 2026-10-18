@@ -40,9 +40,10 @@ def test_watch_keeps_india_only_in_display_order():
     assert w["IN"]["link"].endswith("locale=IN")
 
 
-def test_watch_absent_means_none():
+def test_watch_unchecked_is_none_and_unavailable_is_empty():
     assert tmdb_watch({}) is None
-    assert tmdb_watch({"watch/providers": {"results": {"IN": {"link": "x"}}}}) is None
+    assert tmdb_watch({"watch/providers": {"results": {"IN": {"link": "x"}}}}) == {}
+    assert tmdb_watch({"watch/providers": {"results": {}}}) == {}
 
 
 def _video(key, type_="Trailer", official=True, published="2020-01-01T00:00:00.000Z", site="YouTube"):

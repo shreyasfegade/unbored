@@ -23,9 +23,12 @@ def _provider(p: dict[str, Any]) -> dict[str, Any] | None:
 def tmdb_watch(data: dict[str, Any], regions: tuple[str, ...] = WATCH_REGIONS) -> dict | None:
     """`watch/providers` (appended to a detail call) → {region: {link, flatrate, rent, buy}}.
 
-    Only the regions we show are kept. A region with no providers at all is
-    dropped, so "no entry" always means "not streaming there"."""
-    results = ((data.get("watch/providers") or {}).get("results")) or {}
+    Only the regions we show are kept, and a region with no providers at all is
+    dropped. So `{}` means "checked: not available in any shown region", and
+    None means the response carried no provider data to check."""
+    if "watch/providers" not in data:
+        return None
+    results = (data["watch/providers"] or {}).get("results") or {}
     out: dict[str, Any] = {}
     for region in regions:
         r = results.get(region)
@@ -39,7 +42,7 @@ def tmdb_watch(data: dict[str, Any], regions: tuple[str, ...] = WATCH_REGIONS) -
                 entry[kind] = provs
         if any(k in entry for k in _KINDS):
             out[region] = entry
-    return out or None
+    return out
 
 
 def tmdb_trailer(data: dict[str, Any]) -> dict | None:

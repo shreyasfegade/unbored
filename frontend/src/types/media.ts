@@ -1,20 +1,23 @@
 export type MediaSource = "tmdb_movie" | "tmdb_tv" | "anilist";
 export type MediaType = "movie" | "tv" | "anime";
 
-/** Where a title streams in one region (TMDB watch providers, data by JustWatch). */
+/** One provider in a region (TMDB watch providers, data by JustWatch). */
 export interface WatchProvider {
-  provider_id: number;
+  id: number;
   name: string;
-  logo_path: string | null;
+  /** TMDB image path, e.g. "/abc.jpg". */
+  logo: string | null;
 }
 
+/** Where a title is available in one region. */
 export interface WatchRegion {
+  /** TMDB's watch page for the region, which links out to each provider. */
   link?: string | null;
   flatrate?: WatchProvider[];
   rent?: WatchProvider[];
   buy?: WatchProvider[];
-  /** AniList streaming links: not region-checked. */
-  streaming?: Array<{ site: string; url: string }>;
+  /** AniList streaming links (region "any"): AniList doesn't say where they work. */
+  links?: Array<{ name: string; url: string }>;
 }
 
 export interface MediaItem {
