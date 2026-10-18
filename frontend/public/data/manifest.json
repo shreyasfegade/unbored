@@ -1,25 +1,25 @@
 {
   "version": 1,
-  "generated_at": "2026-08-23T22:58:31.026972+00:00",
-  "count": 2420,
+  "generated_at": "2026-10-18T23:25:44.982625+00:00",
+  "count": 3632,
   "dims": 384,
   "files": {
-    "cards": "cards.4d3e3d8b1258.json",
-    "engine": "engine.518501dbdca1.bin",
-    "shelves": "shelves.04a1efd16f7b.json"
+    "cards": "cards.0ed496de8dbd.json",
+    "engine": "engine.94d19dd9d98b.bin",
+    "shelves": "shelves.382ab98972eb.json"
   },
   "bytes": {
     "cards": {
-      "raw": 2983474,
-      "gzip": 1008853
+      "raw": 5646124,
+      "gzip": 1718169
     },
     "engine": {
-      "raw": 938960,
-      "gzip": 729045
+      "raw": 1409216,
+      "gzip": 1092667
     },
     "shelves": {
-      "raw": 31051,
-      "gzip": 8475
+      "raw": 45573,
+      "gzip": 12263
     }
   }
 }
