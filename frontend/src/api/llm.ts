@@ -11,9 +11,9 @@ export interface ValidateResult {
 /** Validate a key with one tiny generation. The key is passed explicitly here
  *  because it isn't in the store yet. */
 export async function validateKey(provider: LlmProvider, key: string): Promise<ValidateResult> {
-  const { data } = await request<ValidateResult>('POST', '/api/llm/validate', {
+  const { data } = await request<ValidateResult>('POST', '/api/ai/validate', {
     headers: { 'X-LLM-Provider': provider, 'X-LLM-Key': key },
-    timeoutMs: 90000,
+    timeoutMs: 12000,
   });
   return data;
 }

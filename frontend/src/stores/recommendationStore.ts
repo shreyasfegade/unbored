@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { ScoredMediaItem, RecommendationResponse } from '../types/recommendation';
+import type { AIStatus, AITier, ScoredMediaItem, RecommendationResponse } from '../types/recommendation';
 import type { ConfidenceLevel } from '../types/mood';
 
 type Status = 'idle' | 'loading' | 'revealed' | 'regenerating' | 'error';
-export type AIStatus = 'off' | 'used' | 'timeout' | 'error';
+export type { AIStatus };
 
 // Keep the exclusion list bounded so it can't grow without limit across a long
 // session (and it's sent in every request body).
@@ -17,6 +17,7 @@ interface RecommendationState {
   pickedBy: 'ai' | 'engine' | null;
   provider: string | null;
   aiStatus: AIStatus;
+  aiTier: AITier | null;
   mediaTypeApplied: boolean;
   confidence: ConfidenceLevel | null;
   requestId: string | null;
@@ -41,6 +42,7 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
   pickedBy: null,
   provider: null,
   aiStatus: 'off',
+  aiTier: null,
   mediaTypeApplied: true,
   confidence: null,
   requestId: null,
@@ -59,6 +61,7 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
       pickedBy: res.picked_by,
       provider: res.provider,
       aiStatus: res.ai_status ?? (res.picked_by === 'ai' ? 'used' : 'off'),
+      aiTier: res.ai_tier ?? null,
       mediaTypeApplied: res.media_type_applied ?? true,
       confidence: res.confidence,
       requestId: res.request_id,
@@ -97,6 +100,7 @@ export const useRecommendationStore = create<RecommendationState>()((set) => ({
       pickedBy: null,
       provider: null,
       aiStatus: 'off',
+      aiTier: null,
       mediaTypeApplied: true,
       confidence: null,
       requestId: null,

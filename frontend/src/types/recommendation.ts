@@ -3,7 +3,10 @@ import type { MoodType, TimeSlot, TimeOfDay, ConfidenceLevel } from "./mood";
 
 export type MediaTypeChoice = "movie" | "tv" | "anime" | "surprise";
 export type EraPreference = "modern" | "any" | "classic";
-export type AIStatus = "off" | "used" | "timeout" | "error";
+// "limited": today's shared free AI picks are used up (or the provider rate-
+// limited a key), so the engine picked.
+export type AIStatus = "off" | "used" | "timeout" | "error" | "limited";
+export type AITier = "free" | "byo";
 
 export interface ScoreBreakdown {
   relevance: number;
@@ -48,6 +51,8 @@ export interface RecommendationResponse {
   picked_by: "ai" | "engine";
   provider: string | null;
   ai_status: AIStatus;
+  /** Which AI made the call: the shared free tier or the visitor's own key. */
+  ai_tier?: AITier | null;
   media_type_applied: boolean;
   confidence: ConfidenceLevel;
   request_id: string;

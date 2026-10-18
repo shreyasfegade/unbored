@@ -60,8 +60,12 @@ export async function handle(req: EngineRequest): Promise<PipelineResult | Expla
   switch (req.op) {
     case "warm":
       return null;
-    case "recommend":
-      return runPipeline(index, moodTargets, req.body, req.opts);
+    case "recommend": {
+      // Only the head of the ranking crosses back to the page (it tops up
+      // alternates after the AI picks); cloning the whole pool is wasted work.
+      const r = runPipeline(index, moodTargets, req.body, req.opts);
+      return { ...r, ranked: r.ranked.slice(0, 40) };
+    }
     case "explain": {
       const i = index.indexOf(req.targetId);
       if (i === undefined) throw new Error("That title isn't in the catalog.");

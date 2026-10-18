@@ -58,3 +58,13 @@
 .off:hover .arrow {
   transform: translateX(3px);
 }
+
+.count {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.count::before {
+  content: "·";
+  margin-right: var(--space-2);
+}
